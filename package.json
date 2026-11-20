@@ -1,0 +1,18 @@
+{
+  "name": "pathixo-rewards",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pathixo Rewards — Get paid while AI thinks. A high-yield browser extension and ad monetization platform.",
+  "scripts": {
+    "dev:extension": "pnpm --filter @pathixo/extension dev",
+    "build:extension": "pnpm --filter @pathixo/extension build",
+    "zip:extension": "pnpm --filter @pathixo/extension zip",
+    "dev:web": "pnpm --filter @pathixo/web dev",
+    "build:web": "pnpm --filter @pathixo/web build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}
