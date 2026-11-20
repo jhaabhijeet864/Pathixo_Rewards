@@ -1,0 +1,39 @@
+name: 🐛 Bug Report
+description: Create a report to help us fix an issue in the extension, web portal, or API
+title: '[BUG]: '
+labels: ['type:bug']
+body:
+  - type: dropdown
+    id: component
+    attributes:
+      label: Subsystem
+      options:
+        - Extension Client (WXT)
+        - Web Landing / Marketing
+        - Advertiser Portal (/advertise)
+        - User Dashboard (/dashboard)
+        - Backend API / Events
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Clear and concise description of what the bug is.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      placeholder: |
+        1. Open '...'
+        2. Click on '....'
+        3. See error
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Browser & OS
+      placeholder: Chrome 134 on Windows 11

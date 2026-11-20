@@ -1,0 +1,73 @@
+# Pathixo Rewards Issue & Pull Request Taxonomy
+
+- name: 'domain:chatgpt'
+  color: '10b981'
+  description: 'Related to ChatGPT (chatgpt.com) adapter, composer, or turn DOM injection'
+
+- name: 'domain:claude'
+  color: 'd97706'
+  description: 'Related to Claude (claude.ai) adapter, Tiptap composer, or bubble escaping'
+
+- name: 'domain:gemini'
+  color: '3b82f6'
+  description: 'Related to Google Gemini (gemini.google.com) Angular component adapter'
+
+- name: 'domain:perplexity'
+  color: '06b6d4'
+  description: 'Related to Perplexity (perplexity.ai) search & reasoning turn adapter'
+
+- name: 'domain:deepseek'
+  color: '6366f1'
+  description: 'Related to DeepSeek (chat.deepseek.com) thinking accordion adapter'
+
+- name: 'subsystem:extension'
+  color: '8b5cf6'
+  description: 'Browser extension core: WXT, content scripts, background worker, popup'
+
+- name: 'subsystem:web'
+  color: 'ec4899'
+  description: 'Next.js 15 marketing platform, landing page, and dashboard'
+
+- name: 'subsystem:ad-engine'
+  color: '14b8a6'
+  description: 'Ad bundle serving, CPM pricing, auction, or affiliate fallbacks'
+
+- name: 'subsystem:anti-fraud'
+  color: 'ef4444'
+  description: 'Dwell time verification, focus detection, and bot rate-limiting'
+
+- name: 'subsystem:payouts'
+  color: '84cc16'
+  description: 'User $2 cashout rail processing (UPI, PayPal, Gift Cards)'
+
+- name: 'compliance:webstore'
+  color: 'eab308'
+  description: 'Chrome Web Store developer program policies and approval criteria'
+
+- name: 'compliance:manifest-v3'
+  color: 'f97316'
+  description: 'Manifest V3 security constraints: zero remote code, pure JSON data'
+
+- name: 'compliance:privacy'
+  color: '15803d'
+  description: 'Strict zero-prompt-logging and data isolation guarantees'
+
+- name: 'type:selector-breakage'
+  color: 'b91c1c'
+  description: 'Urgent: An AI platform updated their DOM classes and broke ad anchoring'
+
+- name: 'type:bug'
+  color: 'dc2626'
+  description: 'Something is broken or not working as intended'
+
+- name: 'type:feature'
+  color: '0284c7'
+  description: 'New feature proposal or enhancement'
+
+- name: 'status:ready-to-ship'
+  color: '059669'
+  description: 'Passed code review, status checks, and ready for release'
+
+- name: 'bounty:eligible'
+  color: 'f59e0b'
+  description: 'Community contribution eligible for Pathixo reward credits'

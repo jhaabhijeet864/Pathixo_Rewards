@@ -1,0 +1,39 @@
+name: 🚨 AI Site Selector Breakage
+description: Report an AI platform DOM update (ChatGPT, Claude, Gemini, Perplexity, DeepSeek) that broke ad placement
+title: '[SELECTOR BREAKAGE]: <AI Platform> updated layout'
+labels: ['type:selector-breakage']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template when an AI chatbot updates its DOM classes, HTML structure, or generation buttons.
+  - type: dropdown
+    id: platform
+    attributes:
+      label: AI Platform
+      description: Which chatbot updated its interface?
+      options:
+        - ChatGPT (chatgpt.com)
+        - Claude (claude.ai)
+        - Google Gemini (gemini.google.com)
+        - Perplexity (perplexity.ai)
+        - DeepSeek (chat.deepseek.com)
+    validations:
+      required: true
+  - type: textarea
+    id: symptoms
+    attributes:
+      label: Symptoms
+      description: What is happening? (e.g. ad not mounting, Stop button not detected, ad appearing in wrong container)
+    validations:
+      required: true
+  - type: input
+    id: new_selector
+    attributes:
+      label: Proposed New CSS Selector (if inspected)
+      placeholder: e.g. [data-composer-markdown] or button[aria-label="Stop"]
+  - type: textarea
+    id: html_snippet
+    attributes:
+      label: DOM Snippet
+      description: Paste the new container DOM or button snippet (strip any personal prompt text!).
