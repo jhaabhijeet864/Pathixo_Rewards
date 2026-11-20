@@ -11,6 +11,12 @@ import {
 import { fetchAdBundle, sendImpressionEvents } from '../lib/api';
 import type { ImpressionEvent } from '@pathixo/shared';
 
+interface RuntimeMessage {
+  type: string;
+  enabled?: boolean;
+  event?: ImpressionEvent;
+}
+
 export default defineBackground(() => {
   console.log('[Pathixo Rewards] Service Worker activated.');
 
@@ -32,25 +38,28 @@ export default defineBackground(() => {
   });
 
   // Message handler for Popup and Content Scripts
-  browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-    if (message.type === 'GET_STATE') {
+  browser.runtime.onMessage.addListener((message: unknown, _sender, sendResponse): true => {
+    const msg = message as RuntimeMessage;
+    if (!msg || !msg.type) return true;
+
+    if (msg.type === 'GET_STATE') {
       Promise.all([getDeviceId(), isEnabled(), getEarnings()]).then(
         ([deviceId, enabled, earnings]) => {
           sendResponse({ deviceId, enabled, earnings });
         }
       );
-      return true; // Keep message channel open for async response
+      return true;
     }
 
-    if (message.type === 'SET_ENABLED') {
-      setEnabled(!!message.enabled).then(() => {
-        sendResponse({ success: true, enabled: !!message.enabled });
+    if (msg.type === 'SET_ENABLED') {
+      setEnabled(!!msg.enabled).then(() => {
+        sendResponse({ success: true, enabled: !!msg.enabled });
       });
       return true;
     }
 
-    if (message.type === 'RECORD_QUALIFIED_IMPRESSION') {
-      const event = message.event as ImpressionEvent;
+    if (msg.type === 'RECORD_QUALIFIED_IMPRESSION' && msg.event) {
+      const event = msg.event;
       // Calculate earnings credit: 60% of $0.015 ($0.009 per qualified impression)
       const creditPerImpression = 0.009;
       Promise.all([addEarnings(creditPerImpression), enqueueEvent(event)]).then(
@@ -62,7 +71,7 @@ export default defineBackground(() => {
       return true;
     }
 
-    if (message.type === 'OPEN_DASHBOARD') {
+    if (msg.type === 'OPEN_DASHBOARD') {
       getDeviceId().then((deviceId) => {
         const url = `http://localhost:3000/dashboard?device_id=${encodeURIComponent(deviceId)}`;
         browser.tabs.create({ url });
@@ -70,6 +79,8 @@ export default defineBackground(() => {
       });
       return true;
     }
+
+    return true;
   });
 
   async function performSync() {

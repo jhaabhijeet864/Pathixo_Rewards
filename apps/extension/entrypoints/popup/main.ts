@@ -23,9 +23,10 @@ function updateUI(enabled: boolean, earnings?: UserEarnings) {
 }
 
 // Fetch live state from background
-browser.runtime.sendMessage({ type: 'GET_STATE' }).then((res) => {
-  if (res) {
-    updateUI(res.enabled, res.earnings);
+browser.runtime.sendMessage({ type: 'GET_STATE' }).then((res: unknown) => {
+  const data = res as { enabled: boolean; earnings?: UserEarnings } | undefined;
+  if (data) {
+    updateUI(data.enabled, data.earnings);
   }
 });
 

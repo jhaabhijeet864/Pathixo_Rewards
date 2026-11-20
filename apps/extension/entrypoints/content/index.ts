@@ -99,7 +99,7 @@ export default defineContentScript({
 
         // Verify if user paused sponsored cards in extension settings
         try {
-          const state = await browser.runtime.sendMessage({ type: 'GET_STATE' });
+          const state = (await browser.runtime.sendMessage({ type: 'GET_STATE' })) as { enabled?: boolean } | undefined;
           if (state && state.enabled === false) {
             console.debug('[Pathixo Rewards] Ads currently paused by user toggle.');
             return;
