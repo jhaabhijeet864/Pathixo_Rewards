@@ -4,10 +4,12 @@ node_modules/
 
 # Build outputs
 .output/
+.wxt/
 .next/
 out/
 dist/
 build/
+*.tsbuildinfo
 
 # Local reference clones
 temp_chatwait/
