@@ -4,9 +4,52 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pathixo Rewards</title>
+  <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
-  <div id="app">Pathixo Rewards</div>
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="popup-header">
+      <div class="brand-wrapper">
+        <img class="brand-icon" src="/pathixo-icon-round.svg" alt="Pathixo Rewards Logo" />
+        <div class="brand-text">
+          <h1>Pathixo Rewards</h1>
+          <p>Get paid while AI thinks.</p>
+        </div>
+      </div>
+      <label class="switch" title="Toggle sponsored cards">
+        <input type="checkbox" id="toggle-enabled" checked />
+        <span class="slider"></span>
+      </label>
+    </header>
+
+    <!-- Earnings Card -->
+    <section class="earnings-card">
+      <div class="earnings-label">Earnings</div>
+      <div class="earnings-prompt">You have earned</div>
+      <div class="earnings-amount" id="earnings-display">$0.0923</div>
+      <p class="earnings-subtext">waiting for ChatGPT, Claude, Gemini, Perplexity, and DeepSeek.</p>
+    </section>
+
+    <!-- Status Pill -->
+    <div class="status-pill">
+      <span class="status-dot" id="status-dot"></span>
+      <span id="status-text">Sponsored cards are on</span>
+    </div>
+
+    <!-- Account Card -->
+    <section class="account-card">
+      <h2>Your account</h2>
+      <p>Manage your referral link, ad preferences, and cash out on the dashboard.</p>
+      <button class="btn-dashboard" id="btn-dashboard" type="button">Open dashboard</button>
+    </section>
+
+    <!-- Footer -->
+    <footer class="popup-footer">
+      0.1.0+pathixo
+    </footer>
+  </div>
+
   <script type="module" src="./main.ts"></script>
 </body>
 </html>

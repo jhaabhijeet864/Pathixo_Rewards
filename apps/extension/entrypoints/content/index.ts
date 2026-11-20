@@ -1,4 +1,4 @@
-import type { AdCreative, PromptAdapter } from '@pathixo/shared';
+import type { AdCreative, ImpressionEvent, PromptAdapter, SupportedPlatform } from '@pathixo/shared';
 import {
   ChatGPTAdapter,
   ClaudeAdapter,
@@ -8,7 +8,8 @@ import {
 } from './adapters';
 import { PathixoAdCard } from './ad-card';
 
-// Default high-yield affiliate fallbacks ensure 100% fill rate from Day 1
+const MIN_DWELL_MS = 4000; // 4 seconds minimum active dwell time
+
 const FALLBACK_ADS: AdCreative[] = [
   {
     id: 'ad_fallback_cursor',
@@ -44,12 +45,12 @@ function selectAd(): AdCreative {
   return FALLBACK_ADS[index];
 }
 
-function resolveAdapter(hostname: string): PromptAdapter | null {
-  if (hostname.includes('chatgpt.com')) return new ChatGPTAdapter();
-  if (hostname.includes('claude.ai')) return new ClaudeAdapter();
-  if (hostname.includes('gemini.google.com')) return new GeminiAdapter();
-  if (hostname.includes('perplexity.ai')) return new PerplexityAdapter();
-  if (hostname.includes('deepseek.com')) return new DeepSeekAdapter();
+function resolvePlatform(hostname: string): { adapter: PromptAdapter; platform: SupportedPlatform } | null {
+  if (hostname.includes('chatgpt.com')) return { adapter: new ChatGPTAdapter(), platform: 'chatgpt' };
+  if (hostname.includes('claude.ai')) return { adapter: new ClaudeAdapter(), platform: 'claude' };
+  if (hostname.includes('gemini.google.com')) return { adapter: new GeminiAdapter(), platform: 'gemini' };
+  if (hostname.includes('perplexity.ai')) return { adapter: new PerplexityAdapter(), platform: 'perplexity' };
+  if (hostname.includes('deepseek.com')) return { adapter: new DeepSeekAdapter(), platform: 'deepseek' };
   return null;
 }
 
@@ -63,16 +64,25 @@ export default defineContentScript({
   ],
   runAt: 'document_idle',
   main() {
-    const adapter = resolveAdapter(window.location.hostname);
-    if (!adapter) {
-      console.debug('[Pathixo Rewards] No matching adapter for host:', window.location.hostname);
-      return;
-    }
+    const resolved = resolvePlatform(window.location.hostname);
+    if (!resolved) return;
+    const { adapter, platform } = resolved;
 
-    console.log('[Pathixo Rewards] Active adapter attached for:', adapter.host);
+    console.log('[Pathixo Rewards] Content script active on:', platform);
 
     let activeCard: PathixoAdCard | null = null;
+    let currentAd: AdCreative | null = null;
     let cardStartTime = 0;
+    let isTabFocusedDuringWait = true;
+    let dismissedThisTurn = false;
+
+    // Track tab visibility during active wait
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') {
+        isTabFocusedDuringWait = false;
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     adapter.start({
       onSubmit() {
@@ -80,26 +90,43 @@ export default defineContentScript({
           activeCard.unmount();
           activeCard = null;
         }
+        dismissedThisTurn = false;
+        isTabFocusedDuringWait = document.visibilityState === 'visible';
       },
 
-      onAnchorReady(anchor: HTMLElement) {
+      async onAnchorReady(anchor: HTMLElement) {
+        if (dismissedThisTurn) return;
+
+        // Verify if user paused sponsored cards in extension settings
+        try {
+          const state = await browser.runtime.sendMessage({ type: 'GET_STATE' });
+          if (state && state.enabled === false) {
+            console.debug('[Pathixo Rewards] Ads currently paused by user toggle.');
+            return;
+          }
+        } catch {
+          // If background worker busy, proceed
+        }
+
         if (adapter.hostAdVisible()) {
-          console.debug('[Pathixo Rewards] Host ad detected, suppressing injection.');
+          console.debug('[Pathixo Rewards] Host ad visible, suppressing injection.');
           return;
         }
 
         activeCard = new PathixoAdCard();
         activeCard.mount(anchor);
         cardStartTime = Date.now();
+        currentAd = selectAd();
 
-        const ad = selectAd();
-        activeCard.render(ad, {
+        activeCard.render(currentAd, {
           onDismiss() {
+            dismissedThisTurn = true;
             activeCard = null;
+            currentAd = null;
             cardStartTime = 0;
           },
           onClick() {
-            console.debug('[Pathixo Rewards] Ad clicked:', ad.id);
+            console.debug('[Pathixo Rewards] Clicked ad:', currentAd?.id);
           },
         });
       },
@@ -110,10 +137,40 @@ export default defineContentScript({
         }
       },
 
-      onDone() {
-        if (!activeCard || !activeCard.mounted) return;
-        const dwellMs = Date.now() - cardStartTime;
-        console.debug('[Pathixo Rewards] Generation completed. Dwell time:', dwellMs, 'ms');
+      async onDone() {
+        if (!activeCard || !activeCard.mounted || !currentAd || cardStartTime === 0) {
+          return;
+        }
+
+        const elapsedMs = Date.now() - cardStartTime;
+
+        // Anti-Fraud Dwell & Focus Verification
+        if (elapsedMs >= MIN_DWELL_MS && isTabFocusedDuringWait && !dismissedThisTurn) {
+          const impressionEvent: ImpressionEvent = {
+            event_id: `evt_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`,
+            ad_id: currentAd.id,
+            ad_token: currentAd.ad_token,
+            device_id: 'anonymous',
+            timestamp: Date.now(),
+            dwell_ms: elapsedMs,
+            ai_platform: platform,
+          };
+
+          try {
+            await browser.runtime.sendMessage({
+              type: 'RECORD_QUALIFIED_IMPRESSION',
+              event: impressionEvent,
+            });
+            console.log(`[Pathixo Rewards] Verified ${elapsedMs}ms dwell time! Reward credited.`);
+          } catch (err) {
+            console.debug('[Pathixo Rewards] Failed to notify service worker:', err);
+          }
+        } else {
+          console.debug(`[Pathixo Rewards] Unqualified impression (Dwell: ${elapsedMs}ms, Focused: ${isTabFocusedDuringWait})`);
+        }
+
+        // Clean up state
+        cardStartTime = 0;
       },
     });
   },
