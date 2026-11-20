@@ -6,7 +6,7 @@ Pathixo Rewards delivers an open-source Manifest V3 Chrome extension and fullsta
 
 ## Phases
 
-- [ ] **Phase 1: Core Extension Architecture & Chatbot Adapters** - Manifest V3 setup, Shadow DOM ad card component, and resilient DOM detection across ChatGPT, Claude, Gemini, Perplexity, and DeepSeek.
+- [x] **Phase 1: Core Extension Architecture & Chatbot Adapters** - Manifest V3 setup, Shadow DOM ad card component, and resilient DOM detection across ChatGPT, Claude, Gemini, Perplexity, and DeepSeek.
 - [ ] **Phase 2: Ad Engine Backend, Anti-Fraud & Extension Popup** - Ad bundle distribution, dynamic selector updates, 4s dwell verification, tamper-proof impression logging, and extension popup UI.
 - [ ] **Phase 3: Anti-AI-Slop Marketing Web Platform** - Crisp, minimalist SaaS landing page, interactive chatbot preview mockup, 3-step "How It Works", earnings calculator, and privacy guarantee.
 - [ ] **Phase 4: Advertiser Campaign Portal & User Cashout Dashboard** - Self-serve campaign builder with live ad previewer, Stripe balance top-up, and user dashboard with instant $2 cashouts (UPI/PayPal/Gift Cards).
@@ -25,9 +25,9 @@ Pathixo Rewards delivers an open-source Manifest V3 Chrome extension and fullsta
 **Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: WXT project scaffolding, manifest configuration, shared type contracts, and Shadow DOM card renderer.
-- [ ] 01-02: Modular site adapters for ChatGPT, Claude, and Gemini with capture-phase submit handling and SPA re-anchoring.
-- [ ] 01-03: Site adapters for Perplexity and DeepSeek, plus remote selector sync mechanism.
+- [x] 01-01: WXT project scaffolding, manifest configuration, shared type contracts, and Shadow DOM card renderer.
+- [x] 01-02: Modular site adapters for ChatGPT, Claude, and Gemini with capture-phase submit handling and SPA re-anchoring.
+- [x] 01-03: Site adapters for Perplexity and DeepSeek, plus remote selector sync mechanism.
 
 ---
 
@@ -86,7 +86,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Core Extension Architecture & Adapters | 0/3 | Not started | - |
+| 1. Core Extension Architecture & Adapters | 3/3 | Complete | 2026-11-21 |
 | 2. Ad Engine, Anti-Fraud & Extension Popup | 0/3 | Not started | - |
 | 3. Anti-AI-Slop Marketing Web Platform | 0/2 | Not started | - |
 | 4. Advertiser Portal & Cashout Dashboard | 0/2 | Not started | - |
