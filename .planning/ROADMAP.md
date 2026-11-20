@@ -1,8 +1,8 @@
-# Roadmap: PromptPay
+# Roadmap: Pathixo Rewards
 
 ## Overview
 
-PromptPay delivers an open-source Manifest V3 Chrome extension and fullstack web monetization platform that pays users cash while AI chatbots are thinking, funded by high-yield B2B sponsors and affiliate deals. The project moves from core extension injection and modular chatbot adapters (Phase 1) through backend ad delivery, fraud prevention, and popup UI (Phase 2), to the anti-AI-slop high-converting landing page (Phase 3), culminating in the self-serve advertiser campaign portal and $2 user cashout dashboard (Phase 4).
+Pathixo Rewards delivers an open-source Manifest V3 Chrome extension and fullstack web monetization platform that pays users cash while AI chatbots are thinking, funded by high-yield B2B sponsors and affiliate deals. The project moves from core extension injection and modular chatbot adapters (Phase 1) through backend ad delivery, fraud prevention, and popup UI (Phase 2), to the anti-AI-slop high-converting landing page (Phase 3), culminating in the self-serve advertiser campaign portal and $2 user cashout dashboard (Phase 4).
 
 ## Phases
 

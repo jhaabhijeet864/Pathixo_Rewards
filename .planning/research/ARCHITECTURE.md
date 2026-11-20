@@ -1,4 +1,4 @@
-# Research: Architecture Overview for PromptPay
+# Research: Architecture Overview for Pathixo Rewards
 
 **Domain:** Browser Extension Monetization & AI Inline Ad Network
 **Status:** Approved
@@ -22,7 +22,7 @@ flowchart TD
         EXT_POP <-->|Read / Write Settings & Balance| EXT_BG
     end
 
-    subgraph Backend["PromptPay Cloud Platform (Next.js 15 & PostgreSQL)"]
+    subgraph Backend["Pathixo Rewards Cloud Platform (Next.js 15 & PostgreSQL)"]
         API_AD["Ad Engine API (/api/ads/bundle)"]
         API_EVT["Verified Event Processor (/api/events/impression)"]
         API_CFG["Remote Selectors JSON (/api/config/selectors)"]
@@ -35,7 +35,7 @@ flowchart TD
         API_CFG --> DB
     end
 
-    subgraph WebApp["PromptPay Web Platform"]
+    subgraph WebApp["Pathixo Rewards Web Platform"]
         LANDING["Clean Landing Page (Anti-AI-Slop Minimalist UI)"]
         ADV_PORTAL["Advertiser Portal & Live Mockup Previewer (/advertise)"]
         USER_DASH["User Earnings & Cashout Dashboard (/dashboard)"]

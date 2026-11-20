@@ -1,4 +1,4 @@
-# Research: Features Specification for PromptPay
+# Research: Features Specification for Pathixo Rewards
 
 **Domain:** Browser Extension Monetization & AI Inline Ad Network
 **Status:** Approved
@@ -20,7 +20,7 @@
 - **Layout & Structure**:
   - Small sponsor icon / logo (20x20 rounded).
   - Clean sponsor link + crisp headline.
-  - "Sponsored • via PromptPay" micro-badge.
+  - "Sponsored • via Pathixo Rewards" micro-badge.
   - Subtle close button ("×") that dismisses the card and cancels impression logging for that turn.
 - **Strict Non-Blocking Placement**: Never covers the chatbot input area, never obscures streamed response tokens, and never breaks page navigation.
 

@@ -1,4 +1,4 @@
-# Requirements: PromptPay
+# Requirements: Pathixo Rewards
 
 **Defined:** 2026-11-21
 **Core Value:** Users earn real money with instant low-threshold cashouts ($2 floor) while AI generates, while advertisers reach laser-focused AI power users via non-intrusive, privacy-first inline cards that never read or harvest user chats.
@@ -19,7 +19,7 @@
 
 - [ ] **CARD-01**: Shadow DOM wrapper (`attachShadow({ mode: 'open' })`) isolating all card styles from host AI CSS.
 - [ ] **CARD-02**: Native DOM creation (`createElement` / `textContent`) with zero `innerHTML` usage to guarantee XSS immunity and pass Web Store security audits.
-- [ ] **CARD-03**: Visible "Sponsored • via PromptPay" attribution badge and sponsor logo/icon.
+- [ ] **CARD-03**: Visible "Sponsored • via Pathixo Rewards" attribution badge and sponsor logo/icon.
 - [ ] **CARD-04**: Dismiss ("×") button enabling the user to immediately hide the ad for that turn.
 - [ ] **CARD-05**: Strict non-blocking positioning ensuring chatbot prompts and streamed outputs are never obscured.
 

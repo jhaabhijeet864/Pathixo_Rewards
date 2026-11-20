@@ -1,4 +1,4 @@
-# Research: Technical Stack for PromptPay
+# Research: Technical Stack for Pathixo Rewards
 
 **Domain:** Browser Extension Monetization & AI Inline Ad Network
 **Target Environment:** Chrome Manifest V3 (Cross-browser: Chrome, Edge, Firefox), Modern Fullstack Web Platform

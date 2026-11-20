@@ -1,8 +1,8 @@
-# PromptPay (AdWait Platform)
+# Pathixo Rewards
 
 ## What This Is
 
-PromptPay is an open-source browser extension and two-sided advertising platform that pays users cash while AI chatbots (ChatGPT, Claude, Gemini, Perplexity, and DeepSeek) are generating responses. It turns dead waiting time into user earnings and high-attention B2B ad inventory, accompanied by a clean, minimalist web platform featuring a high-converting landing page, self-serve advertiser campaign portal with real-time live preview, user earnings dashboard with instant micro-cashouts ($2 minimum), and an open-source Manifest V3 extension.
+Pathixo Rewards is an open-source browser extension and two-sided advertising platform that pays users cash while AI chatbots (ChatGPT, Claude, Gemini, Perplexity, and DeepSeek) are generating responses. It turns dead waiting time into user earnings and high-attention B2B ad inventory, accompanied by a clean, minimalist web platform featuring a high-converting landing page, self-serve advertiser campaign portal with real-time live preview, user earnings dashboard with instant micro-cashouts ($2 minimum), and an open-source Manifest V3 extension.
 
 ## Core Value
 
@@ -19,7 +19,7 @@ Users earn real money with instant low-threshold cashouts ($2 floor) while AI ge
 - [ ] **EXT-01**: Manifest V3 browser extension built with WXT and TypeScript supporting Chrome, Edge, and Firefox.
 - [ ] **EXT-02**: Modular DOM content script adapters detecting prompt generation and streaming completion across ChatGPT, Claude, Gemini, Perplexity, and DeepSeek.
 - [ ] **EXT-03**: Remote selector configuration sync so AI DOM updates can be patched instantly without waiting for Chrome Web Store reviews.
-- [ ] **EXT-04**: Isolated Shadow DOM ad card container (`attachShadow({ mode: 'open' })`) that prevents style conflicts, ensures non-blocking placement, and features clear "Sponsored • via PromptPay" labeling and instant dismiss ("×") button.
+- [ ] **EXT-04**: Isolated Shadow DOM ad card container (`attachShadow({ mode: 'open' })`) that prevents style conflicts, ensures non-blocking placement, and features clear "Sponsored • via Pathixo Rewards" labeling and instant dismiss ("×") button.
 - [ ] **EXT-05**: Verification and anti-fraud dwell timer requiring `document.visibilityState === 'visible'` and 4-5 seconds active window time before issuing a verified impression event.
 - [ ] **EXT-06**: Clean browser extension popup displaying real-time earnings balance, status toggle (Pause/Resume), today's impression counter, referral link shortcut, and direct dashboard button.
 - [ ] **EXT-07**: Hybrid onboarding allowing instant anonymous usage via client-generated device ID, with optional 1-click Google/Email account linking to sync devices and request cashouts.
@@ -39,7 +39,7 @@ Users earn real money with instant low-threshold cashouts ($2 floor) while AI ge
 - Intrusive banner takeovers, video overlays, or unskippable popups — degrades chatbot usability and triggers instant store rejection.
 - Overly broad browser permissions (`<all_urls>`, `webRequest`, `cookies`, `tabs`) — will trigger Chrome Web Store rejection.
 - Cryptomining in the browser — malicious and universally banned.
-- High payout thresholds ($10+ / €10) with 30-day holds (Chatwait/Uwait flaw) — PromptPay's competitive moat is the instant $2 threshold.
+- High payout thresholds ($10+ / €10) with 30-day holds (Chatwait/Uwait flaw) — Pathixo Rewards' competitive moat is the instant $2 threshold.
 
 ## Context
 
@@ -47,7 +47,7 @@ Users earn real money with instant low-threshold cashouts ($2 floor) while AI ge
   - **Chatwait**: 70k+ users, but restricted to 3 chatbots, 50% split, and a high $10 payout floor through Whop with a 30-day holding period.
   - **uwait**: 8 chatbots, but closed source, reads cited domains (creating privacy hesitation), and enforces a €10 threshold via Stripe.
   - **AdWait**: Pre-launch, closed source, low-yield display ads ($0.0002/view requiring 25,000 queries to hit $5).
-- Direct B2B sponsorships and targeted SaaS affiliate offers allow PromptPay to monetize at $15–$30 CPM instead of $1–$2 display networks, funding the generous 60% user split and rapid $2 payout floor.
+- Direct B2B sponsorships and targeted SaaS affiliate offers allow Pathixo Rewards to monetize at $15–$30 CPM instead of $1–$2 display networks, funding the generous 60% user split and rapid $2 payout floor.
 - Strict adherence to Chrome Web Store Manifest V3 guidelines is required: zero remote executable code, pure JSON payloads, Shadow DOM injection, and explicit host permissions.
 - The marketing site must rigorously avoid "AI slop" (neon purple gradients, floating glowing blobs, Bento grid overload, internal developer jargon like "Shadow DOM" or "Supabase" on user-facing pages) and look like a premium, trustworthy SaaS product (Linear / Stripe / Minimalist aesthetic).
 
