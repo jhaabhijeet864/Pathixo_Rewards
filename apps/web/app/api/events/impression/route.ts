@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { ImpressionEvent } from '@pathixo/shared';
+import { campaignStore } from '../../../../lib/campaign-store';
 
 // In-memory ledger for fast demonstration & event auditing
 const verifiedImpressionsLedger: ImpressionEvent[] = [];
@@ -28,9 +29,17 @@ export async function POST(request: Request) {
         continue;
       }
 
-      // 3. Qualified impression
+      // 3. Qualified impression: record in ledger and deduct from campaign balance
       qualifiedEvents.push(evt);
       verifiedImpressionsLedger.push(evt);
+
+      // Record in campaignStore (updates campaign metrics, platform breakdown & deducts budget)
+      campaignStore.recordImpression({
+        adToken: evt.ad_token,
+        adId: evt.ad_id,
+        dwellMs: evt.dwell_ms,
+        platform: evt.ai_platform,
+      });
     }
 
     return NextResponse.json({

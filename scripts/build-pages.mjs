@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { existsSync, writeFileSync, mkdirSync, copyFileSync } from 'node:fs';
+import { existsSync, writeFileSync, mkdirSync, copyFileSync, rmSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
@@ -44,7 +44,14 @@ try {
     apiRenamed = true;
   }
 
-  // 2. Build web application with static export & GitHub Pages base path
+  // 2. Clean stale .next build cache to ensure pure static export
+  const NEXT_DIR = resolve(WEB_DIR, '.next');
+  if (existsSync(NEXT_DIR)) {
+    console.log('🧹 Cleaning stale .next cache...');
+    rmSync(NEXT_DIR, { recursive: true, force: true });
+  }
+
+  // 3. Build web application with static export & GitHub Pages base path
   console.log('⚡ Running Next.js static export build...');
   const isWindows = process.platform === 'win32';
   const pnpmCmd = isWindows ? 'pnpm.cmd' : 'pnpm';

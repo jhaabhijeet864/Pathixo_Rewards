@@ -74,6 +74,64 @@ export interface CashoutRequest {
   created_at: string;
 }
 
+export type Currency = 'USD' | 'INR';
+
+export const DEFAULT_USD_INR_RATE = 85.0;
+
+export interface PricingTier {
+  id: string;
+  name: string;
+  price_usd: number;
+  price_inr: number;
+  cpm_usd: number;
+  estimated_impressions: number;
+  popular?: boolean;
+}
+
+export const PRICING_TIERS: PricingTier[] = [
+  {
+    id: 'tier_micro',
+    name: 'Micro-Test',
+    price_usd: 5,
+    price_inr: 425,
+    cpm_usd: 20,
+    estimated_impressions: 250,
+  },
+  {
+    id: 'tier_starter',
+    name: 'Starter',
+    price_usd: 15,
+    price_inr: 1275,
+    cpm_usd: 20,
+    estimated_impressions: 750,
+  },
+  {
+    id: 'tier_growth',
+    name: 'Growth',
+    price_usd: 50,
+    price_inr: 4250,
+    cpm_usd: 20,
+    estimated_impressions: 2500,
+    popular: true,
+  },
+  {
+    id: 'tier_scale',
+    name: 'Scale',
+    price_usd: 150,
+    price_inr: 12750,
+    cpm_usd: 20,
+    estimated_impressions: 7500,
+  },
+];
+
+export interface CampaignMetrics {
+  total_impressions: number;
+  total_clicks: number;
+  spent_usd: number;
+  avg_dwell_ms: number;
+  platform_impressions: Record<SupportedPlatform, number>;
+}
+
 export interface AdCampaign {
   id: string;
   advertiser_email: string;
@@ -81,13 +139,16 @@ export interface AdCampaign {
   sponsor_name: string;
   target_url: string;
   icon_url?: string;
+  badge?: string;
+  currency?: Currency;
   cpm_rate_usd: number;
   budget_total_usd: number;
   budget_remaining_usd: number;
   target_platforms: SupportedPlatform[];
   target_countries?: string[];
-  status: 'active' | 'paused' | 'exhausted';
+  status: 'active' | 'paused' | 'exhausted' | 'pending_review';
   created_at: string;
+  metrics?: CampaignMetrics;
 }
 
 export interface ServiceHealth {

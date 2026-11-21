@@ -29,4 +29,28 @@ describe('API Route: /api/ads/bundle', () => {
     const json = await res.json();
     expect(json.device_id).toBe('anonymous');
   });
+
+  it('should include dynamically created active campaigns in the delivered ad bundle', async () => {
+    const { campaignStore } = await import('../../../apps/web/lib/campaign-store');
+    const created = campaignStore.createCampaign({
+      advertiser_email: 'new_sponsor@ai.com',
+      headline: 'Next-Gen Vector Database for LLMs',
+      sponsor_name: 'VectorMax',
+      target_url: 'https://vectormax.ai',
+      badge: 'Database',
+      budget_usd: 50.0,
+      cpm_rate_usd: 30.0,
+    });
+
+    const req = new Request('http://localhost:3000/api/ads/bundle');
+    const res = await GET(req);
+    const json = await res.json();
+
+    const found = json.ads.find((a: any) => a.id === created.id);
+    expect(found).toBeDefined();
+    expect(found.headline).toBe('Next-Gen Vector Database for LLMs');
+    expect(found.sponsor_name).toBe('VectorMax');
+    expect(found.target_cpm).toBe(30.0);
+    expect(found.ad_token).toBe(created.ad_token);
+  });
 });

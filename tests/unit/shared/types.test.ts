@@ -51,4 +51,22 @@ describe('Shared Package: Types and Domain Invariants', () => {
     expect(creative.target_cpm).toBe(25.0);
     expect(creative.ad_token).toBeDefined();
   });
+
+  it('should provide zero-debt pricing tiers and 1:85 USD-to-INR parity rate', async () => {
+    const { PRICING_TIERS, DEFAULT_USD_INR_RATE } = await import('@pathixo/shared');
+
+    expect(DEFAULT_USD_INR_RATE).toBe(85.0);
+    expect(PRICING_TIERS).toHaveLength(4);
+
+    const micro = PRICING_TIERS.find((t) => t.id === 'tier_micro');
+    expect(micro).toBeDefined();
+    expect(micro?.price_usd).toBe(5);
+    expect(micro?.price_inr).toBe(425);
+    expect(micro?.estimated_impressions).toBe(250);
+
+    const growth = PRICING_TIERS.find((t) => t.id === 'tier_growth');
+    expect(growth?.popular).toBe(true);
+    expect(growth?.price_usd).toBe(50);
+    expect(growth?.price_inr).toBe(4250);
+  });
 });

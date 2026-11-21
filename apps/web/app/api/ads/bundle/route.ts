@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { AdCreative } from '@pathixo/shared';
+import { campaignStore } from '../../../../lib/campaign-store';
 
 // High-yield AI sponsor & affiliate fallback inventory
-const INVENTORY: AdCreative[] = [
+const FALLBACK_INVENTORY: AdCreative[] = [
   {
     id: 'ad_b2b_cursor',
     headline: 'Build software 10x faster with Cursor — The AI code editor.',
@@ -53,10 +54,23 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const deviceId = searchParams.get('device_id') || 'anonymous';
 
+  // Get active paid campaigns from campaignStore
+  const activePaid = campaignStore.getActiveCreatives();
+
+  // Combine active paid campaigns with fallback inventory if needed
+  const combinedAds: AdCreative[] = [...activePaid];
+
+  // Append fallback ads that are not duplicates
+  for (const fallback of FALLBACK_INVENTORY) {
+    if (!combinedAds.some((ad) => ad.id === fallback.id || ad.ad_token === fallback.ad_token)) {
+      combinedAds.push(fallback);
+    }
+  }
+
   return NextResponse.json({
     status: 'ok',
     device_id: deviceId,
-    ads: INVENTORY,
+    ads: combinedAds,
     timestamp: Date.now(),
   });
 }

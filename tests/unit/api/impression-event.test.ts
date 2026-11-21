@@ -78,6 +78,36 @@ describe('API Route: /api/events/impression', () => {
     expect(json.disqualified[0].reason).toBe('Malformed payload');
   });
 
+  it('should deduct from campaign budget and update platform impressions upon qualified event', async () => {
+    const { campaignStore } = await import('../../../apps/web/lib/campaign-store');
+    const beforeCmp = campaignStore.getCampaign('cmp_demo_cursor');
+    const initialRemaining = beforeCmp?.budget_remaining_usd || 0;
+    const initialImpressions = beforeCmp?.metrics?.platform_impressions.gemini || 0;
+
+    const event: ImpressionEvent = {
+      event_id: 'evt_test_deduct_01',
+      ad_id: 'cmp_demo_cursor',
+      ad_token: 'tok_b2b_cursor_2026',
+      device_id: 'dev_test_gemini_01',
+      timestamp: Date.now(),
+      dwell_ms: 5200,
+      ai_platform: 'gemini',
+    };
+
+    const req = new Request('http://localhost:3000/api/events/impression', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ events: [event] }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+
+    const afterCmp = campaignStore.getCampaign('cmp_demo_cursor');
+    expect(afterCmp?.budget_remaining_usd).toBeLessThan(initialRemaining);
+    expect(afterCmp?.metrics?.platform_impressions.gemini).toBe(initialImpressions + 1);
+  });
+
   it('should return recent events via GET', async () => {
     const res = await GET();
     expect(res.status).toBe(200);
