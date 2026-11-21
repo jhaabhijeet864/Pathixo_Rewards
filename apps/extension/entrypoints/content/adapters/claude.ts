@@ -118,6 +118,11 @@ export class ClaudeAdapter implements PromptAdapter {
   }
 
   private recordSubmit(): void {
+    this.settling = false;
+    if (this.settleTimer) {
+      clearTimeout(this.settleTimer);
+      this.settleTimer = null;
+    }
     this.lastSubmitTime = Date.now();
     this.cb?.onSubmit();
   }

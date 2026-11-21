@@ -149,6 +149,7 @@ export class PathixoAdCard {
 
   constructor() {
     this.container = document.createElement('div');
+    this.container.id = 'pathixo-ad-host';
     this.container.setAttribute('data-pathixo-card-container', 'true');
     this.shadow = this.container.attachShadow({ mode: 'open' });
 

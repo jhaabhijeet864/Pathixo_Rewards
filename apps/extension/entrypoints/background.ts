@@ -17,6 +17,10 @@ interface RuntimeMessage {
   event?: ImpressionEvent;
 }
 
+const DASHBOARD_BASE = (typeof process !== 'undefined' && process.env?.PATHIXO_WEB_URL)
+  ? process.env.PATHIXO_WEB_URL
+  : 'http://localhost:3000';
+
 export default defineBackground(() => {
   console.log('[Pathixo Rewards] Service Worker activated.');
 
@@ -73,7 +77,7 @@ export default defineBackground(() => {
 
     if (msg.type === 'OPEN_DASHBOARD') {
       getDeviceId().then((deviceId) => {
-        const url = `http://localhost:3000/dashboard?device_id=${encodeURIComponent(deviceId)}`;
+        const url = `${DASHBOARD_BASE}/dashboard?device_id=${encodeURIComponent(deviceId)}`;
         browser.tabs.create({ url });
         sendResponse({ success: true });
       });

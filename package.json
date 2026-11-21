@@ -10,9 +10,21 @@
     "dev:web": "pnpm --filter @pathixo/web dev",
     "build:web": "pnpm --filter @pathixo/web build",
     "typecheck": "pnpm -r typecheck",
-    "lint": "pnpm -r lint"
+    "lint": "pnpm -r lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "verify:selectors": "node scripts/qa/verify-selectors.mjs",
+    "audit:store-compliance": "node scripts/qa/audit-store-compliance.mjs",
+    "simulate:antifraud": "node scripts/qa/simulate-antifraud.mjs",
+    "audit:financials": "node scripts/qa/audit-financials.mjs",
+    "simulate:stream": "node scripts/qa/simulate-stream.mjs",
+    "qa:all": "node scripts/qa/qa-all.mjs"
   },
   "devDependencies": {
-    "typescript": "^5.4.5"
+    "@vitest/coverage-v8": "^5.1.1",
+    "jsdom": "^31.0.1",
+    "typescript": "^5.4.5",
+    "vitest": "^5.1.1"
   }
 }

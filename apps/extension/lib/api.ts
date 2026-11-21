@@ -1,6 +1,8 @@
 import type { AdCreative, ImpressionEvent, RemoteSelectorConfig } from '@pathixo/shared';
 
-const API_BASE = 'http://localhost:3000/api';
+const API_BASE = (typeof process !== 'undefined' && process.env?.PATHIXO_API_URL)
+  ? process.env.PATHIXO_API_URL
+  : 'http://localhost:3000/api';
 
 export async function fetchAdBundle(deviceId: string): Promise<AdCreative[]> {
   try {

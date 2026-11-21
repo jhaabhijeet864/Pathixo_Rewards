@@ -38,11 +38,27 @@ const FALLBACK_ADS: AdCreative[] = [
     is_house_ad: true,
     ad_token: 'tok_house_notion_003',
   },
+  {
+    id: 'ad_fallback_v0',
+    headline: 'Generate production UI components with v0 by Vercel in seconds.',
+    sponsor_name: 'Vercel v0',
+    url: 'https://v0.dev/?ref=pathixo',
+    badge: 'Developer Tool',
+    is_house_ad: true,
+    ad_token: 'tok_house_v0_004',
+  },
 ];
 
-function selectAd(): AdCreative {
-  const index = Math.floor(Math.random() * FALLBACK_ADS.length);
-  return FALLBACK_ADS[index];
+async function getAvailableAds(): Promise<AdCreative[]> {
+  try {
+    const data = await browser.storage.local.get('cached_ads');
+    if (Array.isArray(data.cached_ads) && data.cached_ads.length > 0) {
+      return data.cached_ads as AdCreative[];
+    }
+  } catch {
+    // Fallback if local storage unavailable
+  }
+  return FALLBACK_ADS;
 }
 
 function resolvePlatform(hostname: string): { adapter: PromptAdapter; platform: SupportedPlatform } | null {
@@ -75,6 +91,7 @@ export default defineContentScript({
     let cardStartTime = 0;
     let isTabFocusedDuringWait = true;
     let dismissedThisTurn = false;
+    let registeredDeviceId = 'dev_guest';
 
     // Track tab visibility during active wait
     const handleVisibilityChange = () => {
@@ -97,15 +114,23 @@ export default defineContentScript({
       async onAnchorReady(anchor: HTMLElement) {
         if (dismissedThisTurn) return;
 
-        // Verify if user paused sponsored cards in extension settings
+        // Verify if user paused sponsored cards in extension settings and get device ID
         try {
-          const state = (await browser.runtime.sendMessage({ type: 'GET_STATE' })) as { enabled?: boolean } | undefined;
+          const state = (await browser.runtime.sendMessage({ type: 'GET_STATE' })) as {
+            deviceId?: string;
+            enabled?: boolean;
+          } | undefined;
+
+          if (state?.deviceId) {
+            registeredDeviceId = state.deviceId;
+          }
+
           if (state && state.enabled === false) {
             console.debug('[Pathixo Rewards] Ads currently paused by user toggle.');
             return;
           }
         } catch {
-          // If background worker busy, proceed
+          // If background worker busy, proceed with defaults
         }
 
         if (adapter.hostAdVisible()) {
@@ -116,7 +141,9 @@ export default defineContentScript({
         activeCard = new PathixoAdCard();
         activeCard.mount(anchor);
         cardStartTime = Date.now();
-        currentAd = selectAd();
+
+        const ads = await getAvailableAds();
+        currentAd = ads[Math.floor(Math.random() * ads.length)];
 
         activeCard.render(currentAd, {
           onDismiss() {
@@ -150,7 +177,7 @@ export default defineContentScript({
             event_id: `evt_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`,
             ad_id: currentAd.id,
             ad_token: currentAd.ad_token,
-            device_id: 'anonymous',
+            device_id: registeredDeviceId,
             timestamp: Date.now(),
             dwell_ms: elapsedMs,
             ai_platform: platform,

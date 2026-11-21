@@ -89,3 +89,32 @@ export interface AdCampaign {
   status: 'active' | 'paused' | 'exhausted';
   created_at: string;
 }
+
+export interface ServiceHealth {
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  message?: string;
+  details?: Record<string, unknown>;
+}
+
+export interface HealthCheckResponse {
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  timestamp: string;
+  uptime_seconds: number;
+  version: string;
+  environment: string;
+  services: {
+    selectors: ServiceHealth;
+    ad_inventory: ServiceHealth;
+    payout_engine: ServiceHealth;
+    anti_fraud: ServiceHealth;
+  };
+  system?: {
+    node_version: string;
+    platform: string;
+    memory_mb: {
+      rss: number;
+      heap_used: number;
+      heap_total: number;
+    };
+  };
+}
