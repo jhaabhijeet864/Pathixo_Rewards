@@ -1,39 +1,29 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
-import { ShieldCheck, Zap, Minus, Plus, ExternalLink, Clock, Lock } from 'lucide-react';
+import { ShieldCheck, Zap, Minus, Plus, Clock, ArrowRight } from 'lucide-react';
 import { DEFAULT_USD_INR_RATE } from '@pathixo/shared';
 
-// Directive-compliant reference matrix presets
 const PRESETS = [
-  { label: 'Casual', value: 5, note: '5/day' },
-  { label: 'Light', value: 10, note: '10/day' },
-  { label: 'Average Developer', value: 25, note: '25/day' },
-  { label: 'Heavy', value: 50, note: '50/day' },
-  { label: 'Power User / Coder', value: 100, note: '100/day' },
+  { label: 'Casual', value: 5 },
+  { label: 'Light', value: 10 },
+  { label: 'Regular', value: 25 },
+  { label: 'Heavy', value: 50 },
+  { label: 'Power', value: 100 },
 ];
 
-// Official Ads Division specs
-const BLENDED_CPM_USD = 20.0;
-const USER_SPLIT_PERCENT = 60; // 60% user / 40% platform
-const USER_CREDIT_PER_PROMPT_USD = 0.012; // Exactly $0.0120 USD (₹1.02 INR)
+const USER_CREDIT_PER_PROMPT_USD = 0.012; // $0.0120 USD (60% split on $20 CPM)
 const CASHOUT_FLOOR_USD = 2.0;
 
 export function EarningsCalculator() {
   const [dailyPrompts, setDailyPrompts] = useState<number>(25);
   const [currency, setCurrency] = useState<'USD' | 'INR'>('USD');
 
-  // Official Earning Prediction Formula (Prompts/Day)
-  // monthlyEarnings = (dailyPrompts * 30) * 0.012
-  // daysToCashout = Math.ceil(2.0 / (dailyPrompts * 0.012))
   const monthlyPrompts = dailyPrompts * 30;
   const monthlyEarningsUsd = monthlyPrompts * USER_CREDIT_PER_PROMPT_USD;
   const dailyEarningsUsd = dailyPrompts * USER_CREDIT_PER_PROMPT_USD;
-  const annualEarningsUsd = monthlyEarningsUsd * 12;
   const daysToFirstCashout = Math.max(1, Math.ceil(CASHOUT_FLOOR_USD / (dailyEarningsUsd || 0.001)));
 
-  // Currency Parity: $1.00 USD = ₹85.00 INR standard parity
   const inrRate = DEFAULT_USD_INR_RATE || 85.0;
 
   const formatMoney = (usdVal: number) => {
@@ -50,53 +40,42 @@ export function EarningsCalculator() {
   };
 
   return (
-    <div className="w-full max-w-5xl lg:max-w-6xl xl:max-w-7xl rounded-3xl border border-[#162534] bg-[#0c1219] p-6 sm:p-10 lg:p-14 shadow-2xl">
-      <div className="grid gap-10 lg:gap-14 lg:grid-cols-12 items-start">
+    <div className="w-full max-w-5xl mx-auto rounded-3xl border border-slate-800/80 bg-[#0a0f18] p-6 sm:p-10 lg:p-12 shadow-2xl">
+      <div className="grid gap-8 lg:gap-12 lg:grid-cols-12 items-center">
         {/* Left Column: Interactive Controls */}
         <div className="lg:col-span-7 space-y-6">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-[#072f20] px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-[#10e599]">
-              <Zap className="h-4 w-4" />
-              Transparent 60 / 40 Split • $20.00 Standard Blended CPM
+            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3.5 py-1 text-xs font-semibold text-emerald-400">
+              <Zap className="h-3.5 w-3.5" />
+              <span>Transparent 60% User Split • Instant $2.00 Floor</span>
             </div>
-            <h3 className="mt-4 text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+            <h3 className="mt-3.5 text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white">
               Estimate your monthly payout
             </h3>
-            <p className="mt-2.5 text-sm sm:text-base text-slate-400 leading-relaxed">
-              Passive coffee cash ($5 – $35/mo) earned during your everyday AI coding workflow. Keep an industry-highest 60% of verified ad revenue.
+            <p className="mt-2 text-sm text-slate-400 leading-relaxed">
+              Earn real cash during everyday AI generation wait time. 60% of all ad revenue goes directly to your balance.
             </p>
           </div>
 
           {/* Slider & Controls Card */}
-          <div className="space-y-5 rounded-2xl border border-[#1b2b3c] bg-[#0f1722] p-5 sm:p-7 shadow-sm">
-            {/* Header + Number Input */}
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <span className="text-sm sm:text-base font-semibold text-slate-200">
-                Daily AI prompts sent:
-              </span>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  min="1"
-                  max="150"
-                  value={dailyPrompts}
-                  onChange={(e) => handleSliderChange(Number(e.target.value))}
-                  className="w-16 rounded-lg border border-[#233547] bg-[#141f2d] px-2 py-1 text-center font-mono text-base font-bold text-[#10e599] outline-none focus:border-[#10e599]"
-                />
-                <span className="text-sm font-bold text-slate-300">prompts / day</span>
+          <div className="space-y-4 rounded-2xl border border-slate-800 bg-[#0e1624] p-5 sm:p-6">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-slate-200">Daily prompts sent</span>
+              <div className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/80 px-2.5 py-1 font-mono text-sm font-bold text-emerald-400">
+                <span>{dailyPrompts}</span>
+                <span className="text-xs text-slate-400 font-sans font-normal">/ day</span>
               </div>
             </div>
 
-            {/* Slider with [-] and [+] Stepper Buttons */}
+            {/* Stepper + Slider */}
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => handleSliderChange(dailyPrompts - 5)}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#233547] bg-[#141f2d] text-slate-300 transition hover:bg-[#1a293b] hover:text-white active:scale-95"
-                title="Decrease 5 prompts"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-slate-300 transition hover:bg-slate-700 hover:text-white active:scale-95 cursor-pointer"
                 aria-label="Decrease prompts"
               >
-                <Minus className="h-4 w-4" />
+                <Minus className="h-3.5 w-3.5" />
               </button>
 
               <div className="relative flex-1 flex items-center">
@@ -107,8 +86,7 @@ export function EarningsCalculator() {
                   step="1"
                   value={dailyPrompts}
                   onChange={(e) => handleSliderChange(Number(e.target.value))}
-                  onInput={(e) => handleSliderChange(Number(e.currentTarget.value))}
-                  className="earnings-slider w-full"
+                  className="earnings-slider w-full cursor-pointer accent-emerald-500"
                   aria-label="Daily AI Prompts Slider"
                 />
               </div>
@@ -116,16 +94,15 @@ export function EarningsCalculator() {
               <button
                 type="button"
                 onClick={() => handleSliderChange(dailyPrompts + 5)}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#233547] bg-[#141f2d] text-slate-300 transition hover:bg-[#1a293b] hover:text-white active:scale-95"
-                title="Increase 5 prompts"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-slate-300 transition hover:bg-slate-700 hover:text-white active:scale-95 cursor-pointer"
                 aria-label="Increase prompts"
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="h-3.5 w-3.5" />
               </button>
             </div>
 
-            {/* Clickable Presets matching Official Reference Matrix */}
-            <div className="flex flex-wrap items-center justify-between gap-1.5 pt-1">
+            {/* Clean 5-col presets */}
+            <div className="grid grid-cols-5 gap-1.5 pt-1">
               {PRESETS.map((p) => {
                 const isActive = dailyPrompts === p.value;
                 return (
@@ -133,131 +110,106 @@ export function EarningsCalculator() {
                     key={p.value}
                     type="button"
                     onClick={() => handleSliderChange(p.value)}
-                    className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-all ${
+                    className={`rounded-lg py-1.5 text-xs font-medium transition cursor-pointer text-center ${
                       isActive
-                        ? 'bg-[#10e599] text-[#05281a] shadow-sm font-bold scale-105'
-                        : 'bg-[#141f2d] text-slate-400 hover:bg-[#1b2b3d] hover:text-slate-200 border border-[#213244]'
+                        ? 'bg-emerald-500 text-slate-950 font-bold shadow-xs'
+                        : 'bg-slate-800/80 text-slate-400 hover:bg-slate-700 hover:text-white border border-slate-700/60'
                     }`}
                   >
-                    {p.label} ({p.note})
+                    {p.value}/d
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Strict Verification & Privacy Callouts */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm">
-            <div className="rounded-2xl border border-[#1b2b3c] bg-[#0f1722] p-4 space-y-1">
-              <div className="flex items-center gap-2 text-white font-bold">
-                <ShieldCheck className="h-4 w-4 text-[#10e599] shrink-0" />
-                <span>Instant $2.00 Floor (₹170)</span>
+          {/* Simple Feature Callouts */}
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div className="rounded-xl border border-slate-800/70 bg-[#0e1624]/60 p-3 flex items-start gap-2.5">
+              <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+              <div>
+                <strong className="text-white block font-semibold">$2.00 Instant Floor</strong>
+                <span className="text-slate-400 text-[11px]">Withdraw via UPI (India) or PayPal globally.</span>
               </div>
-              <p className="text-slate-400 leading-relaxed text-xs">
-                Withdraw anytime via instant UPI in India or PayPal globally with no 30-day holds.
-              </p>
             </div>
 
-            <div className="rounded-2xl border border-[#1b2b3c] bg-[#0f1722] p-4 space-y-1">
-              <div className="flex items-center gap-2 text-white font-bold">
-                <Clock className="h-4 w-4 text-[#10e599] shrink-0" />
-                <span>4-Second Dwell Verification</span>
+            <div className="rounded-xl border border-slate-800/70 bg-[#0e1624]/60 p-3 flex items-start gap-2.5">
+              <Clock className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+              <div>
+                <strong className="text-white block font-semibold">4s Active Dwell</strong>
+                <span className="text-slate-400 text-[11px]">Zero prompt reading. Tab must be active.</span>
               </div>
-              <p className="text-slate-400 leading-relaxed text-xs">
-                Qualified views require continuous active dwell while AI generates. Zero prompt reading.
-              </p>
             </div>
           </div>
         </div>
 
-        {/* Right Column: Dynamic Earning Output Card */}
-        <div className="lg:col-span-5 rounded-3xl border border-emerald-500/30 bg-gradient-to-b from-[#111e2b] to-[#0c141e] p-6 sm:p-10 text-center shadow-2xl relative overflow-hidden">
-          {/* Subtle Ambient Glow */}
-          <div className="pointer-events-none absolute -top-12 -right-12 h-44 w-44 rounded-full bg-emerald-500/10 blur-3xl" />
+        {/* Right Column: Clean & Direct Payout Card */}
+        <div className="lg:col-span-5 rounded-2xl border border-emerald-500/30 bg-gradient-to-b from-[#0f1d2c] to-[#0a121c] p-6 sm:p-8 text-center shadow-xl relative overflow-hidden">
+          {/* Subtle glow */}
+          <div className="pointer-events-none absolute -top-10 -right-10 h-36 w-36 rounded-full bg-emerald-500/10 blur-2xl" />
 
-          {/* Currency Toggle */}
-          <div className="flex items-center justify-between gap-2 border-b border-slate-800 pb-4 mb-6">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              Estimated Monthly Earnings
+          {/* Currency Switcher */}
+          <div className="flex items-center justify-between pb-4 border-b border-slate-800/80">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Estimated Payout
             </span>
-            <div className="flex items-center rounded-lg border border-[#223547] bg-[#141f2d] p-0.5 text-xs font-bold">
+            <div className="inline-flex rounded-lg border border-slate-700 bg-slate-900/90 p-0.5 text-xs font-medium">
               <button
                 type="button"
                 onClick={() => setCurrency('USD')}
-                className={`rounded px-2.5 py-0.5 transition ${
-                  currency === 'USD' ? 'bg-[#10e599] text-[#05281a]' : 'text-slate-400 hover:text-white'
+                className={`rounded-md px-2.5 py-1 transition cursor-pointer ${
+                  currency === 'USD' ? 'bg-emerald-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
                 }`}
               >
-                $ USD
+                USD ($)
               </button>
               <button
                 type="button"
                 onClick={() => setCurrency('INR')}
-                className={`rounded px-2.5 py-0.5 transition ${
-                  currency === 'INR' ? 'bg-[#10e599] text-[#05281a]' : 'text-slate-400 hover:text-white'
+                className={`rounded-md px-2.5 py-1 transition cursor-pointer ${
+                  currency === 'INR' ? 'bg-emerald-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
                 }`}
               >
-                ₹ INR
+                INR (₹)
               </button>
             </div>
           </div>
 
-          {/* Primary Calculated Earnings Amount */}
-          <div className="mt-2 text-5xl sm:text-6xl font-black tracking-tight text-white font-mono">
-            {formatMoney(monthlyEarningsUsd)}
-          </div>
-          <span className="mt-2 block text-xs sm:text-sm font-medium text-slate-400">
-            per month in passive cash
-          </span>
-
-          {/* Official Reference Metrics Table */}
-          <div className="mt-6 border-t border-slate-800/80 pt-5 space-y-3 text-xs sm:text-sm text-slate-300 text-left">
-            <div className="flex justify-between py-0.5 border-b border-slate-800/40 pb-2">
-              <span className="text-slate-400">Monthly Prompts:</span>
-              <span className="font-mono font-bold text-white">{monthlyPrompts.toLocaleString()} prompts</span>
+          {/* Big Amount */}
+          <div className="py-6">
+            <div className="text-5xl sm:text-6xl font-black tracking-tight text-white font-mono">
+              {formatMoney(monthlyEarningsUsd)}
             </div>
-            <div className="flex justify-between py-0.5 border-b border-slate-800/40 pb-2">
-              <span className="text-slate-400">Daily Average:</span>
-              <span className="font-mono font-bold text-[#10e599]">+{formatMoney(dailyEarningsUsd)} / day</span>
-            </div>
-            <div className="flex justify-between py-0.5 border-b border-slate-800/40 pb-2">
-              <span className="text-slate-400">Your Share:</span>
-              <span className="font-bold text-white">60% (${USER_CREDIT_PER_PROMPT_USD.toFixed(4)} / prompt)</span>
-            </div>
-            <div className="flex justify-between py-0.5 border-b border-slate-800/40 pb-2">
-              <span className="text-slate-400">Minimum Payout:</span>
-              <span className="font-bold text-white">{formatMoney(CASHOUT_FLOOR_USD)} floor (vs Chatwait $10, uwait €10)</span>
-            </div>
-            <div className="flex justify-between py-0.5">
-              <span className="text-slate-400">Time to First Cashout:</span>
-              <span className="font-bold text-[#10e599]">~{daysToFirstCashout} days</span>
+            <div className="mt-1 text-sm font-medium text-emerald-400">
+              per month in passive cash
             </div>
           </div>
 
-          {/* Direct Advertiser Link */}
-          <div className="mt-6 rounded-xl border border-[#1b2b3c] bg-[#0c141e] p-3 text-left">
-            <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              <span>Advertiser Zero-Debt Plans</span>
-              <Link
-                href="/advertise"
-                className="text-[#10e599] hover:underline flex items-center gap-1 font-semibold normal-case"
-              >
-                Campaigns <ExternalLink className="h-2.5 w-2.5" />
-              </Link>
+          {/* 3 Clean Spaced Metrics */}
+          <div className="rounded-xl border border-slate-800/80 bg-slate-900/60 p-3.5 space-y-2 text-xs text-left">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400">Daily average</span>
+              <span className="font-mono font-bold text-emerald-400">+{formatMoney(dailyEarningsUsd)} / day</span>
             </div>
-            <p className="mt-1 text-xs text-slate-400">
-              Prepaid self-serve tiers: $5 (Micro-Test), $15 (Starter), $50 (Growth), and $150 (Scale).
-            </p>
+            <div className="flex items-center justify-between border-t border-slate-800/60 pt-2">
+              <span className="text-slate-400">Minimum cashout</span>
+              <span className="font-semibold text-white">{formatMoney(CASHOUT_FLOOR_USD)} instant floor</span>
+            </div>
+            <div className="flex items-center justify-between border-t border-slate-800/60 pt-2">
+              <span className="text-slate-400">First payout in</span>
+              <span className="font-semibold text-white">~{daysToFirstCashout} days</span>
+            </div>
           </div>
 
-          {/* CTA Action */}
+          {/* Direct CTA */}
           <a
             href="https://github.com/jhaabhijeet864/Pathixo_Rewards"
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-[#10b981] py-3.5 text-sm sm:text-base font-bold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-[#0ea371] hover:-translate-y-0.5"
+            className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 py-3.5 text-sm sm:text-base font-bold text-slate-950 shadow-lg shadow-emerald-500/20 transition hover:-translate-y-0.5 cursor-pointer"
           >
-            Start Earning Now — Free
+            <span>Start Earning Now — Free</span>
+            <ArrowRight className="h-4 w-4" />
           </a>
         </div>
       </div>
