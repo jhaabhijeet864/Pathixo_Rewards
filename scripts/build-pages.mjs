@@ -65,9 +65,20 @@ try {
 
   console.log('\n🎉 [Pathixo Rewards] Static export build complete in apps/web/out/!\n');
 } finally {
-  // Always restore API directory
+  // Always restore API directory with retry for Windows file lock release
   if (apiRenamed && existsSync(TEMP_API_DIR)) {
-    renameSync(TEMP_API_DIR, API_DIR);
-    console.log('✔ Restored apps/web/app/api');
+    for (let attempt = 1; attempt <= 5; attempt++) {
+      try {
+        renameSync(TEMP_API_DIR, API_DIR);
+        console.log('✔ Restored apps/web/app/api');
+        break;
+      } catch (err) {
+        if (attempt === 5) {
+          console.error('⚠ Failed to restore API directory:', err);
+        } else {
+          spawnSync('node', ['-e', 'Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 500)']);
+        }
+      }
+    }
   }
 }
