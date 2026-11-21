@@ -4,114 +4,82 @@ import { Footer } from '@/components/Footer';
 import { HeroChatMockup } from '@/components/HeroChatMockup';
 import { EarningsCalculator } from '@/components/EarningsCalculator';
 import { FaqSection } from '@/components/FaqSection';
-import {
-  Download,
-  ShieldCheck,
-  Zap,
-  ArrowRight,
-  Lock,
-  Layers,
-  Sparkles,
-  CheckCircle2,
-  ExternalLink,
-  DollarSign,
-  Cpu,
-} from 'lucide-react';
+import { Download, ShieldCheck, Cpu, ArrowRight, Zap, CheckCircle2, Lock } from 'lucide-react';
 
 export default function HomePage() {
   return (
-    <div className="flex min-h-screen flex-col bg-[#090d16] text-slate-100 selection:bg-indigo-500/30 selection:text-white">
+    <div className="flex min-h-screen flex-col bg-white">
       <Navbar />
 
-      <main className="flex-1 w-full">
+      <main className="flex-1">
         {/* HERO SECTION */}
-        <section className="relative overflow-hidden pt-12 pb-20 sm:pt-20 sm:pb-28">
-          {/* Subtle Ambient Background Gradients */}
-          <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[500px] w-[800px] rounded-full bg-gradient-to-tr from-cyan-600/15 via-indigo-600/20 to-purple-600/10 blur-[130px]" />
-          
-          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-            
-            {/* Top Value Pill */}
-            <div className="inline-flex items-center gap-2.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-1.5 text-xs font-mono font-semibold text-cyan-300 shadow-glow backdrop-blur-md">
-              <span className="flex h-2 w-2 rounded-full bg-cyan-400 animate-pulse"></span>
-              <span>60% Revenue Share • $2.00 Instant Cashout • Open Source MV3</span>
+        <section className="relative overflow-hidden pt-16 pb-20 sm:pt-24 sm:pb-28">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 text-center">
+            {/* Pill tag */}
+            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-sm">
+              <span className="flex h-2 w-2 rounded-full bg-emerald-500"></span>
+              Open Source • Free Forever • 60% Revenue Share
             </div>
 
-            {/* Main Headline */}
-            <h1 className="mt-7 text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.08] max-w-5xl mx-auto">
-              Turn AI wait time into{' '}
-              <span className="bg-gradient-to-r from-cyan-400 via-indigo-400 to-emerald-400 bg-clip-text text-transparent">
-                instant passive cash.
-              </span>
+            {/* Main H1 Headline */}
+            <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-6xl sm:leading-[1.1]">
+              Get paid while AI thinks.
             </h1>
 
-            {/* Subheadline */}
-            <p className="mx-auto mt-6 max-w-3xl text-base sm:text-lg lg:text-xl text-slate-300 leading-relaxed">
-              Earn real dollars while ChatGPT, Claude, Gemini, Perplexity, or DeepSeek are thinking. See one elegant, non-intrusive card, keep 60% of verified ad revenue, and cash out immediately at just $2.
+            {/* Plain English Subheadline */}
+            <p className="mx-auto mt-5 max-w-3xl text-base text-slate-600 sm:text-lg sm:leading-relaxed">
+              See one non-intrusive sponsored card while ChatGPT, Claude, Gemini, Perplexity, or DeepSeek generates your answer. Keep 60% of the ad revenue with instant cashouts starting at just $2.
             </p>
 
-            {/* Action Buttons */}
-            <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-4">
+            {/* Primary Action Button */}
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <a
                 href="https://github.com/jhaabhijeet864/Pathixo_Rewards"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative inline-flex items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-indigo-700 px-7 py-4 text-base font-bold text-white shadow-glow transition-all hover:opacity-95 hover:shadow-glow-indigo hover:scale-[1.01]"
+                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3.5 text-base font-semibold text-white shadow-md shadow-emerald-600/20 transition-all hover:bg-emerald-700 hover:shadow-lg"
               >
                 <Download className="h-5 w-5" />
-                <span>Add to Chrome — Free Extension</span>
-                <span className="rounded-md bg-white/20 px-2 py-0.5 text-xs uppercase font-extrabold text-white">
-                  v0.1.0
-                </span>
+                Add to Chrome — It&apos;s Free
               </a>
-
               <Link
                 href="#how-it-works"
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/[0.12] bg-white/[0.04] px-6 py-4 text-base font-semibold text-slate-200 backdrop-blur-sm transition hover:bg-white/[0.08] hover:text-white hover:border-white/[0.2]"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               >
-                <span>See How It Works</span>
+                See how it works
                 <ArrowRight className="h-4 w-4 text-slate-400" />
               </Link>
             </div>
 
-            {/* Trust Assurances Under CTAs */}
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-6 text-xs font-mono text-slate-400">
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> Zero Account Required to Start
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5 text-cyan-400" /> Never Reads Prompt Content
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5 text-indigo-400" /> Instant UPI / PayPal at $2
-              </span>
-            </div>
+            <p className="mt-3 text-xs text-slate-400">
+              No credit card required • Zero chat tracking • Payouts from $2
+            </p>
 
-            {/* Interactive Multi-Model Studio Mockup */}
-            <div className="mt-14 flex justify-center w-full">
+            {/* Interactive Browser Mockup */}
+            <div className="mt-14 flex justify-center">
               <HeroChatMockup />
             </div>
 
-            {/* Supported Models Bar */}
-            <div className="mt-16 border-t border-white/[0.08] pt-10">
-              <p className="text-xs font-mono font-semibold uppercase tracking-wider text-slate-400">
-                Native DOM Adapters for the Top 5 AI Reasoning Engines
+            {/* Supported AI Models Strip */}
+            <div className="mt-16 border-t border-slate-100 pt-10">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                Works seamlessly across your favorite AI platforms
               </p>
-              <div className="mt-6 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs sm:text-sm font-bold text-slate-300">
-                <span className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3.5 py-2 hover:border-white/[0.15] transition">
-                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-400"></span> ChatGPT o3-mini &amp; 4o
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-8 text-sm font-bold text-slate-600">
+                <span className="flex items-center gap-2 hover:text-slate-900 transition">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500"></span> ChatGPT
                 </span>
-                <span className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3.5 py-2 hover:border-white/[0.15] transition">
-                  <span className="h-2.5 w-2.5 rounded-full bg-orange-400"></span> Claude 3.7 Sonnet
+                <span className="flex items-center gap-2 hover:text-slate-900 transition">
+                  <span className="h-2 w-2 rounded-full bg-orange-500"></span> Claude
                 </span>
-                <span className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3.5 py-2 hover:border-white/[0.15] transition">
-                  <span className="h-2.5 w-2.5 rounded-full bg-blue-400"></span> DeepSeek R1 Reasoner
+                <span className="flex items-center gap-2 hover:text-slate-900 transition">
+                  <span className="h-2 w-2 rounded-full bg-blue-500"></span> Google Gemini
                 </span>
-                <span className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3.5 py-2 hover:border-white/[0.15] transition">
-                  <span className="h-2.5 w-2.5 rounded-full bg-purple-400"></span> Google Gemini 2.0
+                <span className="flex items-center gap-2 hover:text-slate-900 transition">
+                  <span className="h-2 w-2 rounded-full bg-teal-500"></span> Perplexity
                 </span>
-                <span className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3.5 py-2 hover:border-white/[0.15] transition">
-                  <span className="h-2.5 w-2.5 rounded-full bg-teal-400"></span> Perplexity Pro
+                <span className="flex items-center gap-2 hover:text-slate-900 transition">
+                  <span className="h-2 w-2 rounded-full bg-indigo-500"></span> DeepSeek
                 </span>
               </div>
             </div>
@@ -119,183 +87,141 @@ export default function HomePage() {
         </section>
 
         {/* 3-STEP "HOW IT WORKS" */}
-        <section id="how-it-works" className="relative border-t border-white/[0.08] bg-[#0c111e] py-24 sm:py-32">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-3xl mx-auto space-y-3">
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-cyan-400">
-                Frictionless Workflow
-              </span>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">
+        <section id="how-it-works" className="border-t border-slate-100 bg-slate-50/60 py-20 sm:py-24">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">Simple &amp; Frictionless</span>
+              <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
                 How Pathixo Rewards works
               </h2>
-              <p className="text-base text-slate-400">
-                You already spend hundreds of seconds each day waiting for AI models to draft code and essays. Pathixo monetizes that idle dead time automatically.
+              <p className="mx-auto mt-3 max-w-xl text-sm text-slate-600">
+                Turn the seconds you already spend waiting for AI answers into passive dollars.
               </p>
             </div>
 
-            {/* 3 Steps Grid */}
-            <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="mt-14 sm:mt-16 grid gap-6 sm:gap-8 sm:grid-cols-3">
               {/* Step 1 */}
-              <div className="relative rounded-2xl border border-white/[0.08] bg-[#111728] p-8 space-y-5 transition-all hover:border-cyan-500/30 hover:shadow-glow">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 font-mono font-black text-lg">
-                  01
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-7 text-left shadow-sm">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 font-extrabold text-lg">
+                  1
                 </div>
-                <h3 className="text-xl font-bold text-white">Install in 10 seconds</h3>
-                <p className="text-sm text-slate-400 leading-relaxed">
-                  Add the lightweight Chrome extension. No passwords, credit cards, or accounts needed. Your browser is instantly assigned a private local device token.
+                <h3 className="mt-5 text-lg font-bold text-slate-900">Install in 10 seconds</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                  Add the extension to Chrome, Edge, or Brave. An anonymous device ID is assigned immediately with no forced signup.
                 </p>
-                <div className="text-xs font-mono text-cyan-400 pt-2 flex items-center gap-1.5">
-                  <CheckCircle2 className="h-3.5 w-3.5" /> Manifest V3 Compliant
-                </div>
               </div>
 
               {/* Step 2 */}
-              <div className="relative rounded-2xl border border-white/[0.08] bg-[#111728] p-8 space-y-5 transition-all hover:border-indigo-500/30 hover:shadow-glow-indigo">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-mono font-black text-lg">
-                  02
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-7 text-left shadow-sm">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 font-extrabold text-lg">
+                  2
                 </div>
-                <h3 className="text-xl font-bold text-white">Prompt normally</h3>
-                <p className="text-sm text-slate-400 leading-relaxed">
-                  Ask questions on ChatGPT, Claude, DeepSeek, Gemini, or Perplexity. During the generation wait time, a clean sponsored card appears below your prompt without covering any text.
+                <h3 className="mt-5 text-lg font-bold text-slate-900">Prompt as usual</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                  When your model is thinking, a single labeled sponsored card appears in empty screen space. It disappears once streaming finishes.
                 </p>
-                <div className="text-xs font-mono text-indigo-400 pt-2 flex items-center gap-1.5">
-                  <CheckCircle2 className="h-3.5 w-3.5" /> 4s Dwell Verified
-                </div>
               </div>
 
               {/* Step 3 */}
-              <div className="relative rounded-2xl border border-white/[0.08] bg-[#111728] p-8 space-y-5 transition-all hover:border-emerald-500/30 hover:shadow-glow-emerald">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono font-black text-lg">
-                  03
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-7 text-left shadow-sm">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 font-extrabold text-lg">
+                  3
                 </div>
-                <h3 className="text-xl font-bold text-white">Cash out at $2.00</h3>
-                <p className="text-sm text-slate-400 leading-relaxed">
-                  Keep 60% of ad revenue. As soon as your verified balance hits the low $2.00 threshold, withdraw immediately via UPI (India), PayPal (Global), or Digital Amazon Gift Cards.
+                <h3 className="mt-5 text-lg font-bold text-slate-900">Cash out at $2</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                  Withdraw your earnings via instant UPI (India), PayPal, or digital gift cards as soon as you hit $2. No 30-day holds.
                 </p>
-                <div className="text-xs font-mono text-emerald-400 pt-2 flex items-center gap-1.5">
-                  <CheckCircle2 className="h-3.5 w-3.5" /> Instant (Zero 30-Day Hold)
-                </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* DYNAMIC EARNINGS CALCULATOR & COMPETITOR MATRIX */}
-        <section id="calculator" className="relative border-t border-white/[0.08] bg-[#090d16] py-24 sm:py-32">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* EARNINGS CALCULATOR & SPLIT */}
+        <section id="calculator" className="py-20 sm:py-24">
+          <div className="mx-auto flex max-w-6xl flex-col items-center px-4 sm:px-6 lg:px-8">
             <EarningsCalculator />
           </div>
         </section>
 
-        {/* PRIVACY & SECURITY ARCHITECTURAL GUARANTEE */}
-        <section className="relative border-t border-white/[0.08] bg-[#0a0f1c] py-24 sm:py-32">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-3xl mx-auto space-y-3">
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-cyan-400">
-                Engineered For Trust
-              </span>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">
-                Architectural Zero-Data Harvesting
+        {/* PRIVACY & TRUST GUARANTEE */}
+        <section id="privacy" className="border-t border-slate-100 bg-slate-50/60 py-20 sm:py-24">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">Privacy First</span>
+              <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+                Built with zero-data harvesting
               </h2>
-              <p className="text-base text-slate-400">
-                You should never install a browser extension that reads your thoughts. Here is why Pathixo Rewards is provably safe.
+              <p className="mx-auto mt-3 max-w-xl text-sm text-slate-600">
+                Browser extensions running on AI tools must be trustworthy. Here is our architectural guarantee.
               </p>
             </div>
 
-            <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
-              {/* Architecture 1 */}
-              <div className="rounded-2xl border border-white/[0.08] bg-[#111728] p-7 space-y-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400">
+            <div className="mt-12 sm:mt-14 grid gap-6 sm:grid-cols-3">
+              <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
                   <Lock className="h-5 w-5" />
                 </div>
-                <h3 className="text-lg font-bold text-white">Zero Prompt Reading</h3>
-                <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-                  Our content script binds only to the send button and keyboard submission events. It contains zero query selectors for user text and never captures conversation payloads.
+                <h3 className="text-base font-bold text-slate-900">Zero Prompt Reading</h3>
+                <p className="text-xs leading-relaxed text-slate-600">
+                  The extension queries only generation buttons and layout wrappers. It never reads, logs, or transmits your prompt text or AI responses.
                 </p>
               </div>
 
-              {/* Architecture 2 */}
-              <div className="rounded-2xl border border-white/[0.08] bg-[#111728] p-7 space-y-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400">
-                  <Layers className="h-5 w-5" />
+              <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                  <Cpu className="h-5 w-5" />
                 </div>
-                <h3 className="text-lg font-bold text-white">Isolated Shadow DOM Host</h3>
-                <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-                  Every ad card renders inside an isolated ShadowRoot with native DOM methods (`createElement`). Zero `innerHTML` usage guarantees complete immunity from cross-site scripting.
+                <h3 className="text-base font-bold text-slate-900">100% Open Source</h3>
+                <p className="text-xs leading-relaxed text-slate-600">
+                  Every line of client-side code is publicly hosted on GitHub. You and the developer community can audit and verify its safety anytime.
                 </p>
               </div>
 
-              {/* Architecture 3 */}
-              <div className="rounded-2xl border border-white/[0.08] bg-[#111728] p-7 space-y-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400">
+              <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
                   <ShieldCheck className="h-5 w-5" />
                 </div>
-                <h3 className="text-lg font-bold text-white">100% Open Source</h3>
-                <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-                  Every line of TypeScript code in our extension is published on GitHub. You can inspect, compile, and run it unpacked yourself anytime.
+                <h3 className="text-base font-bold text-slate-900">1-Click Pause</h3>
+                <p className="text-xs leading-relaxed text-slate-600">
+                  Need complete silence during sensitive work? One click in your browser toolbar pauses all sponsored cards instantly.
                 </p>
               </div>
-            </div>
-
-            {/* GitHub Audit Link Banner */}
-            <div className="mt-10 rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 text-center">
-              <a
-                href="https://github.com/jhaabhijeet864/Pathixo_Rewards"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm font-semibold text-cyan-400 hover:text-cyan-300 transition"
-              >
-                <span>Audit our open source codebase on GitHub</span>
-                <ExternalLink className="h-4 w-4" />
-              </a>
             </div>
           </div>
         </section>
 
-        {/* FAQ ACCORDION SECTION */}
-        <section className="relative border-t border-white/[0.08] bg-[#090d16] py-24 sm:py-32">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12">
-            <div className="text-center max-w-3xl mx-auto space-y-3">
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-cyan-400">
-                Clear Answers
-              </span>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">
-                Frequently Asked Questions
+        {/* FAQ SECTION */}
+        <section id="faq" className="py-20 sm:py-24">
+          <div className="mx-auto flex max-w-6xl flex-col items-center px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">FAQ</span>
+              <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+                Frequently asked questions
               </h2>
-              <p className="text-base text-slate-400">
-                Everything you need to know about payments, ad formats, and privacy guarantees.
-              </p>
             </div>
-
             <FaqSection />
           </div>
         </section>
 
-        {/* BOTTOM FINAL CALL TO ACTION */}
-        <section className="relative border-t border-white/[0.08] bg-gradient-to-b from-[#0e1628] to-[#070b14] py-20 sm:py-28 text-center">
-          <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-8">
-            <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
-              Ready to start earning while AI thinks?
+        {/* BOTTOM CTA */}
+        <section className="border-t border-slate-100 bg-slate-900 py-16 text-white text-center">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+              Stop waiting for free.
             </h2>
-            <p className="mx-auto max-w-2xl text-base sm:text-lg text-slate-300 leading-relaxed">
-              Install the lightweight extension in 10 seconds. Cash out as soon as you reach $2.00 via instant UPI or PayPal.
+            <p className="mx-auto mt-4 max-w-xl text-slate-400 text-sm">
+              One lightweight extension. Every major AI model. Earn from your very next prompt.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+            <div className="mt-8 flex justify-center">
               <a
                 href="https://github.com/jhaabhijeet864/Pathixo_Rewards"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-indigo-700 px-8 py-4 text-base font-bold text-white shadow-glow transition hover:opacity-95 hover:scale-[1.01]"
+                className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-6 py-3.5 text-sm font-semibold text-slate-950 shadow-md transition hover:bg-emerald-400"
               >
-                <Download className="h-5 w-5" />
-                <span>Add Pathixo Rewards to Chrome — It&apos;s Free</span>
+                <Download className="h-4 w-4" />
+                Install Pathixo Rewards — Free
               </a>
-              <Link
-                href="/dashboard"
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-6 py-4 text-base font-semibold text-slate-200 hover:bg-white/10 hover:text-white transition"
-              >
-                <span>Open Dashboard</span>
-              </Link>
             </div>
           </div>
         </section>
