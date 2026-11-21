@@ -45,6 +45,8 @@ export function FaqSection() {
             <button
               type="button"
               onClick={() => toggle(idx)}
+              aria-expanded={isOpen}
+              aria-controls={`faq-answer-${idx}`}
               className="flex w-full items-center justify-between px-6 py-4 sm:py-5 text-left font-bold text-white transition hover:text-[#10e599]"
             >
               <span className="text-base sm:text-lg">{faq.q}</span>
@@ -53,7 +55,12 @@ export function FaqSection() {
               </div>
             </button>
             {isOpen && (
-              <div className="px-6 pb-5 pt-1 text-sm sm:text-base leading-relaxed text-slate-400 border-t border-[#162534]/70">
+              <div
+                id={`faq-answer-${idx}`}
+                role="region"
+                aria-label={faq.q}
+                className="px-6 pb-5 pt-1 text-sm sm:text-base leading-relaxed text-slate-400 border-t border-[#162534]/70"
+              >
                 {faq.a}
               </div>
             )}
