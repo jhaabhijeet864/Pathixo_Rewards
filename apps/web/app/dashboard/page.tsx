@@ -79,8 +79,8 @@ export default function DashboardPage() {
     <div className="flex min-h-screen flex-col bg-slate-50/50">
       <Navbar />
 
-      <main className="flex-1 py-10 sm:py-14">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-8">
+      <main className="flex-1 py-12 sm:py-16">
+        <div className="mx-auto w-full max-w-7xl px-6 sm:px-10 lg:px-14 space-y-10">
           {/* Header */}
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>

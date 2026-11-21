@@ -52,8 +52,8 @@ export default function AdvertisePage() {
     <div className="flex min-h-screen flex-col bg-white">
       <Navbar />
 
-      <main className="flex-1 py-14 sm:py-20">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+      <main className="flex-1 py-16 sm:py-24">
+        <div className="mx-auto w-full max-w-7xl px-6 sm:px-10 lg:px-14">
           {/* Header */}
           <div className="text-center max-w-2xl mx-auto">
             <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">Self-Serve Advertiser Space</span>

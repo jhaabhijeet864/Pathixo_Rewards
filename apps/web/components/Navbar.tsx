@@ -10,15 +10,15 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur-sm">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8 py-3.5">
+      <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 sm:px-10 lg:px-14 py-4">
         {/* Brand */}
-        <Link href="/" className="flex items-center gap-2.5 shrink-0 transition-opacity hover:opacity-90">
-          <img src={`${basePath}/icon.svg`} alt="Pathixo Rewards" className="h-7 w-7 rounded-md" />
-          <span className="text-lg font-bold tracking-tight text-slate-900">Pathixo Rewards</span>
+        <Link href="/" className="flex items-center gap-3 shrink-0 transition-opacity hover:opacity-90">
+          <img src={`${basePath}/icon.svg`} alt="Pathixo Rewards" className="h-8 w-8 rounded-lg" />
+          <span className="text-xl font-bold tracking-tight text-slate-900">Pathixo Rewards</span>
         </Link>
 
         {/* Navigation Links (Desktop) */}
-        <nav className="hidden items-center gap-7 lg:gap-8 text-sm font-medium text-slate-600 md:flex">
+        <nav className="hidden items-center gap-8 lg:gap-10 text-base font-medium text-slate-600 md:flex">
           <Link href="#how-it-works" className="transition-colors hover:text-slate-900">
             How it works
           </Link>
@@ -34,10 +34,10 @@ export function Navbar() {
         </nav>
 
         {/* Action Buttons & Mobile Toggle */}
-        <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+        <div className="flex items-center gap-4 sm:gap-6 shrink-0">
           <Link
             href="/dashboard"
-            className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+            className="text-base font-medium text-slate-600 transition-colors hover:text-slate-900"
           >
             Dashboard
           </Link>
@@ -45,7 +45,7 @@ export function Navbar() {
             href="https://github.com/jhaabhijeet864/Pathixo_Rewards"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 whitespace-nowrap"
+            className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 whitespace-nowrap"
           >
             Add to Chrome — Free
           </a>
@@ -54,18 +54,18 @@ export function Navbar() {
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="inline-flex items-center justify-center rounded-md p-1.5 text-slate-500 hover:bg-slate-100 md:hidden"
+            className="inline-flex items-center justify-center rounded-lg p-2 text-slate-500 hover:bg-slate-100 md:hidden"
             aria-label="Toggle navigation menu"
           >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
       </div>
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="border-b border-slate-200 bg-white px-4 py-3 md:hidden">
-          <div className="flex flex-col space-y-2.5 text-sm font-medium text-slate-600">
+        <div className="border-b border-slate-200 bg-white px-6 py-4 md:hidden">
+          <div className="flex flex-col space-y-3 text-base font-medium text-slate-600">
             <Link
               href="#how-it-works"
               onClick={() => setMobileMenuOpen(false)}
