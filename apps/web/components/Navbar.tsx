@@ -29,24 +29,15 @@ export function Navbar() {
           <Link href="/advertise" className="transition-colors hover:text-white">
             Advertise
           </Link>
-          <Link href="/advertise/manage" className="transition-colors hover:text-white">
-            Ads Manager
-          </Link>
         </nav>
 
         {/* Action Buttons & Mobile Toggle */}
         <div className="flex items-center gap-4 sm:gap-6 shrink-0">
-          <Link
-            href="/dashboard"
-            className="text-sm font-medium text-slate-300 transition-colors hover:text-white"
-          >
-            Dashboard
-          </Link>
           <a
             href="https://github.com/jhaabhijeet864/Pathixo_Rewards"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#10b981] px-4 py-2 text-sm font-bold text-white shadow-sm shadow-emerald-500/20 transition-all hover:bg-[#0ea371] hover:shadow-emerald-500/40 whitespace-nowrap"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#10b981] px-5 py-2.5 text-sm font-bold text-white shadow-sm shadow-emerald-500/20 transition-all hover:bg-[#0ea371] hover:shadow-emerald-500/40 whitespace-nowrap"
           >
             <ChromeIcon className="h-4 w-4" />
             <span>Add to Chrome</span>
@@ -88,20 +79,6 @@ export function Navbar() {
               className="py-1 hover:text-white"
             >
               Advertise
-            </Link>
-            <Link
-              href="/advertise/manage"
-              onClick={() => setMobileMenuOpen(false)}
-              className="py-1 hover:text-white"
-            >
-              Ads Manager
-            </Link>
-            <Link
-              href="/dashboard"
-              onClick={() => setMobileMenuOpen(false)}
-              className="py-1 hover:text-white"
-            >
-              Dashboard
             </Link>
           </div>
         </div>

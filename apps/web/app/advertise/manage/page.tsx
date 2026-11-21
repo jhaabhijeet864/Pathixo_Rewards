@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
-import { CheckCircle2, Sparkles, Upload } from 'lucide-react';
+import { CheckCircle2, Sparkles, ArrowRight } from 'lucide-react';
 import type { AdCampaign } from '@pathixo/shared';
 
 // Default feather/leaf brand icon matching user's screenshot
@@ -21,24 +21,29 @@ function BrandFeatherIcon({ className = 'h-5 w-5' }: { className?: string }) {
 
 function CampaignManagerContent() {
   const searchParams = useSearchParams();
-  const campaignId = searchParams.get('id') || 'cmp_demo_pathixo';
+  const campaignId = searchParams.get('id');
 
   const [campaign, setCampaign] = useState<AdCampaign | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(Boolean(campaignId));
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Edit form states
-  const [sponsorName, setSponsorName] = useState('Pathixo Pvt Ltd');
-  const [adCopy, setAdCopy] = useState('Run AI Agents Locally - 0 API Cost Pre-Registrations Live!');
-  const [targetUrl, setTargetUrl] = useState('https://vakxo.pathixo.com/');
+  // Edit form states (empty defaults, populated dynamically from loaded campaign)
+  const [sponsorName, setSponsorName] = useState('');
+  const [adCopy, setAdCopy] = useState('');
+  const [targetUrl, setTargetUrl] = useState('');
   const [iconUrl, setIconUrl] = useState<string>('');
   const [iconFileName, setIconFileName] = useState<string>('No file chosen');
   const [removeIcon, setRemoveIcon] = useState<boolean>(false);
 
-  // Fetch campaign details on mount
+  // Fetch campaign details on mount if an ID is present
   useEffect(() => {
+    if (!campaignId) {
+      setLoading(false);
+      return;
+    }
+
     let isMounted = true;
     const fetchCampaign = async () => {
       setLoading(true);
@@ -49,9 +54,9 @@ function CampaignManagerContent() {
         if (res.ok && data.campaign && isMounted) {
           const c = data.campaign;
           setCampaign(c);
-          setSponsorName(c.sponsor_name || 'Pathixo Pvt Ltd');
-          setAdCopy(c.headline || 'Run AI Agents Locally - 0 API Cost Pre-Registrations Live!');
-          setTargetUrl(c.target_url || 'https://vakxo.pathixo.com/');
+          setSponsorName(c.sponsor_name || '');
+          setAdCopy(c.headline || '');
+          setTargetUrl(c.target_url || '');
           setIconUrl(c.icon_url || '');
         } else if (isMounted) {
           setErrorMsg(data.message || 'Campaign not found');
@@ -124,6 +129,33 @@ function CampaignManagerContent() {
     }
   };
 
+  if (!campaignId) {
+    return (
+      <div className="mx-auto w-full max-w-xl px-4 py-20 text-center">
+        <div className="rounded-2xl border border-slate-200 bg-white p-8 sm:p-12 shadow-sm space-y-5">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
+            <Sparkles className="h-6 w-6" />
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+            Manage your campaign
+          </h1>
+          <p className="text-sm text-slate-600 leading-relaxed max-w-md mx-auto">
+            This page unlocks when an advertiser launches a campaign. No active campaign ID was provided.
+          </p>
+          <div className="pt-2">
+            <Link
+              href="/advertise"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#059669] hover:bg-[#047857] px-6 py-3 text-sm font-bold text-white shadow-sm transition active:scale-[0.99]"
+            >
+              <span>Create an Ad Campaign</span>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="py-24 text-center space-y-3">
@@ -133,9 +165,32 @@ function CampaignManagerContent() {
     );
   }
 
+  if (errorMsg && !campaign) {
+    return (
+      <div className="mx-auto w-full max-w-xl px-4 py-20 text-center">
+        <div className="rounded-2xl border border-slate-200 bg-white p-8 sm:p-12 shadow-sm space-y-4">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            Campaign Not Found
+          </h1>
+          <p className="text-sm text-slate-600 leading-relaxed max-w-md mx-auto">
+            {errorMsg}. Please verify the campaign link or create a new campaign on the Advertise page.
+          </p>
+          <div className="pt-3">
+            <Link
+              href="/advertise"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 px-6 py-2.5 text-xs font-bold text-white shadow-sm transition"
+            >
+              <span>Go to Campaign Builder</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Calculate metrics
   const cpm = campaign?.cpm_rate_usd ?? 2.0;
-  const budgetRemaining = campaign?.budget_remaining_usd ?? 2.0;
+  const budgetRemaining = campaign?.budget_remaining_usd ?? 0.0;
   const impressionsRemaining = Math.max(0, Math.round((budgetRemaining / Math.max(0.001, cpm)) * 1000));
   const impressionsServed = campaign?.metrics?.total_impressions || 0;
   const clicks = campaign?.metrics?.total_clicks || 0;
@@ -261,12 +316,12 @@ function CampaignManagerContent() {
                 </div>
               )}
               <a
-                href={targetUrl}
+                href={targetUrl || '#'}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="truncate text-sm sm:text-base font-medium text-[#1d4ed8] hover:underline"
               >
-                {adCopy || 'Run AI Agents Locally - 0 API Cost Pre-Registrations Live!'}
+                {adCopy || 'Your ad copy appears here'}
               </a>
             </div>
 
@@ -298,7 +353,7 @@ function CampaignManagerContent() {
               value={sponsorName}
               onChange={(e) => setSponsorName(e.target.value)}
               className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-emerald-500 transition"
-              placeholder="Pathixo Pvt Ltd"
+              placeholder="e.g. Acme Corp"
             />
           </div>
 
@@ -314,7 +369,7 @@ function CampaignManagerContent() {
               value={adCopy}
               onChange={(e) => setAdCopy(e.target.value)}
               className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-emerald-500 transition"
-              placeholder="Run AI Agents Locally - 0 API Cost Pre-Registrations Live!"
+              placeholder="e.g. Your ad copy appears here"
             />
             <div className="mt-1.5 text-xs text-slate-400">
               {adCopy.length}/64 characters (min 3)
@@ -332,7 +387,7 @@ function CampaignManagerContent() {
               value={targetUrl}
               onChange={(e) => setTargetUrl(e.target.value)}
               className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-emerald-500 transition"
-              placeholder="https://vakxo.pathixo.com/"
+              placeholder="https://example.com"
             />
           </div>
 

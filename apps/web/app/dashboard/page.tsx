@@ -1,23 +1,96 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Navbar } from '@/components/Navbar';
-import { Footer } from '@/components/Footer';
+import Link from 'next/link';
 import {
   DollarSign,
   TrendingUp,
   Share2,
   CheckCircle2,
   Clock,
-  ArrowUpRight,
   Copy,
   Check,
-  CreditCard,
-  AlertCircle,
+  Sparkles,
+  ShieldCheck,
 } from 'lucide-react';
 import type { UserEarnings } from '@pathixo/shared';
 
+interface ViewedAdItem {
+  id: string;
+  sponsor: string;
+  headline: string;
+  model: string;
+  dwellSeconds: number;
+  earnedUsd: number;
+  timeAgo: string;
+  verified: boolean;
+}
+
+const INITIAL_VIEWED_ADS: ViewedAdItem[] = [
+  {
+    id: 'ad-1',
+    sponsor: 'Cursor',
+    headline: 'Build software 10x faster with Cursor — The AI Code Editor.',
+    model: 'ChatGPT o3-mini',
+    dwellSeconds: 4.6,
+    earnedUsd: 0.012,
+    timeAgo: '4 mins ago',
+    verified: true,
+  },
+  {
+    id: 'ad-2',
+    sponsor: 'Neon',
+    headline: 'Serverless Postgres with instant branching and autoscaling.',
+    model: 'Claude 3.7 Sonnet',
+    dwellSeconds: 6.2,
+    earnedUsd: 0.012,
+    timeAgo: '18 mins ago',
+    verified: true,
+  },
+  {
+    id: 'ad-3',
+    sponsor: 'Vercel',
+    headline: 'The Frontend Cloud — Build and deploy fullstack web apps.',
+    model: 'DeepSeek R1',
+    dwellSeconds: 5.1,
+    earnedUsd: 0.012,
+    timeAgo: '42 mins ago',
+    verified: true,
+  },
+  {
+    id: 'ad-4',
+    sponsor: 'Superhuman',
+    headline: 'The fastest email experience ever made for high-volume teams.',
+    model: 'Google Gemini',
+    dwellSeconds: 4.0,
+    earnedUsd: 0.012,
+    timeAgo: '2 hours ago',
+    verified: true,
+  },
+  {
+    id: 'ad-5',
+    sponsor: 'Resend',
+    headline: 'Email for developers — The modern way to send transactional emails.',
+    model: 'ChatGPT',
+    dwellSeconds: 4.8,
+    earnedUsd: 0.012,
+    timeAgo: '5 hours ago',
+    verified: true,
+  },
+  {
+    id: 'ad-6',
+    sponsor: 'Linear',
+    headline: 'Issue tracking built for high-performance software teams.',
+    model: 'Claude',
+    dwellSeconds: 5.5,
+    earnedUsd: 0.012,
+    timeAgo: 'Yesterday',
+    verified: true,
+  },
+];
+
 export default function DashboardPage() {
+  const [deviceId, setDeviceId] = useState('dev_usr_8829');
   const [earnings, setEarnings] = useState<UserEarnings>({
     balance_usd: 2.148,
     lifetime_earned_usd: 5.62,
@@ -26,13 +99,24 @@ export default function DashboardPage() {
     referral_bonus_usd: 0.54,
   });
 
+  const [viewedAds] = useState<ViewedAdItem[]>(INITIAL_VIEWED_ADS);
   const [copied, setCopied] = useState(false);
   const [payoutMethod, setPayoutMethod] = useState<'upi' | 'paypal' | 'gift_card'>('upi');
   const [destination, setDestination] = useState('');
   const [cashoutSuccess, setCashoutSuccess] = useState<string | null>(null);
   const [isCashoutSubmitting, setIsCashoutSubmitting] = useState(false);
 
-  const referralLink = 'https://pathixorewards.com/?ref=dev_usr_8829';
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const devParam = params.get('device_id');
+      if (devParam) {
+        setDeviceId(devParam);
+      }
+    }
+  }, []);
+
+  const referralLink = `https://pathixorewards.com/?ref=${deviceId}`;
   const minThreshold = 2.0;
   const canCashout = earnings.balance_usd >= minThreshold;
   const progressPercent = Math.min(100, Math.round((earnings.balance_usd / minThreshold) * 100));
@@ -61,7 +145,7 @@ export default function DashboardPage() {
 
       const data = await res.json();
       if (res.ok) {
-        setCashoutSuccess(data.message || 'Payout processed successfully!');
+        setCashoutSuccess(data.message || 'Payout request received and queued for instant settlement!');
         setEarnings((prev) => ({
           ...prev,
           balance_usd: 0.0,
@@ -75,81 +159,134 @@ export default function DashboardPage() {
     }
   };
 
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50/50">
-      <Navbar />
-
-      <main className="flex-1 py-12 sm:py-16">
-        <div className="mx-auto w-full max-w-7xl px-6 sm:px-10 lg:px-14 space-y-10">
-          {/* Header */}
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
-                Earnings Dashboard
-              </h1>
-              <p className="text-xs text-slate-500">
-                Connected device: <span className="font-mono text-slate-700">dev_usr_8829</span> • Extension active
-              </p>
-            </div>
-            <div className="flex items-center gap-2 self-start sm:self-auto">
-              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/60">
-                Live Revenue Sync
+    <div className="flex min-h-screen flex-col bg-[#070a0e] text-slate-100 font-sans antialiased">
+      {/* MINIMAL STANDALONE DASHBOARD HEADER (NOT CONNECTED TO WEBSITE MARKETING NAV) */}
+      <header className="sticky top-0 z-50 border-b border-slate-800/80 bg-[#070a0e]/95 backdrop-blur-md">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 sm:px-10 lg:px-14 py-4">
+          {/* Brand Heading linking back to main landing page */}
+          <Link
+            href="/"
+            className="flex items-center gap-3 group transition-opacity hover:opacity-90"
+            title="Back to Pathixo Rewards Home"
+          >
+            <img src={`${basePath}/icon.svg`} alt="Pathixo Rewards" className="h-8 w-8 rounded-lg" />
+            <div className="flex flex-col">
+              <span className="text-xl font-bold tracking-tight text-white group-hover:text-emerald-400 transition-colors">
+                Pathixo Rewards
               </span>
+              <span className="text-[11px] text-slate-400 font-medium">User Rewards Console</span>
+            </div>
+          </Link>
+
+          {/* Right Header Status Bar */}
+          <div className="flex items-center gap-3 sm:gap-5">
+            <div className="hidden sm:flex items-center gap-2 rounded-full border border-slate-800 bg-[#0d121c] px-3.5 py-1.5 text-xs text-slate-400">
+              <span className="text-slate-500">Device ID:</span>
+              <span className="font-mono text-slate-300 font-semibold">{deviceId}</span>
+            </div>
+
+            <div className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-950/40 px-3.5 py-1.5 text-xs font-semibold text-emerald-400">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>Extension Connected</span>
             </div>
           </div>
+        </div>
+      </header>
 
-          {/* Metric Cards Grid */}
-          <div className="grid gap-4 sm:grid-cols-3">
-            {/* Balance */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Available Balance</span>
-              <div className="mt-2 text-3xl font-extrabold text-slate-900">
-                ${earnings.balance_usd.toFixed(4)}
-              </div>
-              <p className="mt-1 text-xs text-emerald-700 font-medium">
-                {canCashout ? '✓ Ready for instant cashout' : `$${(minThreshold - earnings.balance_usd).toFixed(2)} to cashout`}
+      {/* DASHBOARD CONTENT BODY */}
+      <main className="flex-1 py-10 sm:py-14">
+        <div className="mx-auto w-full max-w-7xl px-6 sm:px-10 lg:px-14 space-y-10">
+
+          {/* WELCOME BANNER & METRICS */}
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+                Your Rewards &amp; Payouts
+              </h1>
+              <p className="mt-2 text-sm text-slate-400 max-w-2xl">
+                Track your wait-time earnings, review ads verified during AI thinking mode, manage your referrals, and request instant cashouts starting at $2.00.
               </p>
             </div>
 
-            {/* Today's Views */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Today&apos;s Verified Views</span>
-              <div className="mt-2 text-3xl font-extrabold text-slate-900">
-                {earnings.impressions_today}
+            {/* 4 CORE METRIC TILES */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {/* Available Balance */}
+              <div className="rounded-2xl border border-emerald-500/30 bg-[#0d141e] p-6 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Available Balance</span>
+                  <DollarSign className="h-4 w-4 text-emerald-400" />
+                </div>
+                <div className="mt-2 text-3xl sm:text-4xl font-extrabold text-white">
+                  ${earnings.balance_usd.toFixed(4)}
+                </div>
+                <p className="mt-2 text-xs font-medium text-emerald-400">
+                  {canCashout ? '✓ Ready for instant cashout' : `$${(minThreshold - earnings.balance_usd).toFixed(2)} to $2.00 cashout floor`}
+                </p>
               </div>
-              <p className="mt-1 text-xs text-slate-500">Across ChatGPT, Claude &amp; Gemini</p>
-            </div>
 
-            {/* Lifetime Cashouts */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Lifetime Cashouts</span>
-              <div className="mt-2 text-3xl font-extrabold text-slate-900">
-                ${earnings.lifetime_earned_usd.toFixed(2)}
+              {/* Today's Views */}
+              <div className="rounded-2xl border border-slate-800 bg-[#0d121c] p-6 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Today&apos;s Verified Views</span>
+                  <Clock className="h-4 w-4 text-slate-400" />
+                </div>
+                <div className="mt-2 text-3xl sm:text-4xl font-extrabold text-white">
+                  {earnings.impressions_today}
+                </div>
+                <p className="mt-2 text-xs text-slate-500">Across ChatGPT, Claude &amp; Gemini</p>
               </div>
-              <p className="mt-1 text-xs text-slate-500">Paid out via instant rails</p>
+
+              {/* Lifetime Earned */}
+              <div className="rounded-2xl border border-slate-800 bg-[#0d121c] p-6 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Lifetime Cashouts</span>
+                  <TrendingUp className="h-4 w-4 text-slate-400" />
+                </div>
+                <div className="mt-2 text-3xl sm:text-4xl font-extrabold text-white">
+                  ${earnings.lifetime_earned_usd.toFixed(2)}
+                </div>
+                <p className="mt-2 text-xs text-slate-500">Settled via instant rails</p>
+              </div>
+
+              {/* Referral Bonus */}
+              <div className="rounded-2xl border border-slate-800 bg-[#0d121c] p-6 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Referral Commission</span>
+                  <Share2 className="h-4 w-4 text-slate-400" />
+                </div>
+                <div className="mt-2 text-3xl sm:text-4xl font-extrabold text-emerald-400">
+                  ${earnings.referral_bonus_usd.toFixed(2)}
+                </div>
+                <p className="mt-2 text-xs text-slate-500">10% lifetime share from {earnings.referral_count} friends</p>
+              </div>
             </div>
           </div>
 
-          {/* CASHOUT TERMINAL & REFERRAL GRID */}
+          {/* TWO-COLUMN WORKSPACE: CASHOUT TERMINAL + REFERRALS */}
           <div className="grid gap-8 lg:grid-cols-12 items-start">
-            {/* Cashout Terminal (7 cols) */}
-            <div className="lg:col-span-7 rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm space-y-6">
+
+            {/* CASHOUT TERMINAL (7 cols) */}
+            <div className="lg:col-span-7 rounded-2xl border border-slate-800 bg-[#0d121c] p-6 sm:p-8 shadow-sm space-y-6">
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">Instant Redemption</span>
-                <h2 className="mt-1 text-xl font-bold text-slate-900">Withdraw your earnings</h2>
-                <p className="text-xs text-slate-500 mt-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Instant Redemption</span>
+                <h2 className="mt-1 text-2xl font-bold text-white">Withdraw your earnings</h2>
+                <p className="text-xs sm:text-sm text-slate-400 mt-1">
                   Threshold: $2.00 USD. Once requested, funds are routed through instant rails without 30-day holds.
                 </p>
               </div>
 
-              {/* Progress toward threshold */}
-              <div className="rounded-xl bg-slate-50 p-4 border border-slate-100 space-y-2">
-                <div className="flex justify-between text-xs font-semibold text-slate-700">
+              {/* Threshold Progress Bar */}
+              <div className="rounded-xl bg-[#090d14] p-4 border border-slate-800 space-y-2">
+                <div className="flex justify-between text-xs font-semibold text-slate-300">
                   <span>Threshold Progress</span>
-                  <span>${earnings.balance_usd.toFixed(2)} / $2.00 ({progressPercent}%)</span>
+                  <span className="text-emerald-400">
+                    ${earnings.balance_usd.toFixed(2)} / $2.00 ({progressPercent}%)
+                  </span>
                 </div>
-                <div className="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
+                <div className="h-2.5 w-full rounded-full bg-slate-800 overflow-hidden">
                   <div
                     className="h-full bg-emerald-500 transition-all duration-500"
                     style={{ width: `${progressPercent}%` }}
@@ -158,23 +295,23 @@ export default function DashboardPage() {
               </div>
 
               {cashoutSuccess ? (
-                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center space-y-2">
-                  <CheckCircle2 className="h-8 w-8 text-emerald-600 mx-auto" />
-                  <h3 className="font-bold text-slate-900">Transfer Initiated!</h3>
-                  <p className="text-xs text-slate-600">{cashoutSuccess}</p>
+                <div className="rounded-xl border border-emerald-500/40 bg-emerald-950/30 p-6 text-center space-y-2">
+                  <CheckCircle2 className="h-8 w-8 text-emerald-400 mx-auto" />
+                  <h3 className="font-bold text-white text-base">Transfer Initiated!</h3>
+                  <p className="text-xs sm:text-sm text-emerald-300/80">{cashoutSuccess}</p>
                 </div>
               ) : (
                 <form onSubmit={handleCashout} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">Select Payout Rail</label>
+                    <label className="block text-xs font-semibold text-slate-300 mb-2">Select Payout Rail</label>
                     <div className="grid grid-cols-3 gap-2.5">
                       <button
                         type="button"
                         onClick={() => setPayoutMethod('upi')}
                         className={`rounded-xl p-3 text-xs font-bold border transition text-center ${
                           payoutMethod === 'upi'
-                            ? 'border-emerald-600 bg-emerald-50 text-emerald-800'
-                            : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                            ? 'border-emerald-500 bg-emerald-950/60 text-emerald-300 shadow-sm'
+                            : 'border-slate-800 bg-[#090d14] text-slate-400 hover:text-white hover:bg-slate-800/50'
                         }`}
                       >
                         UPI (India Instant)
@@ -184,8 +321,8 @@ export default function DashboardPage() {
                         onClick={() => setPayoutMethod('paypal')}
                         className={`rounded-xl p-3 text-xs font-bold border transition text-center ${
                           payoutMethod === 'paypal'
-                            ? 'border-emerald-600 bg-emerald-50 text-emerald-800'
-                            : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                            ? 'border-emerald-500 bg-emerald-950/60 text-emerald-300 shadow-sm'
+                            : 'border-slate-800 bg-[#090d14] text-slate-400 hover:text-white hover:bg-slate-800/50'
                         }`}
                       >
                         PayPal (Global)
@@ -195,8 +332,8 @@ export default function DashboardPage() {
                         onClick={() => setPayoutMethod('gift_card')}
                         className={`rounded-xl p-3 text-xs font-bold border transition text-center ${
                           payoutMethod === 'gift_card'
-                            ? 'border-emerald-600 bg-emerald-50 text-emerald-800'
-                            : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                            ? 'border-emerald-500 bg-emerald-950/60 text-emerald-300 shadow-sm'
+                            : 'border-slate-800 bg-[#090d14] text-slate-400 hover:text-white hover:bg-slate-800/50'
                         }`}
                       >
                         Amazon Card
@@ -205,12 +342,12 @@ export default function DashboardPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
                       {payoutMethod === 'upi'
-                        ? 'Your VPA / UPI ID (e.g. yourname@okhdfcbank)'
+                        ? 'Your VPA / UPI ID (e.g. username@okhdfcbank)'
                         : payoutMethod === 'paypal'
                         ? 'Your PayPal Email Address'
-                        : 'Delivery Email Address'}
+                        : 'Delivery Email Address for Gift Card'}
                     </label>
                     <input
                       type="text"
@@ -218,63 +355,183 @@ export default function DashboardPage() {
                       placeholder={payoutMethod === 'upi' ? 'username@upi' : 'you@domain.com'}
                       value={destination}
                       onChange={(e) => setDestination(e.target.value)}
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none"
+                      className="w-full rounded-xl border border-slate-800 bg-[#090d14] px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={!canCashout || isCashoutSubmitting}
-                    className="w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-40"
+                    className="w-full rounded-xl bg-[#10b981] py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#0ea371] disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {isCashoutSubmitting
-                      ? 'Transacting...'
+                      ? 'Processing Transfer...'
                       : canCashout
                       ? `Cash out $${earnings.balance_usd.toFixed(2)} Now`
-                      : 'Minimum $2.00 Required'}
+                      : 'Minimum $2.00 Floor Required to Cash Out'}
                   </button>
                 </form>
               )}
             </div>
 
-            {/* Referral Hub (5 cols) */}
-            <div className="lg:col-span-5 rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm space-y-5">
-              <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">Earn 10% Forever</span>
-                <h2 className="mt-1 text-xl font-bold text-slate-900">Invite Friends</h2>
-                <p className="text-xs text-slate-500 mt-1">
-                  Share your link. Whenever someone you invite views sponsored cards, you get 10% of their earnings forever.
-                </p>
+            {/* REFERRALS & HOW TO EARN MORE (5 cols) */}
+            <div className="lg:col-span-5 space-y-6">
+              {/* Referrals Box */}
+              <div className="rounded-2xl border border-slate-800 bg-[#0d121c] p-6 sm:p-8 shadow-sm space-y-5">
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Earn 10% Forever</span>
+                  <h2 className="mt-1 text-2xl font-bold text-white">Invite Friends</h2>
+                  <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                    Share your personal referral link. Whenever someone you invite views sponsored cards while AI thinks, you get 10% of their earnings for life.
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-slate-800 bg-[#090d14] p-3 flex items-center justify-between gap-3">
+                  <span className="truncate text-xs font-mono text-slate-300">{referralLink}</span>
+                  <button
+                    type="button"
+                    onClick={handleCopy}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-emerald-500 transition"
+                  >
+                    {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                    {copied ? 'Copied' : 'Copy Link'}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 text-center text-xs">
+                  <div className="rounded-xl bg-[#090d14] p-3.5 border border-slate-800">
+                    <span className="text-slate-400 block mb-1">Friends Referred</span>
+                    <strong className="text-xl font-bold text-white">{earnings.referral_count}</strong>
+                  </div>
+                  <div className="rounded-xl bg-[#090d14] p-3.5 border border-slate-800">
+                    <span className="text-slate-400 block mb-1">Commission Earned</span>
+                    <strong className="text-xl font-bold text-emerald-400">${earnings.referral_bonus_usd.toFixed(2)}</strong>
+                  </div>
+                </div>
               </div>
 
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 flex items-center justify-between gap-2">
-                <span className="truncate text-xs font-mono text-slate-600">{referralLink}</span>
-                <button
-                  type="button"
-                  onClick={handleCopy}
-                  className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 border border-slate-200 shadow-xs hover:bg-slate-50"
-                >
-                  {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
-                  {copied ? 'Copied' : 'Copy'}
-                </button>
-              </div>
+              {/* How to Earn More Box */}
+              <div className="rounded-2xl border border-slate-800 bg-[#0d121c] p-6 sm:p-7 shadow-sm space-y-4">
+                <div className="flex items-center gap-2 text-white font-bold text-base">
+                  <Sparkles className="h-4 w-4 text-emerald-400" />
+                  <h3>How to earn more passive cash</h3>
+                </div>
 
-              <div className="grid grid-cols-2 gap-3 pt-2 text-center text-xs">
-                <div className="rounded-xl bg-slate-50 p-3 border border-slate-100">
-                  <span className="text-slate-400 block mb-1">Friends Referred</span>
-                  <strong className="text-lg text-slate-900">{earnings.referral_count}</strong>
-                </div>
-                <div className="rounded-xl bg-slate-50 p-3 border border-slate-100">
-                  <span className="text-slate-400 block mb-1">Bonus Earned</span>
-                  <strong className="text-lg text-emerald-700">${earnings.referral_bonus_usd.toFixed(2)}</strong>
-                </div>
+                <ul className="space-y-3 text-xs sm:text-sm text-slate-400">
+                  <li className="flex items-start gap-2.5">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-950 text-emerald-400 text-xs font-bold border border-emerald-500/30">
+                      1
+                    </span>
+                    <span>
+                      <strong className="text-slate-200">Use reasoning models:</strong> ChatGPT o1/o3-mini, Claude 3.7 Sonnet, and DeepSeek R1 have extended 4s–15s thinking times which consistently qualify for ad rewards.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-950 text-emerald-400 text-xs font-bold border border-emerald-500/30">
+                      2
+                    </span>
+                    <span>
+                      <strong className="text-slate-200">Keep extension pinned:</strong> Pin Pathixo to your Chrome toolbar to ensure cards trigger smoothly while working.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-950 text-emerald-400 text-xs font-bold border border-emerald-500/30">
+                      3
+                    </span>
+                    <span>
+                      <strong className="text-slate-200">Share with developer peers:</strong> Friends who use AI for coding and research quickly earn, building up your 10% commission.
+                    </span>
+                  </li>
+                </ul>
               </div>
             </div>
+
           </div>
+
+          {/* ADS SEEN SO FAR (AD HISTORY LOG) */}
+          <div className="rounded-2xl border border-slate-800 bg-[#0d121c] p-6 sm:p-8 shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Telemetry Log</span>
+                <h2 className="text-2xl font-bold text-white mt-1">Ads seen so far</h2>
+                <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                  Full transparent audit trail of sponsored cards shown on this device during AI wait times.
+                </p>
+              </div>
+              <div className="text-xs text-slate-500 flex items-center gap-1.5 self-start sm:self-auto">
+                <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                <span>Zero prompt reading • DOM-timing only</span>
+              </div>
+            </div>
+
+            {/* Table / List */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs sm:text-sm">
+                <thead>
+                  <tr className="border-b border-slate-800 text-slate-400 uppercase text-[11px] tracking-wider">
+                    <th className="pb-3 font-semibold">Sponsor &amp; Message</th>
+                    <th className="pb-3 font-semibold">AI Platform</th>
+                    <th className="pb-3 font-semibold">Dwell Time</th>
+                    <th className="pb-3 font-semibold">Earned</th>
+                    <th className="pb-3 font-semibold text-right">Time</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {viewedAds.map((ad) => (
+                    <tr key={ad.id} className="hover:bg-slate-800/20 transition-colors">
+                      <td className="py-3.5 pr-4">
+                        <div className="font-semibold text-white">{ad.sponsor}</div>
+                        <div className="text-xs text-slate-400 truncate max-w-xs sm:max-w-md">{ad.headline}</div>
+                      </td>
+                      <td className="py-3.5 pr-4 text-slate-300 font-medium">
+                        {ad.model}
+                      </td>
+                      <td className="py-3.5 pr-4">
+                        <span className="inline-flex items-center gap-1 rounded bg-slate-800 px-2 py-0.5 text-xs text-slate-300 font-mono">
+                          {ad.dwellSeconds.toFixed(1)}s dwell
+                        </span>
+                      </td>
+                      <td className="py-3.5 pr-4">
+                        <span className="font-bold text-emerald-400">
+                          +${ad.earnedUsd.toFixed(4)}
+                        </span>
+                      </td>
+                      <td className="py-3.5 text-right text-xs text-slate-500 whitespace-nowrap">
+                        {ad.timeAgo}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-500">
+              <span>Showing last 6 qualified impressions</span>
+              <span>Credits deposited in real-time</span>
+            </div>
+          </div>
+
         </div>
       </main>
 
-      <Footer />
+      {/* MINIMAL STANDALONE DASHBOARD FOOTER */}
+      <footer className="border-t border-slate-800/80 bg-[#070a0e] py-8 text-xs text-slate-500">
+        <div className="mx-auto flex w-full max-w-7xl flex-col sm:flex-row items-center justify-between gap-4 px-6 sm:px-10 lg:px-14">
+          <div className="flex items-center gap-2">
+            <span>Pathixo Rewards User Console</span>
+            <span>•</span>
+            <span>Anonymous Device Mode</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <Link href="/" className="hover:text-emerald-400 transition-colors">
+              ← Return to Main Website
+            </Link>
+            <Link href="/privacy" className="hover:text-emerald-400 transition-colors">
+              Privacy Guarantee
+            </Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

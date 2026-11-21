@@ -1,4 +1,4 @@
-import type { AdCampaign, AdCreative, CampaignMetrics, SupportedPlatform, Currency } from '@pathixo/shared';
+import type { AdCampaign, AdCreative, SupportedPlatform, Currency } from '@pathixo/shared';
 
 export interface CampaignStoreItem extends AdCampaign {
   ad_token: string;
@@ -6,36 +6,6 @@ export interface CampaignStoreItem extends AdCampaign {
 
 // Initial demo campaigns for seamless local testing & demo display
 const initialCampaigns: CampaignStoreItem[] = [
-  {
-    id: 'cmp_demo_pathixo',
-    advertiser_email: 'founder@pathixo.com',
-    headline: 'Run AI Agents Locally - 0 API Cost Pre-Registrations Live!',
-    sponsor_name: 'Pathixo Pvt Ltd',
-    target_url: 'https://vakxo.pathixo.com/',
-    icon_url: 'https://vakxo.pathixo.com/favicon.ico',
-    badge: 'Pending review',
-    currency: 'USD',
-    cpm_rate_usd: 2.0,
-    budget_total_usd: 2.0,
-    budget_remaining_usd: 2.0,
-    target_platforms: ['chatgpt', 'claude', 'gemini', 'perplexity', 'deepseek'],
-    status: 'pending_review',
-    created_at: new Date(Date.now() - 3600000).toISOString(),
-    ad_token: 'tok_b2b_pathixo_2026',
-    metrics: {
-      total_impressions: 0,
-      total_clicks: 0,
-      spent_usd: 0,
-      avg_dwell_ms: 0,
-      platform_impressions: {
-        chatgpt: 0,
-        claude: 0,
-        gemini: 0,
-        perplexity: 0,
-        deepseek: 0,
-      },
-    },
-  },
   {
     id: 'cmp_demo_cursor',
     advertiser_email: 'team@cursor.com',

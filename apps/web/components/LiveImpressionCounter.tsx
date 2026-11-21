@@ -8,7 +8,6 @@ interface LiveImpressionCounterProps {
 
 export function LiveImpressionCounter({ initialCount = 5790394 }: LiveImpressionCounterProps) {
   const [count, setCount] = useState<number>(initialCount);
-  const [isLive, setIsLive] = useState(true);
   const prevCountRef = useRef<number>(count);
 
   useEffect(() => {
@@ -22,14 +21,11 @@ export function LiveImpressionCounter({ initialCount = 5790394 }: LiveImpression
         const data = await res.json();
         if (typeof data.total_impressions === 'number' && isMounted) {
           setCount(data.total_impressions);
-          setIsLive(true);
         } else if (typeof data.total_verified_impressions === 'number' && isMounted) {
           setCount(initialCount + data.total_verified_impressions);
-          setIsLive(true);
         }
       } catch {
         // Fallback to active display
-        if (isMounted) setIsLive(true);
       }
     };
 

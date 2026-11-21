@@ -22,9 +22,6 @@ export function Footer() {
           <Link href="/advertise" className="hover:text-white transition-colors">
             Advertise
           </Link>
-          <Link href="/advertise/manage" className="hover:text-white transition-colors">
-            Ads Manager
-          </Link>
           <a
             href="https://github.com/jhaabhijeet864/Pathixo_Rewards"
             target="_blank"

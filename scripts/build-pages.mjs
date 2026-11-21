@@ -48,7 +48,11 @@ try {
   const NEXT_DIR = resolve(WEB_DIR, '.next');
   if (existsSync(NEXT_DIR)) {
     console.log('🧹 Cleaning stale .next cache...');
-    rmSync(NEXT_DIR, { recursive: true, force: true });
+    if (process.platform === 'win32') {
+      spawnSync('powershell.exe', ['-NoProfile', '-Command', `Remove-Item -Recurse -Force "${NEXT_DIR}"`]);
+    } else {
+      rmSync(NEXT_DIR, { recursive: true, force: true });
+    }
   }
 
   // 3. Build web application with static export & GitHub Pages base path

@@ -78,13 +78,11 @@ export function DeepSeekIcon({ className = 'h-4 w-4' }: { className?: string }) 
 export function HeroChatMockup() {
   const [balance, setBalance] = useState<number>(12.622);
   const [showEarnedBadge, setShowEarnedBadge] = useState<boolean>(true);
-  const [isAdVisible, setIsAdVisible] = useState<boolean>(true);
+  const [isAdVisible] = useState<boolean>(true);
 
   // Auto-playing live GIF animation loop
   useEffect(() => {
-    let tickCount = 0;
     const interval = setInterval(() => {
-      tickCount++;
       // Pulse credit animation and tick up balance
       setShowEarnedBadge(false);
       setTimeout(() => {

@@ -7,14 +7,9 @@ import { Footer } from '@/components/Footer';
 import {
   Sparkles,
   CheckCircle2,
-  ArrowRight,
   ShieldCheck,
-  Target,
-  BarChart3,
-  ExternalLink,
   Zap,
   Lock,
-  Layers,
 } from 'lucide-react';
 import { ChatGptIcon, ClaudeIcon, GeminiIcon } from '@/components/HeroChatMockup';
 import {
@@ -28,7 +23,7 @@ export default function AdvertisePage() {
   const [headline, setHeadline] = useState('Build software 10x faster with Cursor — The AI Code Editor.');
   const [sponsorName, setSponsorName] = useState('Cursor');
   const [targetUrl, setTargetUrl] = useState('https://cursor.com');
-  const [iconUrl, setIconUrl] = useState('');
+  const iconUrl = '';
   const [badge, setBadge] = useState('Developer Tool');
   const [cpm, setCpm] = useState(20);
   const [email, setEmail] = useState('');
@@ -39,7 +34,7 @@ export default function AdvertisePage() {
   const [customAmount, setCustomAmount] = useState<string>('75');
 
   // Multi-chatbot preview tab
-  const [previewPlatform, setPreviewPlatform] = useState<SupportedPlatform>('chatgpt');
+  const [previewPlatform, setPreviewPlatform] = useState<SupportedPlatform>('gemini');
 
   // Submission state
   const [createdCampaign, setCreatedCampaign] = useState<{ id: string; budget_total_usd: number } | null>(null);
@@ -81,6 +76,7 @@ export default function AdvertisePage() {
           budget_usd: currency === 'USD' ? budgetInSelectedCurrency : undefined,
           budget_inr: currency === 'INR' ? budgetInSelectedCurrency : undefined,
           target_platforms: ['chatgpt', 'claude', 'gemini', 'perplexity', 'deepseek'],
+          status: 'pending_review',
         }),
       });
 
@@ -100,14 +96,14 @@ export default function AdvertisePage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50/50">
+    <div className="flex min-h-screen flex-col bg-[#f8fafc] text-slate-900 isolate">
       <Navbar />
 
-      <main className="flex-1 py-12 sm:py-16">
+      <main className="flex-1 py-12 sm:py-16 bg-[#f8fafc]">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="text-center max-w-3xl mx-auto">
-            <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100/80 px-3 py-1 text-xs font-semibold text-emerald-800 mb-3">
+            <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-800 mb-3">
               <Zap className="h-3.5 w-3.5" />
               <span>Self-Serve In-Stream Ad Engine</span>
             </div>
@@ -117,18 +113,6 @@ export default function AdvertisePage() {
             <p className="mt-3 text-base text-slate-600 sm:text-lg">
               Place your developer tool or AI SaaS directly inside <strong>ChatGPT</strong>, <strong>Claude</strong>, and <strong>Gemini</strong> during the response wait time. Pay only for verified 4s+ active dwell views.
             </p>
-
-            {/* Quick Link to Advertiser Admin Panel */}
-            <div className="mt-4 flex items-center justify-center gap-4 text-xs font-medium text-slate-500">
-              <span>Already running an ad?</span>
-              <Link
-                href="/advertise/manage"
-                className="inline-flex items-center gap-1 font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
-              >
-                Go to Advertiser Management Panel
-                <ArrowRight className="h-3 w-3" />
-              </Link>
-            </div>
           </div>
 
           {/* Builder & Live Preview Grid */}
@@ -148,7 +132,7 @@ export default function AdvertisePage() {
                     onClick={() => setCurrency('USD')}
                     className={`rounded-md px-2.5 py-1 transition ${
                       currency === 'USD'
-                        ? 'bg-white text-emerald-700 shadow-sm'
+                        ? 'bg-white text-emerald-700 shadow-2xs font-bold'
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
@@ -159,7 +143,7 @@ export default function AdvertisePage() {
                     onClick={() => setCurrency('INR')}
                     className={`rounded-md px-2.5 py-1 transition ${
                       currency === 'INR'
-                        ? 'bg-white text-emerald-700 shadow-sm'
+                        ? 'bg-white text-emerald-700 shadow-2xs font-bold'
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
@@ -188,7 +172,6 @@ export default function AdvertisePage() {
                       href={`/advertise/manage?id=${createdCampaign.id}`}
                       className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition"
                     >
-                      <BarChart3 className="h-3.5 w-3.5" />
                       Open Advertiser Control Panel
                     </Link>
                     <button
@@ -230,7 +213,7 @@ export default function AdvertisePage() {
                       <label className="block text-xs font-semibold text-slate-700">Promo Badge</label>
                       <input
                         type="text"
-                        placeholder="e.g. AI Tool, 20% OFF"
+                        placeholder="e.g. Developer Tool, 20% OFF"
                         value={badge}
                         onChange={(e) => setBadge(e.target.value)}
                         className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none"
@@ -323,30 +306,32 @@ export default function AdvertisePage() {
                             min={currency === 'USD' ? 5 : 400}
                             value={customAmount}
                             onChange={(e) => setCustomAmount(e.target.value)}
-                            className="w-full bg-transparent font-semibold text-slate-900 focus:outline-none"
                             placeholder={currency === 'USD' ? 'Min 5' : 'Min 400'}
+                            className="w-full bg-transparent text-slate-900 focus:outline-none"
                           />
                         </div>
                       )}
                     </div>
                   </div>
 
-                  {/* CPM Bid Slider */}
-                  <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-3 space-y-2">
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="font-semibold text-slate-700">CPM Bid Rate:</span>
-                      <strong className="text-emerald-800 font-mono">${cpm}.00 USD / 1k views</strong>
+                  {/* CPM Bidding Priority Selector */}
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="block text-xs font-semibold text-slate-700">
+                        CPM Bid Priority: <strong className="text-emerald-700">${cpm}.00 / 1k</strong>
+                      </label>
+                      <span className="text-[11px] text-slate-500">Higher bid = faster delivery</span>
                     </div>
                     <input
                       type="range"
-                      min="15"
-                      max="40"
-                      step="1"
+                      min={15}
+                      max={40}
+                      step={5}
                       value={cpm}
                       onChange={(e) => setCpm(Number(e.target.value))}
-                      className="w-full accent-emerald-600"
+                      className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
                     />
-                    <div className="flex justify-between text-[10px] text-slate-400">
+                    <div className="flex justify-between text-[10px] text-slate-400 mt-1">
                       <span>$15 (Standard)</span>
                       <span>$25 (Accelerated)</span>
                       <span>$40 (Priority)</span>
@@ -367,7 +352,7 @@ export default function AdvertisePage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full rounded-xl bg-emerald-600 py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="w-full rounded-xl bg-emerald-600 py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Lock className="h-4 w-4" />
                     <span>
@@ -387,10 +372,10 @@ export default function AdvertisePage() {
             <div className="lg:col-span-6 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
                     Live Chatbot Ad Previewer
                   </span>
-                  <div className="text-[11px] text-emerald-600 font-medium">
+                  <div className="text-[11px] text-emerald-700 font-medium">
                     See exactly how your ad renders on each AI platform
                   </div>
                 </div>
@@ -400,7 +385,7 @@ export default function AdvertisePage() {
                   <button
                     type="button"
                     onClick={() => setPreviewPlatform('chatgpt')}
-                    className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition ${
+                    className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition cursor-pointer ${
                       previewPlatform === 'chatgpt'
                         ? 'bg-slate-900 text-white shadow-xs'
                         : 'text-slate-600 hover:text-slate-900'
@@ -412,7 +397,7 @@ export default function AdvertisePage() {
                   <button
                     type="button"
                     onClick={() => setPreviewPlatform('claude')}
-                    className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition ${
+                    className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition cursor-pointer ${
                       previewPlatform === 'claude'
                         ? 'bg-[#D97757] text-white shadow-xs'
                         : 'text-slate-600 hover:text-slate-900'
@@ -424,7 +409,7 @@ export default function AdvertisePage() {
                   <button
                     type="button"
                     onClick={() => setPreviewPlatform('gemini')}
-                    className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition ${
+                    className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition cursor-pointer ${
                       previewPlatform === 'gemini'
                         ? 'bg-blue-600 text-white shadow-xs'
                         : 'text-slate-600 hover:text-slate-900'
@@ -465,10 +450,9 @@ export default function AdvertisePage() {
                         ? 'ChatGPT (GPT-4o Stream)'
                         : previewPlatform === 'claude'
                         ? 'Claude 3.5 Sonnet'
-                        : 'Google Gemini 2.0 Flash'}
+                        : 'Google Gemini 4 Argon'}
                     </span>
                   </div>
-                  <span className="text-[11px] font-sans opacity-75">Shadow DOM Isolated</span>
                 </div>
 
                 {/* Conversation Body */}
@@ -492,7 +476,7 @@ export default function AdvertisePage() {
                     </div>
                   </div>
 
-                  {/* INLINE AD CARD (SHADOW DOM ISOLATED) */}
+                  {/* Inline Sponsored Ad Card */}
                   <div
                     className={`rounded-xl border p-3.5 text-xs shadow-xs transition-all ${
                       previewPlatform === 'chatgpt'
@@ -559,7 +543,7 @@ export default function AdvertisePage() {
                   Accidental scrolls or backgrounded tabs are discarded immediately. An impression is only debited from your prepaid budget after the active AI window has streamed for at least 4 continuous seconds.
                 </p>
                 <div className="pt-2 flex items-center justify-between text-[11px] text-emerald-700 font-semibold border-t border-slate-100">
-                  <span>✓ 100% Shadow DOM Protection</span>
+                  <span>✓ Verified 4s+ Active Dwell</span>
                   <span>✓ Zero Host CSS Conflicts</span>
                   <span>✓ Real-time Pacing</span>
                 </div>

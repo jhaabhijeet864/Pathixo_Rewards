@@ -1,0 +1,17 @@
+# Pathixo Rewards Code Ownership
+
+# Global repository owners
+* @jhaabhijeet864
+
+# Extension Subsystem
+/apps/extension/ @jhaabhijeet864
+
+# Web Platform & API Engine
+/apps/web/ @jhaabhijeet864
+
+# Shared Schema & Contracts
+/packages/shared/ @jhaabhijeet864
+
+# QA & Security Scripts
+/scripts/ @jhaabhijeet864
+/.github/ @jhaabhijeet864
