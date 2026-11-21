@@ -92,3 +92,13 @@ pnpm build:extension
    `git checkout -b feat/add-new-adapter` or `git checkout -b fix/selector-update`
 2. Commit your modifications with concise commit messages.
 3. Push to your branch and open a Pull Request against the `main` branch.
+
+---
+
+## 7. Release Versioning and Tagging
+
+When preparing or proposing release tags, follow the [Release Versioning and Tagging Specification](file:///e:/Open%20Source/Ad_AI/RELEASE_CONVENTION.md). Never invent arbitrary tags. Always use domain-qualified tags:
+- Milestone: `vX.Y.Z`
+- Extension: `ext-vX.Y.Z[-channel]`
+- Web: `web-vX.Y.Z`
+- Selectors: `selectors-YYYY.MM.DD-rN`

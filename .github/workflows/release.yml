@@ -1,13 +1,65 @@
-name: Release Extension Package
+name: Release Automation
 
 on:
   push:
     tags:
-      - 'v*'
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
+      - 'ext-v[0-9]+.[0-9]+.[0-9]+*'
+      - 'web-v[0-9]+.[0-9]+.[0-9]+*'
+      - 'selectors-*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release tag name (following Pathixo Release Specification)'
+        required: true
+        type: string
+        default: 'v0.1.0'
+      prerelease:
+        description: 'Mark as pre-release (beta / rc)'
+        required: false
+        type: boolean
+        default: false
+      draft:
+        description: 'Create as draft release'
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
 
 jobs:
-  release:
-    name: Build & Publish Release Artifacts
+  validate:
+    name: Pre-Release Quality Gates
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.21.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile=false
+
+      - name: Run Monorepo Typecheck
+        run: pnpm -r typecheck
+
+      - name: Run Master QA Verification Suite
+        run: pnpm run qa:all
+
+  package:
+    name: Build & Package Artifacts
+    needs: [validate]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -29,13 +81,60 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile=false
 
-      - name: Build & Zip WXT Extension
-        run: pnpm --filter @pathixo/extension zip
+      - name: Prepare Artifacts Directory
+        run: mkdir -p dist-release
 
-      - name: Create GitHub Release
+      # Build Extension Artifacts (for milestone or ext tags)
+      - name: Build Chrome MV3 Extension
+        if: ${{ startsWith(github.ref_name, 'v') || startsWith(github.ref_name, 'ext-') || github.event_name == 'workflow_dispatch' }}
+        run: |
+          pnpm --filter @pathixo/extension build
+          pnpm --filter @pathixo/extension zip
+          cp apps/extension/.output/pathixo-rewards-extension.zip dist-release/pathixo-rewards-chrome-mv3.zip
+
+      - name: Build Firefox Extension
+        if: ${{ startsWith(github.ref_name, 'v') || startsWith(github.ref_name, 'ext-') || github.event_name == 'workflow_dispatch' }}
+        run: |
+          pnpm --filter @pathixo/extension build:firefox
+          pnpm --filter @pathixo/extension zip:firefox
+          cp apps/extension/.output/pathixo-rewards-extension.zip dist-release/pathixo-rewards-firefox.zip
+
+      # Build Web Platform (for milestone or web tags)
+      - name: Build Web Application
+        if: ${{ startsWith(github.ref_name, 'v') || startsWith(github.ref_name, 'web-') || github.event_name == 'workflow_dispatch' }}
+        run: pnpm --filter @pathixo/web build
+
+      # Export Selector Snapshot (for selector hot-patches or milestones)
+      - name: Export Selectors Configuration
+        if: ${{ startsWith(github.ref_name, 'selectors-') || startsWith(github.ref_name, 'v') || github.event_name == 'workflow_dispatch' }}
+        run: node scripts/validate-selectors.mjs
+
+      # Compute Cryptographic Checksums
+      - name: Generate SHA-256 Checksums
+        working-directory: dist-release
+        run: |
+          if [ -n "$(ls -A . 2>/dev/null)" ]; then
+            sha256sum * > checksums.sha256
+          fi
+
+      # Determine Pre-release Status
+      - name: Evaluate Release Type
+        id: release_type
+        run: |
+          TAG="${{ github.event.inputs.tag_name || github.ref_name }}"
+          if [[ "$TAG" == *"beta"* || "$TAG" == *"rc"* || "$TAG" == *"preview"* || "${{ github.event.inputs.prerelease }}" == "true" ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+          fi
+
+      # Publish to GitHub Releases
+      - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: apps/extension/.output/pathixo-rewards-extension.zip
+          tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
+          name: ${{ github.event.inputs.tag_name || github.ref_name }}
+          files: dist-release/*
           generate_release_notes: true
-          draft: false
-          prerelease: false
+          draft: ${{ github.event.inputs.draft || false }}
+          prerelease: ${{ steps.release_type.outputs.is_prerelease == 'true' }}
