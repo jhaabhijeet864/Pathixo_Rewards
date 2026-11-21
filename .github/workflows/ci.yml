@@ -44,7 +44,7 @@ jobs:
         run: pnpm --filter @pathixo/extension zip
 
       - name: Upload Extension Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pathixo-rewards-extension
           path: apps/extension/.output/pathixo-rewards-extension.zip
