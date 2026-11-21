@@ -1,6 +1,7 @@
-# Pathixo Rewards 💰
+# Pathixo Rewards
 
-> **Get paid while AI thinks.** The high-yield, privacy-first browser extension and ad monetization network for AI wait time.
+> **Get paid while AI thinks.** Privacy-first browser extension and ad network for AI wait time.
+> **Earn 60% revenue share.** Instant micro-cashouts at an industry-low $2.00 threshold.
 
 [![CI Status Checks](https://github.com/jhaabhijeet864/Pathixo_Rewards/actions/workflows/ci.yml/badge.svg)](https://github.com/jhaabhijeet864/Pathixo_Rewards/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](https://opensource.org/licenses/MIT)
@@ -11,7 +12,7 @@ Pathixo Rewards turns the idle seconds you spend waiting for AI chatbot response
 
 ---
 
-## ⚡ Competitive Edge
+## Competitive Edge
 
 | Feature | Pathixo Rewards (This Project) | Chatwait | uwait | AdWait |
 | :--- | :--- | :--- | :--- | :--- |
@@ -25,7 +26,7 @@ Pathixo Rewards turns the idle seconds you spend waiting for AI chatbot response
 
 ---
 
-## 🏗️ Monorepo Architecture
+## Monorepo Architecture
 
 ```text
 Pathixo_Rewards/
@@ -59,7 +60,7 @@ Pathixo_Rewards/
 
 ---
 
-## 🚀 Quickstart
+## Quickstart
 
 ### Prerequisites
 - Node.js 20+ (Node v22 or v24 recommended)
@@ -83,7 +84,7 @@ Open [http://localhost:3000](http://localhost:3000) to view the landing page, `/
 
 ---
 
-## 📦 How to Load Extension in Chrome / Edge
+## Loading the Extension in Chrome and Edge
 
 1. Build the production extension package:
    ```bash
@@ -97,7 +98,7 @@ Open [http://localhost:3000](http://localhost:3000) to view the landing page, `/
 
 ---
 
-## 🧪 Testing & QA Verification Suite
+## Testing and QA Verification Suite
 
 Pathixo Rewards features a production-grade automated testing and verification suite powered by Vitest, jsdom, and custom adversarial QA simulation harnesses:
 
@@ -122,7 +123,7 @@ These custom run commands address failure modes unique to AI chatbot ad-insertio
 
 ---
 
-## 🛡️ Chrome Web Store Compliance & Safety
+## Chrome Web Store Compliance and Safety
 
 Pathixo Rewards was built from Day 1 to pass Chrome Web Store automated security reviews on first submission:
 
@@ -134,7 +135,7 @@ Pathixo Rewards was built from Day 1 to pass Chrome Web Store automated security
 
 ---
 
-## 🏷️ GitHub Issues & Labels Taxonomy
+## Issue Tracking and Labels Taxonomy
 
 This project includes a tailored label taxonomy for AI site changes, subsystems, and bounties:
 
@@ -156,6 +157,19 @@ GITHUB_TOKEN=your_token node .github/scripts/sync-labels.mjs
 
 ---
 
-## 📄 License
+## Release Versioning and Tagging Convention
+
+Pathixo Rewards follows a domain-qualified semantic tagging system tailored to multi-target browser extensions and edge-cached selector hot-patches:
+
+- Full Milestone Releases: `v<MAJOR>.<MINOR>.<PATCH>` (e.g. `v0.1.0`)
+- Extension Store Packages: `ext-v<MAJOR>.<MINOR>.<PATCH>[-<CHANNEL>]` (e.g. `ext-v0.1.0`, `ext-v0.1.1-beta.1`)
+- Web and API Services: `web-v<MAJOR>.<MINOR>.<PATCH>` (e.g. `web-v0.1.0`)
+- Dynamic DOM Selector Hot-Patches: `selectors-<YYYY>.<MM>.<DD>-r<N>` (e.g. `selectors-2026.11.21-r1`)
+
+Read the complete [Release Tagging Specification](file:///e:/Open%20Source/Ad_AI/RELEASE_CONVENTION.md) before cutting release tags.
+
+---
+
+## License
 
 MIT License. Open source and free for the community.
