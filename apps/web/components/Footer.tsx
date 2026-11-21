@@ -1,12 +1,13 @@
 import Link from 'next/link';
 
 export function Footer() {
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
   return (
     <footer className="border-t border-slate-200 bg-slate-50 py-12 text-sm text-slate-600">
       <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-6 px-6 sm:flex-row">
         <div className="flex flex-col items-center gap-1 sm:items-start">
           <div className="flex items-center gap-2">
-            <img src="/icon.svg" alt="Pathixo Rewards" className="h-5 w-5 rounded" />
+            <img src={`${basePath}/icon.svg`} alt="Pathixo Rewards" className="h-5 w-5 rounded" />
             <span className="font-semibold text-slate-900">Pathixo Rewards</span>
           </div>
           <p className="text-xs text-slate-500">Get paid while AI thinks. 100% open-source.</p>

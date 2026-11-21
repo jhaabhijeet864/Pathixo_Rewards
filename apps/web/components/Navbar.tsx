@@ -3,12 +3,13 @@
 import Link from 'next/link';
 
 export function Navbar() {
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur-sm">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3.5">
         {/* Brand */}
         <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-90">
-          <img src="/icon.svg" alt="Pathixo Rewards" className="h-7 w-7 rounded-md" />
+          <img src={`${basePath}/icon.svg`} alt="Pathixo Rewards" className="h-7 w-7 rounded-md" />
           <span className="text-lg font-bold tracking-tight text-slate-900">Pathixo Rewards</span>
         </Link>
 

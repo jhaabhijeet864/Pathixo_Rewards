@@ -9,6 +9,7 @@
     "zip:extension": "pnpm --filter @pathixo/extension zip",
     "dev:web": "pnpm --filter @pathixo/web dev",
     "build:web": "pnpm --filter @pathixo/web build",
+    "build:pages": "node scripts/build-pages.mjs",
     "typecheck": "pnpm -r typecheck",
     "lint": "pnpm -r lint",
     "test": "vitest run",
