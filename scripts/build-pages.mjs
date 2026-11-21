@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { existsSync, renameSync, writeFileSync, mkdirSync, copyFileSync } from 'node:fs';
+import { existsSync, writeFileSync, mkdirSync, copyFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
@@ -17,12 +17,30 @@ const EXT_ZIP = resolve(ROOT, 'apps/extension/.output/pathixo-rewards-extension.
 
 console.log('\n🚀 [Pathixo Rewards] Building static export for GitHub Pages...\n');
 
+function moveDir(src, dest) {
+  if (process.platform === 'win32') {
+    const ps = spawnSync('powershell.exe', [
+      '-NoProfile',
+      '-Command',
+      `if (Test-Path "${src}") { Move-Item -Path "${src}" -Destination "${dest}" -Force }`,
+    ]);
+    if (ps.status !== 0) {
+      throw new Error(`Failed to move ${src} -> ${dest}: ${ps.stderr?.toString()}`);
+    }
+  } else {
+    const mv = spawnSync('mv', [src, dest]);
+    if (mv.status !== 0) {
+      throw new Error(`Failed to move ${src} -> ${dest}`);
+    }
+  }
+}
+
 let apiRenamed = false;
 try {
   // 1. Temporarily isolate dynamic API routes for static HTML export
   if (existsSync(API_DIR)) {
     console.log('📦 Isolating API routes for static export...');
-    renameSync(API_DIR, TEMP_API_DIR);
+    moveDir(API_DIR, TEMP_API_DIR);
     apiRenamed = true;
   }
 
@@ -65,20 +83,13 @@ try {
 
   console.log('\n🎉 [Pathixo Rewards] Static export build complete in apps/web/out/!\n');
 } finally {
-  // Always restore API directory with retry for Windows file lock release
+  // Always restore API directory
   if (apiRenamed && existsSync(TEMP_API_DIR)) {
-    for (let attempt = 1; attempt <= 5; attempt++) {
-      try {
-        renameSync(TEMP_API_DIR, API_DIR);
-        console.log('✔ Restored apps/web/app/api');
-        break;
-      } catch (err) {
-        if (attempt === 5) {
-          console.error('⚠ Failed to restore API directory:', err);
-        } else {
-          spawnSync('node', ['-e', 'Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 500)']);
-        }
-      }
+    try {
+      moveDir(TEMP_API_DIR, API_DIR);
+      console.log('✔ Restored apps/web/app/api');
+    } catch (err) {
+      console.error('⚠ Failed to restore API directory:', err);
     }
   }
 }
