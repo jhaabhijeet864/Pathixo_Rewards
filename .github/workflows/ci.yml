@@ -31,6 +31,11 @@ jobs:
       - name: Typecheck all workspaces
         run: pnpm -r typecheck
 
+      - name: Run Selector Canary & Database Seed Verification
+        run: |
+          pnpm run canary:selectors
+          pnpm run db:seed
+
       - name: Run Master QA Verification Suite
         run: pnpm run qa:all
 
