@@ -34,8 +34,11 @@ jobs:
       - name: Run Master QA Verification Suite
         run: pnpm run qa:all
 
-      - name: Build WXT Manifest V3 Extension
+      - name: Build WXT Manifest V3 Extension (Chrome)
         run: pnpm --filter @pathixo/extension build
+
+      - name: Build WXT Extension (Firefox)
+        run: pnpm --filter @pathixo/extension build:firefox
 
       - name: Zip Extension for Chrome Web Store
         run: pnpm --filter @pathixo/extension zip
