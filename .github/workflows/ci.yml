@@ -8,7 +8,7 @@ on:
 
 jobs:
   verify:
-    name: Typecheck & Build Status Checks
+    name: Typecheck, Build & QA Verification
     runs-on: ubuntu-latest
 
     steps:
@@ -30,6 +30,9 @@ jobs:
 
       - name: Typecheck all workspaces
         run: pnpm -r typecheck
+
+      - name: Run Master QA Verification Suite
+        run: pnpm run qa:all
 
       - name: Build WXT Manifest V3 Extension
         run: pnpm --filter @pathixo/extension build

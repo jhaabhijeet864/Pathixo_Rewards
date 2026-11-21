@@ -97,6 +97,31 @@ Open [http://localhost:3000](http://localhost:3000) to view the landing page, `/
 
 ---
 
+## 🧪 Testing & QA Verification Suite
+
+Pathixo Rewards features a production-grade automated testing and verification suite powered by Vitest, jsdom, and custom adversarial QA simulation harnesses:
+
+### Standard Test Commands
+| Command | Description |
+| :--- | :--- |
+| `pnpm test` | Runs the full Vitest unit & integration test suite (43+ tests across extension, API & shared packages) |
+| `pnpm test:watch` | Starts Vitest in interactive watch mode for rapid test-driven iteration |
+| `pnpm test:coverage` | Computes test coverage using the `@vitest/coverage-v8` engine |
+
+### Specialized QA Commands (Novel to Pathixo Rewards)
+These custom run commands address failure modes unique to AI chatbot ad-insertion extensions:
+
+| Command | Why It's Critical | What It Does |
+| :--- | :--- | :--- |
+| `pnpm run verify:selectors` | **AI DOM Drift Prevention** | Validates CSS selectors across all 5 AI platforms (ChatGPT, Claude, Gemini, Perplexity, DeepSeek) against synthetic DOM trees and verifies syntax before deployment. |
+| `pnpm run audit:store-compliance` | **Store Rejection Safeguard** | Statically scans source code and build output for forbidden sinks (`innerHTML`, `outerHTML`, `eval()`, dynamic scripts) and audits Manifest V3 permission boundaries. |
+| `pnpm run simulate:antifraud` | **Anti-Fraud Integrity Matrix** | Tests dwell verification against adversarial attacks: sub-threshold dwell (3999ms), tab blur/backgrounding, negative dwell, and missing security tokens. |
+| `pnpm run audit:financials` | **Financial Invariant Check** | Verifies 60/40 revenue split precision, IEEE-754 micro-accumulation drift, and strict enforcement of the $2.00 minimum cashout floor. |
+| `pnpm run simulate:stream` | **AI Generation Lifecycle Harness** | Simulates real-time token streaming character-by-character in a mock DOM, mounting the ad card into an open Shadow DOM and verifying dwell qualification. |
+| `pnpm run qa:all` | **Master QA Pipeline** | Executes all 6 test and verification suites in sequence. Must pass before shipping or releasing to stores. |
+
+---
+
 ## 🛡️ Chrome Web Store Compliance & Safety
 
 Pathixo Rewards was built from Day 1 to pass Chrome Web Store automated security reviews on first submission:

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security Vulnerability Disclosure
+    url: mailto:security@pathixo.com
+    about: Please report security vulnerabilities privately via email.
+  - name: Selector Breakage Quick Report
+    url: https://github.com/jhaabhijeet864/Pathixo_Rewards/issues/new?template=selector_breakage.yml
+    about: Report when an AI site (ChatGPT, Claude, Gemini, Perplexity, DeepSeek) updates its DOM.

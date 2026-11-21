@@ -1,0 +1,37 @@
+name: 💡 Feature Request
+description: Propose a new feature, adapter, or enhancement for Pathixo Rewards
+title: '[FEAT]: '
+labels: ['type:feature']
+body:
+  - type: dropdown
+    id: component
+    attributes:
+      label: Target Component
+      options:
+        - Extension Client (WXT / Manifest V3)
+        - AI Platform Adapter (New Chatbot Support)
+        - Web Platform / Landing Page
+        - Advertiser Portal (/advertise)
+        - User Dashboard & Cashout (/dashboard)
+        - API & Backend Engine
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or Motivation
+      description: What challenge or user need does this feature address?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe your proposed design or behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Any other approaches or existing solutions you considered?
