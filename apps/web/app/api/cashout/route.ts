@@ -1,10 +1,16 @@
 import { NextResponse } from 'next/server';
 import type { CashoutRequest } from '@pathixo/shared';
+import { checkRateLimit, createRateLimitExceededResponse } from '@/lib/rate-limit';
 
 const cashoutRequests: CashoutRequest[] = [];
 
 export async function POST(request: Request) {
   try {
+    const rateLimit = checkRateLimit(request, { maxRequests: 10, windowMs: 60_000, prefix: 'cashout' });
+    if (!rateLimit.success) {
+      return createRateLimitExceededResponse(rateLimit);
+    }
+
     const body = await request.json();
     const { device_id, amount_usd, payout_method, payout_destination } = body;
 

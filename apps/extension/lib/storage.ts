@@ -66,11 +66,14 @@ export async function setCachedAds(ads: AdCreative[]): Promise<void> {
   await browser.storage.local.set({ cached_ads: ads });
 }
 
+export const MAX_QUEUED_EVENTS = 100;
+
 export async function enqueueEvent(event: ImpressionEvent): Promise<void> {
   const data = await browser.storage.local.get('queued_events');
   const queue = Array.isArray(data.queued_events) ? (data.queued_events as ImpressionEvent[]) : [];
   queue.push(event);
-  await browser.storage.local.set({ queued_events: queue });
+  const boundedQueue = queue.length > MAX_QUEUED_EVENTS ? queue.slice(-MAX_QUEUED_EVENTS) : queue;
+  await browser.storage.local.set({ queued_events: boundedQueue });
 }
 
 export async function drainQueuedEvents(): Promise<ImpressionEvent[]> {

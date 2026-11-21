@@ -18,14 +18,16 @@ const EXT_ZIP = resolve(ROOT, 'apps/extension/.output/pathixo-rewards-extension.
 console.log('\n🚀 [Pathixo Rewards] Building static export for GitHub Pages...\n');
 
 function moveDir(src, dest) {
+  if (!existsSync(src)) return;
+  const newName = dest.split(/[/\\]/).pop();
   if (process.platform === 'win32') {
     const ps = spawnSync('powershell.exe', [
       '-NoProfile',
       '-Command',
-      `if (Test-Path "${src}") { Move-Item -Path "${src}" -Destination "${dest}" -Force }`,
+      `if (Test-Path "${src}") { Rename-Item -LiteralPath "${src}" -NewName "${newName}" -Force }`,
     ]);
-    if (ps.status !== 0) {
-      throw new Error(`Failed to move ${src} -> ${dest}: ${ps.stderr?.toString()}`);
+    if (ps.status !== 0 && existsSync(src)) {
+      throw new Error(`Failed to rename ${src} -> ${newName}: ${ps.stderr?.toString()}`);
     }
   } else {
     const mv = spawnSync('mv', [src, dest]);
@@ -35,6 +37,32 @@ function moveDir(src, dest) {
   }
 }
 
+function restoreApi() {
+  if (existsSync(TEMP_API_DIR)) {
+    try {
+      moveDir(TEMP_API_DIR, API_DIR);
+      console.log('✔ Restored apps/web/app/api');
+    } catch (err) {
+      console.error('⚠ Failed to restore API directory:', err);
+    }
+  }
+}
+
+// In case previous run crashed or was killed, restore first
+restoreApi();
+
+process.on('SIGINT', () => {
+  restoreApi();
+  process.exit(1);
+});
+process.on('SIGTERM', () => {
+  restoreApi();
+  process.exit(1);
+});
+process.on('exit', () => {
+  restoreApi();
+});
+
 let apiRenamed = false;
 try {
   // 1. Temporarily isolate dynamic API routes for static HTML export
@@ -42,17 +70,6 @@ try {
     console.log('📦 Isolating API routes for static export...');
     moveDir(API_DIR, TEMP_API_DIR);
     apiRenamed = true;
-  }
-
-  // 2. Clean stale .next build cache to ensure pure static export
-  const NEXT_DIR = resolve(WEB_DIR, '.next');
-  if (existsSync(NEXT_DIR)) {
-    console.log('🧹 Cleaning stale .next cache...');
-    if (process.platform === 'win32') {
-      spawnSync('powershell.exe', ['-NoProfile', '-Command', `Remove-Item -Recurse -Force "${NEXT_DIR}"`]);
-    } else {
-      rmSync(NEXT_DIR, { recursive: true, force: true });
-    }
   }
 
   // 3. Build web application with static export & GitHub Pages base path

@@ -14,16 +14,22 @@ const REMOTE_URL = 'https://github.com/jhaabhijeet864/Pathixo_Rewards.git';
 console.log('\n🚀 [Pathixo Rewards] Deploying static landing page to gh-pages branch...\n');
 
 // 1. Build pages first if out/ does not exist or needs update
-console.log('⚡ Step 1: Ensuring static export build is fresh...');
-const buildScript = resolve(__dirname, 'build-pages.mjs');
-const buildResult = spawnSync('node', [buildScript], {
-  cwd: ROOT,
-  stdio: 'inherit',
-});
+const skipBuild = process.argv.includes('--skip-build') || process.env.SKIP_BUILD === 'true';
 
-if (buildResult.status !== 0) {
-  console.error('❌ Build failed before deployment');
-  process.exit(1);
+if (!skipBuild) {
+  console.log('⚡ Step 1: Ensuring static export build is fresh...');
+  const buildScript = resolve(__dirname, 'build-pages.mjs');
+  const buildResult = spawnSync('node', [buildScript], {
+    cwd: ROOT,
+    stdio: 'inherit',
+  });
+
+  if (buildResult.status !== 0) {
+    console.error('❌ Build failed before deployment');
+    process.exit(1);
+  }
+} else {
+  console.log('⚡ Step 1: Using existing static export in out/...');
 }
 
 if (!existsSync(OUT_DIR)) {

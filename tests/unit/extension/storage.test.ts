@@ -103,4 +103,25 @@ describe('Extension Storage Library (apps/extension/lib/storage.ts)', () => {
     const secondDrain = await drainQueuedEvents();
     expect(secondDrain).toHaveLength(0);
   });
+
+  it('should cap the queued events at MAX_QUEUED_EVENTS to prevent memory exhaustion', async () => {
+    // Enqueue 110 events
+    for (let i = 0; i < 110; i++) {
+      await enqueueEvent({
+        event_id: `evt_${i}`,
+        ad_id: 'ad_test',
+        ad_token: 'tok_test',
+        device_id: 'dev_test',
+        timestamp: Date.now(),
+        dwell_ms: 4200,
+        ai_platform: 'chatgpt',
+      });
+    }
+
+    const drained = await drainQueuedEvents();
+    expect(drained).toHaveLength(100);
+    // Oldest 10 (0..9) should have been pruned, remaining starts at evt_10
+    expect(drained[0].event_id).toBe('evt_10');
+    expect(drained[99].event_id).toBe('evt_109');
+  });
 });

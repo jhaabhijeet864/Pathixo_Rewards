@@ -21,7 +21,7 @@ function BrandFeatherIcon({ className = 'h-5 w-5' }: { className?: string }) {
 
 function CampaignManagerContent() {
   const searchParams = useSearchParams();
-  const campaignId = searchParams.get('id');
+  const campaignId = searchParams?.get('id') || null;
 
   const [campaign, setCampaign] = useState<AdCampaign | null>(null);
   const [loading, setLoading] = useState<boolean>(Boolean(campaignId));

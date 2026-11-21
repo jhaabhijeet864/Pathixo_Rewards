@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server';
 import type { ImpressionEvent } from '@pathixo/shared';
 import { campaignStore } from '../../../../lib/campaign-store';
+import { checkRateLimit, createRateLimitExceededResponse } from '@/lib/rate-limit';
 
 // In-memory ledger for fast demonstration & event auditing
 const verifiedImpressionsLedger: ImpressionEvent[] = [];
 
 export async function POST(request: Request) {
   try {
+    const rateLimit = checkRateLimit(request, { maxRequests: 120, windowMs: 60_000, prefix: 'impression' });
+    if (!rateLimit.success) {
+      return createRateLimitExceededResponse(rateLimit);
+    }
+
     const body = await request.json();
     const events: ImpressionEvent[] = body.events || [];
 
