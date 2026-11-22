@@ -3,11 +3,11 @@ import Link from 'next/link';
 export function Footer() {
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
   return (
-    <footer className="border-t border-slate-800/80 bg-[#05070a] py-12 text-sm text-slate-400">
-      <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-6 px-6 sm:px-10 lg:px-14 sm:flex-row">
+    <footer className="border-t border-slate-800/80 bg-[#05070a] py-10 text-sm text-slate-400">
+      <div className="mx-auto flex w-full max-w-6xl lg:max-w-7xl flex-col items-center justify-between gap-6 px-4 sm:px-6 lg:px-8 sm:flex-row">
         {/* Brand */}
         <div className="flex items-center gap-2.5">
-          <img src={`${basePath}/icon.svg`} alt="Pathixo Rewards" className="h-6 w-6 rounded-md" />
+          <img src={`${basePath}/pathixo-rewards.svg`} alt="Pathixo Rewards" className="h-7 w-7 object-contain" />
           <span className="font-bold text-white text-base">Pathixo Rewards</span>
         </div>
 

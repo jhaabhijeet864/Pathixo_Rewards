@@ -43,15 +43,15 @@ describe('Extension Storage Library (apps/extension/lib/storage.ts)', () => {
 
   it('should retrieve default earnings and accurately add earnings increments', async () => {
     const initial = await getEarnings();
-    expect(initial.balance_usd).toBeGreaterThan(0);
-    expect(initial.impressions_today).toBe(4);
+    expect(initial.balance_usd).toBe(0.0);
+    expect(initial.impressions_today).toBe(0);
 
     const prevBalance = initial.balance_usd;
     const increment = 0.009; // 1 qualified impression
     const updated = await addEarnings(increment);
 
-    expect(updated.balance_usd).toBe(Number((prevBalance + increment).toFixed(4)));
-    expect(updated.impressions_today).toBe(initial.impressions_today + 1);
+    expect(updated.balance_usd).toBe(0.009);
+    expect(updated.impressions_today).toBe(1);
   });
 
   it('should store and retrieve cached ads', async () => {

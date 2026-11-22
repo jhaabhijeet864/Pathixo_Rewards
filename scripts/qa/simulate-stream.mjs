@@ -88,8 +88,17 @@ if (simulatedElapsedMs >= 4000 && isTabFocused && !isDismissed) {
   };
 
   console.log('   🎉 [QUALIFIED IMPRESSION]: Verification passed!');
-  console.log('   💰 [User Credited]: +$0.0090 USD added to balance.');
+  console.log('   💰 [User Credited]: +$0.0027 USD added to balance (Cursor @ $4.50 CPM).');
   console.log(`   📄 Event ID: ${verifiedEvent.event_id}`);
+
+  // Model 1: Verify Ad Card Sustains and Remains Mounted in DOM
+  const sustainedCard = document.getElementById('pathixo-ad-host');
+  if (!sustainedCard || !sustainedCard.isConnected) {
+    console.error('\n❌ [FAIL] Ad Card vanished after stream completion! Must sustain in DOM.\n');
+    process.exit(1);
+  }
+  console.log('   📌 [Model 1 Persistence]: Ad Card remains cleanly mounted above response for user to read.');
+
   console.log('\n✅ [PASS] Stream injection & dwell qualification lifecycle verified!\n');
   process.exit(0);
 } else {

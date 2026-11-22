@@ -87,7 +87,7 @@ export function HeroChatMockup() {
       setShowEarnedBadge(false);
       setTimeout(() => {
         setBalance((prev) => {
-          const next = Number((prev + 0.005).toFixed(3));
+          const next = Number((prev + 0.002).toFixed(3));
           return next > 12.95 ? 12.622 : next;
         });
         setShowEarnedBadge(true);
@@ -98,19 +98,19 @@ export function HeroChatMockup() {
   }, []);
 
   return (
-    <div className="w-full max-w-3xl flex flex-col items-center">
+    <div className="w-full max-w-2xl lg:max-w-[780px] flex flex-col items-center">
       {/* Chat Window Container with Relative Badges */}
       <div className="relative w-full">
         {/* Top-Right Floating Balance Card */}
         <div className="absolute -top-7 sm:-top-8 -right-2 sm:-right-6 z-30 flex flex-col items-start rounded-2xl border border-[#223244] bg-[#0c131c]/95 px-4 py-3 shadow-2xl backdrop-blur-md">
-          {/* Green +$0.005 Toast */}
+          {/* Green +$0.002 Toast */}
           <div className="absolute -top-3 right-3">
             <span
               className={`inline-block rounded-full bg-[#10e599] px-2.5 py-0.5 text-xs font-black text-[#04281a] shadow-md transition-all duration-300 ${
                 showEarnedBadge ? 'scale-100 opacity-100' : 'scale-90 opacity-70'
               }`}
             >
-              +$0.005
+              +$0.002
             </span>
           </div>
 

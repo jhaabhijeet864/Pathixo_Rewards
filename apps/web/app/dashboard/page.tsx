@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   DollarSign,
   TrendingUp,
@@ -42,6 +43,8 @@ function formatTimeAgo(timestamp: number | string): string {
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [deviceId, setDeviceId] = useState('');
   const [userSession, setUserSession] = useState<{ email: string; name: string } | null>(null);
   const [isNewLogin, setIsNewLogin] = useState(false);
@@ -67,6 +70,29 @@ export default function DashboardPage() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    // STRICT AUTH CHECK: The dashboard section must only appear when properly logged in
+    let session: { email: string; name: string; logged_in?: boolean } | null = null;
+    try {
+      const storedAuth = localStorage.getItem('pathixo_auth_session');
+      if (storedAuth) {
+        const parsed = JSON.parse(storedAuth);
+        if (parsed?.logged_in && parsed?.email) {
+          session = parsed;
+          setUserSession(session);
+        }
+      }
+    } catch {
+      // Storage parse fallback
+    }
+
+    if (!session) {
+      setIsAuthLoading(false);
+      router.replace('/login');
+      return;
+    }
+
+    setIsAuthLoading(false);
+
     const params = new URLSearchParams(window.location.search);
     const devParam = params.get('device_id');
     const loginParam = params.get('login');
@@ -87,14 +113,7 @@ export default function DashboardPage() {
       setIsNewLogin(true);
     }
 
-    let session: { email: string; name: string } | null = null;
     try {
-      const storedAuth = localStorage.getItem('pathixo_auth_session');
-      if (storedAuth) {
-        session = JSON.parse(storedAuth);
-        setUserSession(session);
-      }
-
       const storedEarnings = localStorage.getItem(`pathixo_earnings_${currentId}`);
       if (storedEarnings) {
         setEarnings(JSON.parse(storedEarnings));
@@ -304,49 +323,96 @@ export default function DashboardPage() {
     }
   };
 
+  const handleSignOut = () => {
+    try {
+      localStorage.removeItem('pathixo_auth_session');
+      window.dispatchEvent(new Event('pathixo_auth_change'));
+    } catch {}
+    router.replace('/login');
+  };
+
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+
+  if (isAuthLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#070a0e] text-slate-100">
+        <div className="flex flex-col items-center gap-3">
+          <img src={`${basePath}/pathixo-rewards.svg`} alt="Pathixo Rewards" className="h-10 w-10 animate-pulse" />
+          <span className="text-sm font-medium text-slate-400">Verifying session...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!userSession) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#070a0e] px-4 text-center text-slate-100">
+        <img src={`${basePath}/pathixo-rewards.svg`} alt="Pathixo Rewards" className="h-12 w-12 mb-4" />
+        <h1 className="text-2xl font-bold text-white mb-2">Sign in required</h1>
+        <p className="text-sm text-slate-400 max-w-sm mb-6">
+          The rewards dashboard is only accessible when signed in with your account.
+        </p>
+        <Link
+          href="/login"
+          className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-6 py-2.5 text-sm font-bold text-slate-950 hover:bg-emerald-400 transition"
+        >
+          Sign in to Pathixo
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-[#070a0e] text-slate-100 font-sans antialiased">
       {/* MINIMAL STANDALONE DASHBOARD HEADER */}
       <header className="sticky top-0 z-50 border-b border-slate-800/80 bg-[#070a0e]/95 backdrop-blur-md">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 sm:px-10 py-4">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8 py-3.5">
           <Link
             href="/"
-            className="flex items-center gap-3 group transition-opacity hover:opacity-90"
+            className="flex items-center gap-2.5 group transition-opacity hover:opacity-90"
             title="Back to Pathixo Rewards Home"
           >
-            <img src={`${basePath}/pathixo-rewards.svg`} alt="Pathixo Rewards" className="h-9 w-9 object-contain" />
+            <img src={`${basePath}/pathixo-rewards.svg`} alt="Pathixo Rewards" className="h-8 w-8 object-contain" />
             <div className="flex flex-col">
-              <span className="text-xl font-bold tracking-tight text-white group-hover:text-emerald-400 transition-colors">
+              <span className="text-lg font-bold tracking-tight text-white group-hover:text-emerald-400 transition-colors">
                 Pathixo Rewards
               </span>
-              <span className="text-[11px] text-slate-400 font-medium">User Rewards Console</span>
+              <span className="text-[10px] text-slate-400 font-medium">User Rewards Console</span>
             </div>
           </Link>
 
           {/* Right Header Status Bar */}
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-2.5 sm:gap-3">
             {userSession && (
-              <div className="hidden md:flex items-center gap-2 rounded-full border border-slate-800 bg-[#0d121c] px-3.5 py-1.5 text-xs text-slate-300">
-                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                <span className="font-mono text-xs">{userSession.email}</span>
+              <div className="flex items-center gap-2">
+                <div className="hidden md:flex items-center gap-2 rounded-full border border-slate-800 bg-[#0d121c] px-3 py-1 text-xs text-slate-300">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  <span className="font-mono text-xs">{userSession.email}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="rounded-full border border-slate-800 bg-[#0d121c] px-3 py-1 text-xs font-medium text-slate-400 hover:text-rose-400 hover:border-rose-900/50 transition cursor-pointer"
+                  title="Sign out"
+                >
+                  Sign out
+                </button>
               </div>
             )}
 
-            <div className="hidden sm:flex items-center gap-2 rounded-full border border-slate-800 bg-[#0d121c] px-3.5 py-1.5 text-xs text-slate-400">
-              <span className="text-slate-500">Device ID:</span>
+            <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-slate-800 bg-[#0d121c] px-3 py-1 text-xs text-slate-400">
+              <span className="text-slate-500">Device:</span>
               <span className="font-mono text-slate-300 font-semibold">{deviceId.slice(0, 10)}...</span>
             </div>
 
             {extensionConnected ? (
-              <div className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-950/40 px-3.5 py-1.5 text-xs font-semibold text-emerald-400">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <div className="flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-950/40 px-3 py-1 text-xs font-semibold text-emerald-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                 <span>Extension Active</span>
               </div>
             ) : (
-              <div className="flex items-center gap-2 rounded-full border border-slate-800 bg-[#0d121c] px-3.5 py-1.5 text-xs font-medium text-slate-400">
-                <span className="h-2 w-2 rounded-full bg-slate-500"></span>
+              <div className="flex items-center gap-1.5 rounded-full border border-slate-800 bg-[#0d121c] px-3 py-1 text-xs font-medium text-slate-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-slate-500"></span>
                 <span>Extension Ready</span>
               </div>
             )}
@@ -375,8 +441,8 @@ export default function DashboardPage() {
       )}
 
       {/* DASHBOARD CONTENT BODY */}
-      <main className="flex-1 py-10 sm:py-12">
-        <div className="mx-auto w-full max-w-7xl px-6 sm:px-10 space-y-8">
+      <main className="flex-1 py-8 sm:py-10">
+        <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 space-y-7">
 
           {/* ONBOARDING SUCCESS BANNER */}
           {isNewLogin && (
@@ -397,74 +463,74 @@ export default function DashboardPage() {
           )}
 
           {/* WELCOME BANNER & METRICS */}
-          <div className="space-y-6">
+          <div className="space-y-5">
             <div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
                 Your Rewards &amp; Payouts
               </h1>
-              <p className="mt-1.5 text-sm text-slate-400 max-w-2xl">
+              <p className="mt-1 text-xs sm:text-sm text-slate-400 max-w-2xl">
                 Track your wait-time earnings, review live impressions during AI thinking mode, and request instant cashouts.
               </p>
             </div>
 
             {/* 4 CORE METRIC TILES */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
               {/* Available Balance */}
-              <div className="rounded-2xl border border-emerald-500/30 bg-[#0d141e] p-6 shadow-sm">
+              <div className="rounded-xl border border-emerald-500/30 bg-[#0d141e] p-4 sm:p-5 shadow-xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Available Balance</span>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">Available Balance</span>
                   <DollarSign className="h-4 w-4 text-emerald-400" />
                 </div>
-                <div className="mt-2 text-3xl sm:text-4xl font-extrabold text-white">
+                <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-white">
                   ${earnings.balance_usd.toFixed(4)}
                 </div>
-                <p className="mt-2 text-xs font-medium text-emerald-400">
+                <p className="mt-1.5 text-[11px] font-medium text-emerald-400">
                   {canCashout ? '✓ Ready for instant cashout' : `$${(minThreshold - earnings.balance_usd).toFixed(2)} to $2.00 cashout floor`}
                 </p>
               </div>
 
               {/* Today's Views */}
-              <div className="rounded-2xl border border-slate-800 bg-[#0d121c] p-6 shadow-sm">
+              <div className="rounded-xl border border-slate-800 bg-[#0d121c] p-4 sm:p-5 shadow-xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Today&apos;s Verified Views</span>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Today&apos;s Verified Views</span>
                   <Clock className="h-4 w-4 text-slate-400" />
                 </div>
-                <div className="mt-2 text-3xl sm:text-4xl font-extrabold text-white">
+                <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-white">
                   {earnings.impressions_today}
                 </div>
-                <p className="mt-2 text-xs text-slate-500">Across ChatGPT, Claude &amp; Gemini</p>
+                <p className="mt-1.5 text-[11px] text-slate-500">Across ChatGPT, Claude &amp; Gemini</p>
               </div>
 
               {/* Lifetime Cashouts */}
-              <div className="rounded-2xl border border-slate-800 bg-[#0d121c] p-6 shadow-sm">
+              <div className="rounded-xl border border-slate-800 bg-[#0d121c] p-4 sm:p-5 shadow-xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Lifetime Cashouts</span>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Lifetime Cashouts</span>
                   <TrendingUp className="h-4 w-4 text-slate-400" />
                 </div>
-                <div className="mt-2 text-3xl sm:text-4xl font-extrabold text-white">
+                <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-white">
                   ${(earnings.lifetime_cashouts_usd || 0).toFixed(2)}
                 </div>
-                <p className="mt-2 text-xs text-slate-500">Settled via instant rails</p>
+                <p className="mt-1.5 text-[11px] text-slate-500">Settled via instant rails</p>
               </div>
 
               {/* Referral Commission (Clicks to dedicated Referrals page) */}
               <Link
                 href="/dashboard/referrals"
-                className="group rounded-2xl border border-slate-800 bg-[#0d121c] p-6 shadow-sm hover:border-emerald-500/50 hover:bg-[#0f1724] transition-all cursor-pointer block"
+                className="group rounded-xl border border-slate-800 bg-[#0d121c] p-4 sm:p-5 shadow-xs hover:border-emerald-500/50 hover:bg-[#0f1724] transition-all cursor-pointer block"
                 title="View dedicated Referrals dashboard"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-emerald-400 transition-colors">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 group-hover:text-emerald-400 transition-colors">
                     Referral Commission
                   </span>
                   <Share2 className="h-4 w-4 text-slate-400 group-hover:text-emerald-400 transition-colors" />
                 </div>
-                <div className="mt-2 text-3xl sm:text-4xl font-extrabold text-emerald-400">
+                <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-emerald-400">
                   ${earnings.referral_bonus_usd.toFixed(2)}
                 </div>
-                <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
+                <div className="mt-1.5 flex items-center justify-between text-[11px] text-slate-500">
                   <span>10% weekly royalty</span>
-                  <span className="font-semibold text-emerald-400 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
+                  <span className="font-semibold text-emerald-400 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform whitespace-nowrap shrink-0">
                     View Details <ArrowRight className="h-3 w-3" />
                   </span>
                 </div>
@@ -473,29 +539,29 @@ export default function DashboardPage() {
           </div>
 
           {/* TWO-COLUMN WORKSPACE: CASHOUT TERMINAL + REFERRAL QUICK HUB */}
-          <div className="grid gap-6 lg:grid-cols-12 items-start">
+          <div className="grid gap-5 lg:grid-cols-12 items-start">
 
             {/* CASHOUT TERMINAL (7 cols) */}
-            <div className="lg:col-span-7 rounded-2xl border border-slate-800 bg-[#0d121c] p-6 sm:p-7 shadow-sm space-y-5">
+            <div className="lg:col-span-7 rounded-xl border border-slate-800 bg-[#0d121c] p-5 sm:p-6 shadow-xs space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Instant Redemption</span>
-                  <h2 className="mt-0.5 text-xl sm:text-2xl font-bold text-white">Withdraw your earnings</h2>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">Instant Redemption</span>
+                  <h2 className="mt-0.5 text-lg sm:text-xl font-bold text-white">Withdraw your earnings</h2>
                 </div>
-                <span className="text-xs font-mono text-slate-400 bg-slate-800/60 px-2.5 py-1 rounded-md border border-slate-700/50">
+                <span className="text-[11px] font-mono text-slate-400 bg-slate-800/60 px-2 py-0.5 rounded border border-slate-700/50">
                   $2.00 Floor
                 </span>
               </div>
 
               {/* Threshold Progress Bar */}
-              <div className="rounded-xl bg-[#090d14] p-4 border border-slate-800 space-y-2">
+              <div className="rounded-lg bg-[#090d14] p-3 border border-slate-800 space-y-1.5">
                 <div className="flex justify-between text-xs font-semibold text-slate-300">
                   <span>Threshold Progress</span>
-                  <span className="text-emerald-400">
+                  <span className="text-emerald-400 font-mono">
                     ${earnings.balance_usd.toFixed(2)} / $2.00 ({progressPercent}%)
                   </span>
                 </div>
-                <div className="h-2.5 w-full rounded-full bg-slate-800 overflow-hidden">
+                <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
                   <div
                     className="h-full bg-emerald-500 transition-all duration-500"
                     style={{ width: `${progressPercent}%` }}
@@ -504,29 +570,29 @@ export default function DashboardPage() {
               </div>
 
               {cashoutSuccess ? (
-                <div className="rounded-xl border border-emerald-500/40 bg-emerald-950/30 p-5 text-center space-y-2">
-                  <CheckCircle2 className="h-7 w-7 text-emerald-400 mx-auto" />
-                  <h3 className="font-bold text-white text-base">Transfer Initiated!</h3>
-                  <p className="text-xs sm:text-sm text-emerald-300/80">{cashoutSuccess}</p>
+                <div className="rounded-lg border border-emerald-500/40 bg-emerald-950/30 p-4 text-center space-y-1.5">
+                  <CheckCircle2 className="h-6 w-6 text-emerald-400 mx-auto" />
+                  <h3 className="font-bold text-white text-sm">Transfer Initiated!</h3>
+                  <p className="text-xs text-emerald-300/80">{cashoutSuccess}</p>
                   <button
                     type="button"
                     onClick={() => setCashoutSuccess(null)}
-                    className="mt-2 text-xs text-slate-400 hover:text-white underline cursor-pointer"
+                    className="mt-1 text-xs text-slate-400 hover:text-white underline cursor-pointer"
                   >
                     Make another request
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleCashout} className="space-y-4">
+                <form onSubmit={handleCashout} className="space-y-3.5">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-2">Select Payout Rail</label>
+                    <label className="block text-[11px] font-semibold text-slate-300 mb-1.5">Select Payout Rail</label>
                     <div className="grid grid-cols-3 gap-2">
                       <button
                         type="button"
                         onClick={() => setPayoutMethod('upi')}
-                        className={`rounded-xl p-3 text-xs font-bold border transition text-center cursor-pointer ${
+                        className={`rounded-lg py-2 px-2.5 text-xs font-bold border transition text-center cursor-pointer ${
                           payoutMethod === 'upi'
-                            ? 'border-emerald-500 bg-emerald-950/60 text-emerald-300 shadow-sm'
+                            ? 'border-emerald-500 bg-emerald-950/60 text-emerald-300 shadow-xs'
                             : 'border-slate-800 bg-[#090d14] text-slate-400 hover:text-white hover:bg-slate-800/50'
                         }`}
                       >
@@ -535,9 +601,9 @@ export default function DashboardPage() {
                       <button
                         type="button"
                         onClick={() => setPayoutMethod('paypal')}
-                        className={`rounded-xl p-3 text-xs font-bold border transition text-center cursor-pointer ${
+                        className={`rounded-lg py-2 px-2.5 text-xs font-bold border transition text-center cursor-pointer ${
                           payoutMethod === 'paypal'
-                            ? 'border-emerald-500 bg-emerald-950/60 text-emerald-300 shadow-sm'
+                            ? 'border-emerald-500 bg-emerald-950/60 text-emerald-300 shadow-xs'
                             : 'border-slate-800 bg-[#090d14] text-slate-400 hover:text-white hover:bg-slate-800/50'
                         }`}
                       >
@@ -546,9 +612,9 @@ export default function DashboardPage() {
                       <button
                         type="button"
                         onClick={() => setPayoutMethod('gift_card')}
-                        className={`rounded-xl p-3 text-xs font-bold border transition text-center cursor-pointer ${
+                        className={`rounded-lg py-2 px-2.5 text-xs font-bold border transition text-center cursor-pointer ${
                           payoutMethod === 'gift_card'
-                            ? 'border-emerald-500 bg-emerald-950/60 text-emerald-300 shadow-sm'
+                            ? 'border-emerald-500 bg-emerald-950/60 text-emerald-300 shadow-xs'
                             : 'border-slate-800 bg-[#090d14] text-slate-400 hover:text-white hover:bg-slate-800/50'
                         }`}
                       >
@@ -558,7 +624,7 @@ export default function DashboardPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    <label className="block text-[11px] font-semibold text-slate-300 mb-1">
                       {payoutMethod === 'upi'
                         ? 'Your VPA / UPI ID (e.g. username@okhdfcbank)'
                         : payoutMethod === 'paypal'
@@ -571,14 +637,14 @@ export default function DashboardPage() {
                       placeholder={payoutMethod === 'upi' ? 'username@upi' : 'you@domain.com'}
                       value={destination}
                       onChange={(e) => setDestination(e.target.value)}
-                      className="w-full rounded-xl border border-slate-800 bg-[#090d14] px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+                      className="w-full rounded-lg border border-slate-800 bg-[#090d14] px-3.5 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={!canCashout || isCashoutSubmitting || isImpersonating}
-                    className="w-full rounded-xl bg-[#10b981] py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#0ea371] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                    className="w-full rounded-lg bg-[#10b981] py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs transition hover:bg-[#0ea371] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                   >
                     {isImpersonating
                       ? 'Cashout Disabled During Admin Impersonation'
@@ -593,50 +659,50 @@ export default function DashboardPage() {
             </div>
 
             {/* COMFY REFERRAL QUICK HUB (5 cols) */}
-            <div className="lg:col-span-5 rounded-2xl border border-slate-800 bg-[#0d121c] p-6 sm:p-7 shadow-sm space-y-5">
+            <div className="lg:col-span-5 rounded-xl border border-slate-800 bg-[#0d121c] p-5 sm:p-6 shadow-xs space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Referral Program</span>
-                  <h2 className="mt-0.5 text-xl sm:text-2xl font-bold text-white">Invite &amp; Earn 10%</h2>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">Referral Program</span>
+                  <h2 className="mt-0.5 text-lg sm:text-xl font-bold text-white">Invite &amp; Earn 10%</h2>
                 </div>
-                <span className="text-xs font-semibold text-emerald-400 bg-emerald-950/60 px-2.5 py-1 rounded-md border border-emerald-800/40">
+                <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/40">
                   Weekly Royalty
                 </span>
               </div>
 
-              <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+              <p className="text-xs text-slate-400 leading-relaxed">
                 Earn a 10% weekly royalty on verified wait-time impressions from developers who join through your unique link.
               </p>
 
               {/* Permanent Referral Link Box */}
-              <div className="rounded-xl border border-slate-800 bg-[#090d14] p-3 flex items-center justify-between gap-2.5">
+              <div className="rounded-lg border border-slate-800 bg-[#090d14] p-2.5 flex items-center justify-between gap-2">
                 <span className="truncate text-xs font-mono text-slate-300 select-all">{fullReferralUrl}</span>
                 <button
                   type="button"
                   onClick={handleCopyReferral}
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-emerald-500 transition cursor-pointer"
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white shadow-2xs hover:bg-emerald-500 transition cursor-pointer"
                 >
-                  {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                   <span>{copied ? 'Copied' : 'Copy'}</span>
                 </button>
               </div>
 
               {/* Quick 2-stat summary */}
-              <div className="grid grid-cols-2 gap-3 text-center text-xs">
-                <div className="rounded-xl bg-[#090d14] p-3 border border-slate-800">
-                  <span className="text-slate-400 block mb-0.5">Friends Referred</span>
-                  <strong className="text-lg font-bold text-white">{earnings.referral_count}</strong>
+              <div className="grid grid-cols-2 gap-2 text-center text-xs">
+                <div className="rounded-lg bg-[#090d14] p-2.5 border border-slate-800">
+                  <span className="text-slate-400 block text-[11px] mb-0.5">Friends Referred</span>
+                  <strong className="text-base font-bold text-white">{earnings.referral_count}</strong>
                 </div>
-                <div className="rounded-xl bg-[#090d14] p-3 border border-slate-800">
-                  <span className="text-slate-400 block mb-0.5">Total Royalty</span>
-                  <strong className="text-lg font-bold text-emerald-400">${earnings.referral_bonus_usd.toFixed(2)}</strong>
+                <div className="rounded-lg bg-[#090d14] p-2.5 border border-slate-800">
+                  <span className="text-slate-400 block text-[11px] mb-0.5">Total Royalty</span>
+                  <strong className="text-base font-bold text-emerald-400">${earnings.referral_bonus_usd.toFixed(2)}</strong>
                 </div>
               </div>
 
               {/* Dedicated Referral Link Navigation */}
               <Link
                 href="/dashboard/referrals"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-800/80 py-2.5 text-xs font-bold text-slate-200 hover:bg-slate-700 hover:text-white transition"
+                className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800/80 py-2 text-xs font-bold text-slate-200 hover:bg-slate-700 hover:text-white transition"
               >
                 <span>View Full Referrals Dashboard &amp; Peers</span>
                 <ArrowRight className="h-3.5 w-3.5 text-emerald-400" />
@@ -646,7 +712,7 @@ export default function DashboardPage() {
           </div>
 
           {/* ADS SEEN SO FAR (AD HISTORY LOG) */}
-          <div className="rounded-2xl border border-slate-800 bg-[#0d121c] p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="rounded-xl border border-slate-800 bg-[#0d121c] p-5 sm:p-6 shadow-xs space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-white">Ads seen so far</h2>

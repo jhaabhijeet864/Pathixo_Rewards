@@ -12,7 +12,7 @@ let pass = true;
 
 // 1. Revenue Share Tests across CPM spectrum
 console.log('📊 1. Revenue Share Matrix (60% User / 40% Platform):');
-const cpmRates = [10.0, 15.0, 20.0, 25.0, 30.0];
+const cpmRates = [2.0, 2.5, 3.5, 5.0, 10.0, 20.0];
 
 for (const cpm of cpmRates) {
   const pricePerView = cpm / 1000;

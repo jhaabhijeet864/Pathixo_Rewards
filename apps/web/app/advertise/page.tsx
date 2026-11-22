@@ -9,29 +9,28 @@ import {
   CheckCircle2,
   ShieldCheck,
   Zap,
-  Lock,
 } from 'lucide-react';
 import { ChatGptIcon, ClaudeIcon, GeminiIcon } from '@/components/HeroChatMockup';
 import {
   Currency,
   SupportedPlatform,
   DEFAULT_USD_INR_RATE,
-  PRICING_TIERS,
 } from '@pathixo/shared';
 
 export default function AdvertisePage() {
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
   const [headline, setHeadline] = useState('Build software 10x faster with Cursor — The AI Code Editor.');
   const [sponsorName, setSponsorName] = useState('Cursor');
   const [targetUrl, setTargetUrl] = useState('https://cursor.com');
   const iconUrl = '';
   const [badge, setBadge] = useState('Developer Tool');
-  const [cpm, setCpm] = useState(20);
   const [email, setEmail] = useState('');
-
-  // Currency & Tier selection
+  // Currency & Chatwait-style Bid & Block selection
   const [currency, setCurrency] = useState<Currency>('USD');
-  const [selectedTierId, setSelectedTierId] = useState<string>('tier_growth');
-  const [customAmount, setCustomAmount] = useState<string>('75');
+  const [bidPreset, setBidPreset] = useState<'2.00' | '2.50' | '5.00' | 'custom'>('2.00');
+  const [customBidUsd, setCustomBidUsd] = useState<string>('3.00');
+  const [customBidInr, setCustomBidInr] = useState<string>('250');
+  const [blocks, setBlocks] = useState<number>(1);
 
   // Multi-chatbot preview tab
   const [previewPlatform, setPreviewPlatform] = useState<SupportedPlatform>('gemini');
@@ -40,21 +39,42 @@ export default function AdvertisePage() {
   const [createdCampaign, setCreatedCampaign] = useState<{ id: string; budget_total_usd: number } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Compute budget
-  const selectedTier = PRICING_TIERS.find((t) => t.id === selectedTierId);
-  const budgetInSelectedCurrency =
-    selectedTierId === 'custom'
-      ? Number(customAmount) || (currency === 'USD' ? 5 : 425)
-      : currency === 'USD'
-      ? selectedTier?.price_usd ?? 50
-      : selectedTier?.price_inr ?? 4250;
-
-  const budgetInUsd =
+  // Compute bid and total due
+  const safeBlocks = Math.max(1, Math.floor(blocks || 1));
+  const bidInUsd =
     currency === 'USD'
-      ? budgetInSelectedCurrency
-      : Number((budgetInSelectedCurrency / DEFAULT_USD_INR_RATE).toFixed(2));
+      ? bidPreset === '2.00'
+        ? 2.0
+        : bidPreset === '2.50'
+        ? 2.5
+        : bidPreset === '5.00'
+        ? 5.0
+        : Math.max(2.0, parseFloat(customBidUsd) || 2.0)
+      : bidPreset === '2.00'
+      ? 2.0
+      : bidPreset === '2.50'
+      ? 2.53
+      : bidPreset === '5.00'
+      ? 5.0
+      : Math.max(2.0, (parseFloat(customBidInr) || 170) / DEFAULT_USD_INR_RATE);
 
-  const estimatedImpressions = Math.max(10, Math.round((budgetInUsd / cpm) * 1000));
+  const bidInSelectedCurrency =
+    currency === 'USD'
+      ? bidInUsd
+      : bidPreset === '2.00'
+      ? 170
+      : bidPreset === '2.50'
+      ? 215
+      : bidPreset === '5.00'
+      ? 425
+      : Math.max(170, parseFloat(customBidInr) || 170);
+
+  const totalDueInSelectedCurrency =
+    currency === 'USD'
+      ? Number((bidInSelectedCurrency * safeBlocks).toFixed(2))
+      : Math.round(bidInSelectedCurrency * safeBlocks);
+
+  const totalImpressions = safeBlocks * 1000;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,9 +92,9 @@ export default function AdvertisePage() {
           icon_url: iconUrl || undefined,
           badge,
           currency,
-          cpm_rate_usd: cpm,
-          budget_usd: currency === 'USD' ? budgetInSelectedCurrency : undefined,
-          budget_inr: currency === 'INR' ? budgetInSelectedCurrency : undefined,
+          cpm_rate_usd: bidInUsd,
+          budget_usd: currency === 'USD' ? totalDueInSelectedCurrency : undefined,
+          budget_inr: currency === 'INR' ? totalDueInSelectedCurrency : undefined,
           target_platforms: ['chatgpt', 'claude', 'gemini', 'perplexity', 'deepseek'],
           status: 'pending_review',
         }),
@@ -83,7 +103,6 @@ export default function AdvertisePage() {
       if (res.ok) {
         const data = await res.json();
         setCreatedCampaign(data.campaign);
-        // Automatically unlock and navigate to campaign management page
         if (data.campaign?.id) {
           window.location.href = `/advertise/manage?id=${encodeURIComponent(data.campaign.id)}`;
         }
@@ -99,8 +118,8 @@ export default function AdvertisePage() {
     <div className="flex min-h-screen flex-col bg-[#f8fafc] text-slate-900 isolate">
       <Navbar />
 
-      <main className="flex-1 py-12 sm:py-16 bg-[#f8fafc]">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+      <main className="flex-1 py-10 sm:py-14 bg-[#f8fafc]">
+        <div className="mx-auto max-w-5xl lg:max-w-6xl px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="text-center max-w-3xl mx-auto">
             <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-800 mb-3">
@@ -249,116 +268,150 @@ export default function AdvertisePage() {
                     />
                   </div>
 
-                  <div className="pt-2">
-                    <label className="block text-xs font-semibold text-slate-700 mb-2">
-                      Select Prepaid Plan Tier
-                    </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {PRICING_TIERS.map((tier) => {
-                        const isSelected = selectedTierId === tier.id;
-                        const price = currency === 'USD' ? `$${tier.price_usd}` : `₹${tier.price_inr}`;
-                        return (
-                          <button
-                            key={tier.id}
-                            type="button"
-                            onClick={() => setSelectedTierId(tier.id)}
-                            className={`relative rounded-xl p-2.5 text-center transition border ${
-                              isSelected
-                                ? 'border-emerald-600 bg-emerald-50/70 text-emerald-900 ring-2 ring-emerald-500/20'
-                                : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                            }`}
-                          >
-                            {tier.popular && (
-                              <span className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-emerald-600 px-2 py-0.5 text-[9px] font-bold uppercase text-white shadow-xs">
-                                Popular
-                              </span>
-                            )}
-                            <div className="text-[11px] font-medium text-slate-500">{tier.name}</div>
-                            <div className="text-sm font-bold text-slate-900 mt-0.5">{price}</div>
-                            <div className="text-[10px] text-emerald-700 font-semibold mt-1">
-                              ~{tier.estimated_impressions} views
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
+                  {/* Chatwait-Style Bid & Blocks Pricing Section */}
+                  <div className="pt-2 space-y-5">
+                    {/* Bid per 1,000 impressions */}
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900">
+                        Bid per 1,000 impressions
+                      </h3>
+                      <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                        Higher bids get more impressions. Every active campaign is eligible to show, weighted by bid, so a {currency === 'USD' ? '$5' : '₹425'} bid earns roughly 2.5x the impressions of a {currency === 'USD' ? '$2' : '₹170'} bid.
+                      </p>
 
-                    {/* Custom input toggle */}
-                    <div className="mt-2.5 flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedTierId('custom')}
-                        className={`rounded-lg px-3 py-1.5 text-xs font-semibold border transition ${
-                          selectedTierId === 'custom'
-                            ? 'border-emerald-600 bg-emerald-50 text-emerald-800 ring-1 ring-emerald-500'
-                            : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                        }`}
-                      >
-                        Custom Amount
-                      </button>
-                      {selectedTierId === 'custom' && (
-                        <div className="flex-1 flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs">
-                          <span className="font-bold text-slate-500 mr-1">
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        {currency === 'USD' ? (
+                          <>
+                            {(['2.00', '2.50', '5.00'] as const).map((preset) => {
+                              const isSelected = bidPreset === preset;
+                              return (
+                                <button
+                                  key={preset}
+                                  type="button"
+                                  onClick={() => setBidPreset(preset)}
+                                  className={`rounded-lg px-4 py-2 text-sm font-semibold transition cursor-pointer border ${
+                                    isSelected
+                                      ? 'border-emerald-600 bg-emerald-50 text-emerald-800 ring-1 ring-emerald-600'
+                                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                                  }`}
+                                >
+                                  ${preset}
+                                </button>
+                              );
+                            })}
+                            <button
+                              type="button"
+                              onClick={() => setBidPreset('custom')}
+                              className={`rounded-lg px-4 py-2 text-sm font-semibold transition cursor-pointer border ${
+                                bidPreset === 'custom'
+                                  ? 'border-emerald-600 bg-emerald-50 text-emerald-800 ring-1 ring-emerald-600'
+                                  : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                              }`}
+                            >
+                              Custom $
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            {(
+                              [
+                                { id: '2.00', label: '₹170' },
+                                { id: '2.50', label: '₹215' },
+                                { id: '5.00', label: '₹425' },
+                              ] as const
+                            ).map(({ id, label }) => {
+                              const isSelected = bidPreset === id;
+                              return (
+                                <button
+                                  key={id}
+                                  type="button"
+                                  onClick={() => setBidPreset(id)}
+                                  className={`rounded-lg px-4 py-2 text-sm font-semibold transition cursor-pointer border ${
+                                    isSelected
+                                      ? 'border-emerald-600 bg-emerald-50 text-emerald-800 ring-1 ring-emerald-600'
+                                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                                  }`}
+                                >
+                                  {label}
+                                </button>
+                              );
+                            })}
+                            <button
+                              type="button"
+                              onClick={() => setBidPreset('custom')}
+                              className={`rounded-lg px-4 py-2 text-sm font-semibold transition cursor-pointer border ${
+                                bidPreset === 'custom'
+                                  ? 'border-emerald-600 bg-emerald-50 text-emerald-800 ring-1 ring-emerald-600'
+                                  : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                              }`}
+                            >
+                              Custom ₹
+                            </button>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Custom input field if selected */}
+                      {bidPreset === 'custom' && (
+                        <div className="mt-2.5 flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs max-w-xs">
+                          <span className="font-bold text-slate-500 mr-1.5">
                             {currency === 'USD' ? '$' : '₹'}
                           </span>
                           <input
                             type="number"
-                            min={currency === 'USD' ? 5 : 400}
-                            value={customAmount}
-                            onChange={(e) => setCustomAmount(e.target.value)}
-                            placeholder={currency === 'USD' ? 'Min 5' : 'Min 400'}
-                            className="w-full bg-transparent text-slate-900 focus:outline-none"
+                            min={currency === 'USD' ? 2 : 170}
+                            step={currency === 'USD' ? 0.25 : 10}
+                            value={currency === 'USD' ? customBidUsd : customBidInr}
+                            onChange={(e) =>
+                              currency === 'USD'
+                                ? setCustomBidUsd(e.target.value)
+                                : setCustomBidInr(e.target.value)
+                            }
+                            placeholder={currency === 'USD' ? 'Min 2.00' : 'Min 170'}
+                            className="w-full bg-transparent text-slate-900 font-semibold focus:outline-none"
                           />
+                          <span className="text-slate-400 text-[11px] shrink-0">/ 1,000 views</span>
                         </div>
                       )}
                     </div>
-                  </div>
 
-                  {/* CPM Bidding Priority Selector */}
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <label className="block text-xs font-semibold text-slate-700">
-                        CPM Bid Priority: <strong className="text-emerald-700">${cpm}.00 / 1k</strong>
-                      </label>
-                      <span className="text-[11px] text-slate-500">Higher bid = faster delivery</span>
-                    </div>
-                    <input
-                      type="range"
-                      min={15}
-                      max={40}
-                      step={5}
-                      value={cpm}
-                      onChange={(e) => setCpm(Number(e.target.value))}
-                      className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
-                    />
-                    <div className="flex justify-between text-[10px] text-slate-400 mt-1">
-                      <span>$15 (Standard)</span>
-                      <span>$25 (Accelerated)</span>
-                      <span>$40 (Priority)</span>
-                    </div>
-                  </div>
-
-                  {/* Metrics Estimation Bar */}
-                  <div className="rounded-xl bg-emerald-50/70 border border-emerald-200/60 p-3 text-xs text-slate-700 flex justify-between items-center">
+                    {/* Blocks (1 block = 1,000 impressions) */}
                     <div>
-                      <div className="font-medium text-slate-600">Estimated Verified Views:</div>
-                      <div className="text-[11px] text-slate-500">Only debited after 4s+ continuous dwell</div>
+                      <h3 className="text-sm font-bold text-slate-900">
+                        Blocks (1 block = 1,000 impressions)
+                      </h3>
+                      <div className="mt-2.5 flex items-center gap-3">
+                        <input
+                          type="number"
+                          min={1}
+                          max={500}
+                          step={1}
+                          value={blocks}
+                          onChange={(e) => setBlocks(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                          className="w-24 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-bold text-slate-900 text-center focus:border-emerald-500 focus:outline-none"
+                        />
+                        <span className="text-sm font-medium text-slate-600">
+                          = {totalImpressions.toLocaleString()} impressions
+                        </span>
+                      </div>
                     </div>
-                    <strong className="text-emerald-800 text-base font-extrabold">
-                      {estimatedImpressions.toLocaleString()} views
-                    </strong>
+
+                    {/* Total due now Box */}
+                    <div className="rounded-xl border border-emerald-300/80 bg-emerald-50/60 px-4 py-3.5 flex items-center justify-between">
+                      <span className="text-sm font-medium text-slate-700">Total due now</span>
+                      <strong className="text-xl font-extrabold text-emerald-800">
+                        {currency === 'USD' ? `$${totalDueInSelectedCurrency.toFixed(2)}` : `₹${totalDueInSelectedCurrency.toLocaleString('en-IN')}`}
+                      </strong>
+                    </div>
                   </div>
 
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full rounded-xl bg-emerald-600 py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full rounded-xl bg-emerald-600 py-3.5 text-base font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer mt-4"
                   >
-                    <Lock className="h-4 w-4" />
                     <span>
-                      {isSubmitting
-                        ? 'Funding Campaign...'
-                        : `Fund Campaign (${currency === 'USD' ? `$${budgetInSelectedCurrency}` : `₹${budgetInSelectedCurrency}`})`}
+                      {isSubmitting ? 'Processing...' : 'Continue to checkout'}
                     </span>
                   </button>
                   <p className="text-[11px] text-center text-slate-400">
@@ -489,9 +542,15 @@ export default function AdvertisePage() {
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2 min-w-0">
                         {/* Avatar */}
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-emerald-600 font-bold text-white text-xs shadow-xs">
-                          {(sponsorName || 'P').charAt(0).toUpperCase()}
-                        </span>
+                        {iconUrl ? (
+                          <img src={iconUrl} alt="Logo" className="h-6 w-6 shrink-0 object-contain rounded-md" />
+                        ) : sponsorName ? (
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-emerald-600 font-bold text-white text-xs shadow-xs">
+                            {sponsorName.charAt(0).toUpperCase()}
+                          </span>
+                        ) : (
+                          <img src={`${basePath}/pathixo-rewards.svg`} alt="Pathixo Logo" className="h-6 w-6 shrink-0 object-contain" />
+                        )}
 
                         {badge && (
                           <span className="rounded bg-emerald-100/90 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-800 shrink-0">

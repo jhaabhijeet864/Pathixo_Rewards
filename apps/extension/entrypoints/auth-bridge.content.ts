@@ -25,6 +25,7 @@ export default defineContentScript({
             deviceId?: string;
             user?: unknown;
             earnings?: unknown;
+            viewedAds?: unknown;
           } | undefined;
 
           window.postMessage({
@@ -33,6 +34,7 @@ export default defineContentScript({
             deviceId: state?.deviceId,
             user: state?.user,
             earnings: state?.earnings,
+            viewedAds: state?.viewedAds,
           }, '*');
         } catch {
           window.postMessage({ type: 'PATHIXO_EXTENSION_PONG', installed: true }, '*');
@@ -58,5 +60,21 @@ export default defineContentScript({
         }
       }
     });
+
+    // Forward real-time impression notifications from extension background worker to web page
+    try {
+      browser.runtime.onMessage.addListener((message: unknown) => {
+        const msg = message as { type: string; earnings?: unknown; ad?: unknown };
+        if (msg && msg.type === 'PATHIXO_NEW_IMPRESSION') {
+          window.postMessage({
+            type: 'PATHIXO_IMPRESSION_LOGGED',
+            earnings: msg.earnings,
+            ad: msg.ad,
+          }, '*');
+        }
+      });
+    } catch {
+      // ignore
+    }
   },
 });

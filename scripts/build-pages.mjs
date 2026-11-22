@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { existsSync, writeFileSync, mkdirSync, copyFileSync, rmSync } from 'node:fs';
+import { existsSync, writeFileSync, mkdirSync, copyFileSync, rmSync, renameSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
@@ -19,20 +19,25 @@ console.log('\n🚀 [Pathixo Rewards] Building static export for GitHub Pages...
 
 function moveDir(src, dest) {
   if (!existsSync(src)) return;
-  const newName = dest.split(/[/\\]/).pop();
-  if (process.platform === 'win32') {
-    const ps = spawnSync('powershell.exe', [
-      '-NoProfile',
-      '-Command',
-      `if (Test-Path "${src}") { Rename-Item -LiteralPath "${src}" -NewName "${newName}" -Force }`,
-    ]);
-    if (ps.status !== 0 && existsSync(src)) {
-      throw new Error(`Failed to rename ${src} -> ${newName}: ${ps.stderr?.toString()}`);
-    }
-  } else {
-    const mv = spawnSync('mv', [src, dest]);
-    if (mv.status !== 0) {
-      throw new Error(`Failed to move ${src} -> ${dest}`);
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    try {
+      renameSync(src, dest);
+      return;
+    } catch (err) {
+      if (attempt === 5) {
+        const newName = dest.split(/[/\\]/).pop();
+        const ps = spawnSync('powershell.exe', [
+          '-NoProfile',
+          '-Command',
+          `Rename-Item -LiteralPath "${src}" -NewName "${newName}" -Force`,
+        ]);
+        if (ps.status !== 0 && existsSync(src)) {
+          throw err;
+        }
+      } else {
+        const end = Date.now() + 250;
+        while (Date.now() < end) {}
+      }
     }
   }
 }

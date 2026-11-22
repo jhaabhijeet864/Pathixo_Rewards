@@ -7,6 +7,8 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://pathixorewards.com'),
   title: 'Pathixo Rewards: Get paid while AI thinks',
@@ -23,9 +25,17 @@ export const metadata: Metadata = {
     'AI monetization',
   ],
   icons: {
-    icon: '/icon.svg',
-    apple: '/icon.svg',
+    icon: [
+      { url: `${basePath}/favicon.ico` },
+      { url: `${basePath}/icons/favicon-32x32.png`, sizes: '32x32', type: 'image/png' },
+      { url: `${basePath}/icons/favicon-16x16.png`, sizes: '16x16', type: 'image/png' },
+      { url: `${basePath}/pathixo-rewards.svg`, type: 'image/svg+xml' },
+    ],
+    apple: [
+      { url: `${basePath}/icons/apple-touch-icon.png`, sizes: '180x180', type: 'image/png' },
+    ],
   },
+  manifest: `${basePath}/manifest.webmanifest`,
   openGraph: {
     title: 'Pathixo Rewards: Get paid while AI thinks',
     description:

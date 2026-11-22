@@ -62,3 +62,10 @@ VALUES
     ('payout_seed_001', 'dev_demo_chrome_01', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 2.5000, 'upi', 'developer@oksbi', 'completed', NOW() - INTERVAL '3 days'),
     ('payout_seed_002', 'dev_demo_chrome_01', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 5.0000, 'paypal', 'developer@gmail.com', 'completed', NOW() - INTERVAL '1 day')
 ON CONFLICT (id) DO NOTHING;
+
+-- 7. Insert Sample Pre-Registrations
+INSERT INTO pre_registrations (email, source, status)
+VALUES
+    ('vip.tester@gmail.com', 'coming_soon', 'pending_launch'),
+    ('ai.researcher@mit.edu', 'coming_soon', 'pending_launch')
+ON CONFLICT (email) DO NOTHING;

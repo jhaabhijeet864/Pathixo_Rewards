@@ -26,7 +26,7 @@ export default defineConfig({
     ],
     web_accessible_resources: [
       {
-        resources: ['house-ads/*', 'icon/*', 'pathixo-icon-round.svg'],
+        resources: ['house-ads/*', 'icon/*', 'pathixo-icon-round.svg', 'pathixo-rewards.svg'],
         matches: ['*://*/*'],
       },
     ],

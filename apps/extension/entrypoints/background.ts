@@ -10,7 +10,10 @@ import {
   getAuthUser,
   setAuthUser,
   resetEarningsForNewUser,
+  getViewedAds,
+  addViewedAd,
   type AuthUser,
+  type ViewedAdRecord,
 } from '../lib/storage';
 import { fetchAdBundle, sendImpressionEvents } from '../lib/api';
 import type { ImpressionEvent } from '@pathixo/shared';
@@ -19,6 +22,7 @@ interface RuntimeMessage {
   type: string;
   enabled?: boolean;
   event?: ImpressionEvent;
+  ad?: { sponsor_name?: string; headline?: string; target_cpm?: number };
   user?: AuthUser;
 }
 
@@ -68,9 +72,9 @@ export default defineBackground(() => {
     if (!msg || !msg.type) return true;
 
     if (msg.type === 'GET_STATE') {
-      Promise.all([getDeviceId(), isEnabled(), getEarnings(), getAuthUser()]).then(
-        ([deviceId, enabled, earnings, user]) => {
-          sendResponse({ deviceId, enabled, earnings, user });
+      Promise.all([getDeviceId(), isEnabled(), getEarnings(), getAuthUser(), getViewedAds()]).then(
+        ([deviceId, enabled, earnings, user, viewedAds]) => {
+          sendResponse({ deviceId, enabled, earnings, user, viewedAds });
         }
       );
       return true;
@@ -85,14 +89,59 @@ export default defineBackground(() => {
 
     if (msg.type === 'RECORD_QUALIFIED_IMPRESSION' && msg.event) {
       const event = msg.event;
-      // Calculate earnings credit: 60% of $0.015 ($0.009 per qualified impression)
-      const creditPerImpression = 0.009;
-      Promise.all([addEarnings(creditPerImpression), enqueueEvent(event)]).then(
-        ([updatedEarnings]) => {
-          console.log('[Pathixo Rewards] Qualified impression logged! New balance: $' + updatedEarnings.balance_usd);
-          sendResponse({ success: true, earnings: updatedEarnings });
+      // Dynamic per-ad variable payout: 60% of (target_cpm / 1000) with subtle natural variance (±5%)
+      const cpm = Number(msg.ad?.target_cpm) || 2.20;
+      const baseCredit = (cpm / 1000) * 0.60;
+      const jitter = 1 + (Math.random() * 0.10 - 0.05); // ±5% subtle variance
+      const creditPerImpression = Number((baseCredit * jitter).toFixed(5));
+
+      const formatPlatform = (p: string) => {
+        const lower = (p || '').toLowerCase();
+        if (lower.includes('chatgpt')) return 'ChatGPT o3-mini';
+        if (lower.includes('claude')) return 'Claude 3.7 Sonnet';
+        if (lower.includes('gemini')) return 'Google Gemini 4 Argon';
+        if (lower.includes('perplexity')) return 'Perplexity Pro';
+        if (lower.includes('deepseek')) return 'DeepSeek R1';
+        return p ? p.charAt(0).toUpperCase() + p.slice(1) : 'AI Wait';
+      };
+
+      const viewedRecord: ViewedAdRecord = {
+        id: event.event_id,
+        sponsor: msg.ad?.sponsor_name || 'Sponsored Partner',
+        headline: msg.ad?.headline || 'Wait-time sponsored message',
+        model: formatPlatform(event.ai_platform),
+        dwellSeconds: Number(((event.dwell_ms || 4000) / 1000).toFixed(1)),
+        earnedUsd: creditPerImpression,
+        timestamp: event.timestamp || Date.now(),
+        verified: true,
+      };
+
+      Promise.all([
+        addEarnings(creditPerImpression),
+        enqueueEvent(event),
+        addViewedAd(viewedRecord),
+      ]).then(([updatedEarnings, _, updatedAds]) => {
+        console.log('[Pathixo Rewards] Qualified impression logged! New balance: $' + updatedEarnings.balance_usd);
+
+        // Notify open dashboard tabs in real time
+        try {
+          browser.tabs.query({}).then((tabs) => {
+            for (const tab of tabs) {
+              if (tab.id) {
+                browser.tabs.sendMessage(tab.id, {
+                  type: 'PATHIXO_NEW_IMPRESSION',
+                  earnings: updatedEarnings,
+                  ad: viewedRecord,
+                }).catch(() => {});
+              }
+            }
+          }).catch(() => {});
+        } catch {
+          // ignore
         }
-      );
+
+        sendResponse({ success: true, earnings: updatedEarnings, viewedAds: updatedAds });
+      });
       return true;
     }
 

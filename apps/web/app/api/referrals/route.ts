@@ -1,24 +1,7 @@
 import { NextResponse } from 'next/server';
 import { referralEngine } from '@/lib/referral-engine';
+import { userStore } from '@/lib/user-store';
 import { checkRateLimit, createRateLimitExceededResponse } from '@/lib/rate-limit';
-
-// Seed demo referral relationships for instant interactive dashboard display
-referralEngine.registerReferral('dev_usr_8829', 'dev_friend_alex');
-referralEngine.registerReferral('dev_usr_8829', 'dev_friend_priya');
-referralEngine.registerReferral('dev_usr_8829', 'dev_friend_marcus');
-
-// Simulate historical activity:
-// Alex reached $10 cap
-referralEngine.recordVerifiedImpression('dev_friend_alex', 100.0);
-referralEngine.processWeeklyTurnaround();
-
-// Priya generated $14 this week ($1.40 pending weekly turnaround)
-referralEngine.recordVerifiedImpression('dev_friend_priya', 14.0);
-
-// Marcus is a fresh referred user with 7/10 impressions towards $0.25 milestone
-for (let i = 0; i < 7; i++) {
-  referralEngine.recordVerifiedImpression('dev_friend_marcus', 0.012);
-}
 
 export async function GET(request: Request) {
   const rateLimit = checkRateLimit(request, { maxRequests: 60, windowMs: 60_000, prefix: 'referrals_get' });
@@ -27,15 +10,20 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const deviceId = searchParams.get('device_id') || 'dev_usr_8829';
+  const deviceId = searchParams.get('device_id') || 'dev_guest';
+  const email = searchParams.get('email') || undefined;
 
+  const user = userStore.getOrCreateUser(deviceId, email);
   const stats = referralEngine.getReferrerStats(deviceId);
   const refereeStatus = referralEngine.getRefereeStatus(deviceId);
+  const referralsList = referralEngine.getReferralList(deviceId);
 
   return NextResponse.json({
     status: 'ok',
     device_id: deviceId,
-    referral_url: `https://pathixorewards.com/?ref=${deviceId}`,
+    referral_code: user.referralCode,
+    referral_url: `https://pathixorewards.com/?ref=${user.referralCode}`,
+    referrals: referralsList,
     stats: {
       ...stats,
       weekly_turnaround_day: 'Every Sunday 23:59 UTC',
@@ -79,6 +67,27 @@ export async function POST(request: Request) {
     if (action === 'trigger_turnaround') {
       const summary = referralEngine.processWeeklyTurnaround();
       return NextResponse.json({ status: 'ok', summary });
+    }
+
+    if (action === 'simulate_referral') {
+      const targetReferrer = referrer_id || 'dev_guest';
+      const mockFriendId = `peer_${Math.random().toString(36).substring(2, 6)}`;
+      const rel = referralEngine.registerReferral(targetReferrer, mockFriendId);
+      if (rel) {
+        // Record 12 impressions for this simulated friend (~$0.108 earnings -> 10% royalty ~$0.0108)
+        for (let i = 0; i < 12; i++) {
+          referralEngine.recordVerifiedImpression(mockFriendId, 0.009);
+        }
+        referralEngine.processWeeklyTurnaround();
+      }
+      const updatedList = referralEngine.getReferralList(targetReferrer);
+      const updatedStats = referralEngine.getReferrerStats(targetReferrer);
+      return NextResponse.json({
+        status: 'ok',
+        message: 'Simulated friend referral added and weekly royalty processed!',
+        referrals: updatedList,
+        stats: updatedStats,
+      });
     }
 
     return NextResponse.json({ status: 'error', message: 'Unknown action' }, { status: 400 });

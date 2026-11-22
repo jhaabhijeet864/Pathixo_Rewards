@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     }
 
     // Determine normalized USD budget
-    let normalizedBudgetUsd = 100.0;
+    let normalizedBudgetUsd = 2.0;
     if (budget_usd !== undefined && budget_usd !== null) {
       normalizedBudgetUsd = Number(budget_usd);
     } else if (budget_inr !== undefined && budget_inr !== null) {
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
       icon_url,
       badge,
       currency: currency || (budget_inr ? 'INR' : 'USD'),
-      cpm_rate_usd: Number(cpm_rate_usd) || 20.0,
+      cpm_rate_usd: Number(cpm_rate_usd) || 2.50,
       budget_usd: normalizedBudgetUsd,
       target_platforms,
       status: status || undefined,

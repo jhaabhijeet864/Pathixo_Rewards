@@ -33,7 +33,7 @@ class AdminStore {
   private payouts: Map<string, AdminPayoutRecord> = new Map();
   private auditLogs: AdminAuditLogEntry[] = [];
   private bannedEntities: Set<string> = new Set();
-  private cwsInstallsCount = 1248;
+  private cwsInstallsCount = 0;
 
   constructor() {
     this.seed();
@@ -44,109 +44,40 @@ class AdminStore {
     this.payouts.clear();
     this.auditLogs = [];
     this.bannedEntities.clear();
+    this.cwsInstallsCount = 0;
 
-    // Initial seed users
-    const seedUsers: AdminUserRecord[] = [
-      {
-        id: 'usr_alex_8829',
-        email: 'alex.dev@gmail.com',
-        full_name: 'Alex Developer',
-        device_ids: ['dev_usr_8829'],
-        balance_usd: 2.148,
-        lifetime_earned_usd: 5.62,
-        impressions_count: 142,
-        referral_code: 'ALEX_DEV',
-        referral_count: 3,
-        is_banned: false,
-        fraud_risk_score: 'low',
-        created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
-        ip_address: '103.21.244.12',
-      },
-      {
-        id: 'usr_priya_4401',
-        email: 'priya.ai@startup.in',
-        full_name: 'Priya Sharma',
-        device_ids: ['dev_usr_4401'],
-        balance_usd: 4.89,
-        lifetime_earned_usd: 12.4,
-        impressions_count: 380,
-        referral_code: 'PRIYA_AI',
-        referred_by_code: 'ALEX_DEV',
-        referral_count: 8,
-        is_banned: false,
-        fraud_risk_score: 'low',
-        created_at: new Date(Date.now() - 86400000 * 4).toISOString(),
-        ip_address: '49.36.12.88',
-      },
-      {
-        id: 'usr_bot_9912',
-        email: 'clickfarm88@tempmail.org',
-        full_name: 'Fast Clicker',
-        device_ids: ['dev_bot_9912', 'dev_bot_9913'],
-        balance_usd: 1.85,
-        lifetime_earned_usd: 1.85,
-        impressions_count: 610,
-        referral_code: 'FARM_FAST',
-        referred_by_code: 'ALEX_DEV',
-        referral_count: 12,
-        is_banned: false,
-        fraud_risk_score: 'high',
-        created_at: new Date(Date.now() - 86400000 * 1).toISOString(),
-        ip_address: '185.220.101.5', // Known VPN / suspicious exit node
-        notes: 'High dwell-time clustering detected (30 impressions in 20 mins)',
-      },
-    ];
-
-    for (const u of seedUsers) {
-      this.users.set(u.id, u);
-    }
-
-    // Initial seed payouts
-    const seedPayouts: AdminPayoutRecord[] = [
-      {
-        id: 'pay_req_101',
-        device_id: 'dev_usr_4401',
-        user_email: 'priya.ai@startup.in',
-        amount_usd: 3.5,
-        payout_method: 'upi',
-        payout_destination: 'priya@oksbi',
-        status: 'pending',
-        created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
-      },
-      {
-        id: 'pay_req_102',
-        device_id: 'dev_usr_8829',
-        user_email: 'alex.dev@gmail.com',
-        amount_usd: 2.0,
-        payout_method: 'paypal',
-        payout_destination: 'alex.dev@gmail.com',
-        status: 'pending',
-        created_at: new Date(Date.now() - 3600000 * 5).toISOString(),
-      },
-    ];
-
-    for (const p of seedPayouts) {
-      this.payouts.set(p.id, p);
-    }
-
-    // Initial audit log
+    // Initial operational boot log
     this.logAudit({
       admin_email: 'jhaabhijeet864@gmail.com',
       action_type: 'SYSTEM_INITIALIZED',
       target_entity: 'circuit_breaker',
       target_id: 'SYSTEM_BOOT',
-      justification_note: 'Master command center initialized with verified superadmin allowlist.',
+      justification_note: 'Master command center initialized and ready for live operations.',
     });
+  }
+
+  public registerUser(user: AdminUserRecord) {
+    this.users.set(user.id, user);
+  }
+
+  public registerPayout(payout: AdminPayoutRecord) {
+    this.payouts.set(payout.id, payout);
+  }
+
+  public setCwsInstalls(count: number) {
+    this.cwsInstallsCount = Math.max(0, count);
   }
 
   // 1. Metrics & Overview
   public getMetrics(): AdminMetrics {
     const campaigns = campaignStore.getAllCampaigns();
 
-    // Total advertiser money deposited
+    // Total external paid advertiser deposits (excluding internal startup house ads)
     let totalInflowUsd = 0;
     for (const c of campaigns) {
-      totalInflowUsd += c.budget_total_usd;
+      if (!c.id.startsWith('cmp_house_') && c.advertiser_email !== 'founder@pathixo.com') {
+        totalInflowUsd += c.budget_total_usd;
+      }
     }
 
     // User liabilities: sum of all active user balances
@@ -166,11 +97,11 @@ class AdminStore {
 
     // Aggregate platform impressions
     const platformDist: AdminMetrics['platform_distribution'] = {
-      chatgpt: { impressions: 0, avg_dwell_ms: 5400, share_percentage: 0 },
-      claude: { impressions: 0, avg_dwell_ms: 5800, share_percentage: 0 },
-      gemini: { impressions: 0, avg_dwell_ms: 4900, share_percentage: 0 },
-      perplexity: { impressions: 0, avg_dwell_ms: 6100, share_percentage: 0 },
-      deepseek: { impressions: 0, avg_dwell_ms: 7200, share_percentage: 0 },
+      chatgpt: { impressions: 0, avg_dwell_ms: 0, share_percentage: 0 },
+      claude: { impressions: 0, avg_dwell_ms: 0, share_percentage: 0 },
+      gemini: { impressions: 0, avg_dwell_ms: 0, share_percentage: 0 },
+      perplexity: { impressions: 0, avg_dwell_ms: 0, share_percentage: 0 },
+      deepseek: { impressions: 0, avg_dwell_ms: 0, share_percentage: 0 },
     };
 
     let totalPlatformImpressions = 0;
@@ -194,16 +125,24 @@ class AdminStore {
       }
     }
 
+    // Live active extensions: unique device count across active users
+    let activeDevicesCount = 0;
+    for (const u of this.users.values()) {
+      if (!u.is_banned && u.device_ids) {
+        activeDevicesCount += u.device_ids.length;
+      }
+    }
+
     return {
       total_inflow_usd: Number(totalInflowUsd.toFixed(2)),
       user_liability_usd: Number(userLiabilityUsd.toFixed(4)),
       platform_profit_usd: platformProfitUsd,
       referral_pool_usd: referralPoolUsd,
       active_campaigns_count: activeCampaigns.length,
-      live_extensions_today: 432,
+      live_extensions_today: activeDevicesCount,
       cws_installs: this.cwsInstallsCount,
       registered_users_count: this.users.size,
-      logins_today: 184,
+      logins_today: this.users.size,
       platform_distribution: platformDist,
       circuit_breakers: { ...this.circuitBreakers },
     };

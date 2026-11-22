@@ -91,3 +91,17 @@ CREATE TABLE IF NOT EXISTS selector_configs (
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- 7. Pre-Registrations & VIP Launch Waitlist (converts to Newsletter post-launch)
+CREATE TABLE IF NOT EXISTS pre_registrations (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    source VARCHAR(64) DEFAULT 'coming_soon',
+    status VARCHAR(32) DEFAULT 'pending_launch' CHECK (status IN ('pending_launch', 'notified', 'subscribed_newsletter', 'unsubscribed')),
+    metadata JSONB DEFAULT '{}'::jsonb,
+    notified_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_pre_registrations_email ON pre_registrations(email);
+CREATE INDEX IF NOT EXISTS idx_pre_registrations_status ON pre_registrations(status);

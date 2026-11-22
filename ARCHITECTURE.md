@@ -70,6 +70,7 @@ Each supported AI platform has a dedicated content script adapter that:
 - **`/api/events/impression`**: Validates signed impression tokens, verifies dwell criteria, debits campaign budgets, and credits user balances.
 - **`/api/cashout`**: Processes micro-cashout requests meeting the $2.00 minimum threshold.
 - **`/api/health`**: Comprehensive health check and telemetry endpoint.
+- **`/admin` & `/api/admin/*`**: Master Command Console providing real-time dual telemetry (Chrome Web Store vs. live heartbeat pings), campaign moderation, advertiser inflow ledger, user fraud shields with Read-Only impersonation, and payout settlement rails. Governed by [ADMIN_CONSOLE_SPEC.md](file:///e:/Open Source/Ad_AI/docs/ADMIN_CONSOLE_SPEC.md).
 
 ---
 

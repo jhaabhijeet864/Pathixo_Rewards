@@ -52,7 +52,7 @@ function updateUI(
     }
 
     if (earnings && earningsDisplay) {
-      earningsDisplay.textContent = `$${earnings.balance_usd.toFixed(4)}`;
+      earningsDisplay.textContent = `$${earnings.balance_usd.toFixed(5)}`;
     }
   } else {
     // Show activation onboarding state

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { CashoutRequest } from '@pathixo/shared';
 import { checkRateLimit, createRateLimitExceededResponse } from '@/lib/rate-limit';
+import { userStore } from '@/lib/user-store';
+import { adminStore } from '@/lib/admin-store';
 
 const cashoutRequests: CashoutRequest[] = [];
 
@@ -12,7 +14,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { device_id, amount_usd, payout_method, payout_destination } = body;
+    const { device_id, amount_usd, payout_method, payout_destination, user_email } = body;
 
     if (!payout_method || !payout_destination) {
       return NextResponse.json(
@@ -29,10 +31,17 @@ export async function POST(request: Request) {
       );
     }
 
+    const resolvedDeviceId = device_id || 'dev_guest';
+    const cashoutRes = userStore.cashout(resolvedDeviceId, amount, payout_method, payout_destination);
+    if (!cashoutRes.success) {
+      return NextResponse.json({ status: 'error', message: cashoutRes.message }, { status: 400 });
+    }
+
     const newCashout: CashoutRequest = {
       id: `payout_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`,
-      device_id: device_id || 'dev_guest',
-      amount_usd: amount,
+      device_id: resolvedDeviceId,
+      user_email: user_email || undefined,
+      amount_usd: cashoutRes.amount,
       payout_method,
       payout_destination,
       status: 'completed', // Instant simulated transfer
@@ -40,11 +49,16 @@ export async function POST(request: Request) {
     };
 
     cashoutRequests.push(newCashout);
+    adminStore.registerPayout({
+      ...newCashout,
+      user_email: user_email || undefined,
+    });
 
     return NextResponse.json({
       status: 'success',
-      message: `Cashout of $${amount.toFixed(2)} sent via ${payout_method.toUpperCase()}!`,
+      message: cashoutRes.message,
       payout: newCashout,
+      earnings: cashoutRes.earnings,
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);

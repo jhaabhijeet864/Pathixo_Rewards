@@ -53,20 +53,25 @@ describe('Shared Package: Types and Domain Invariants', () => {
   });
 
   it('should provide zero-debt pricing tiers and 1:85 USD-to-INR parity rate', async () => {
-    const { PRICING_TIERS, DEFAULT_USD_INR_RATE } = await import('@pathixo/shared');
+    const { PRICING_TIERS, DEFAULT_USD_INR_RATE, calculateDynamicUserReward } = await import('@pathixo/shared');
 
     expect(DEFAULT_USD_INR_RATE).toBe(85.0);
     expect(PRICING_TIERS).toHaveLength(4);
 
-    const micro = PRICING_TIERS.find((t) => t.id === 'tier_micro');
-    expect(micro).toBeDefined();
-    expect(micro?.price_usd).toBe(5);
-    expect(micro?.price_inr).toBe(425);
-    expect(micro?.estimated_impressions).toBe(250);
+    const starter = PRICING_TIERS.find((t) => t.id === 'tier_starter');
+    expect(starter).toBeDefined();
+    expect(starter?.price_usd).toBe(2);
+    expect(starter?.price_inr).toBe(170);
+    expect(starter?.estimated_impressions).toBe(1000);
 
     const growth = PRICING_TIERS.find((t) => t.id === 'tier_growth');
     expect(growth?.popular).toBe(true);
-    expect(growth?.price_usd).toBe(50);
-    expect(growth?.price_inr).toBe(4250);
+    expect(growth?.price_usd).toBe(5);
+    expect(growth?.price_inr).toBe(425);
+    expect(growth?.estimated_impressions).toBe(2000);
+
+    // Verify dynamic per-ad reward formula
+    expect(calculateDynamicUserReward(2.0, false)).toBe(0.0012);
+    expect(calculateDynamicUserReward(4.5, false)).toBe(0.0027);
   });
 });

@@ -8,14 +8,15 @@ import { Footer } from '@/components/Footer';
 import { CheckCircle2, Sparkles, ArrowRight } from 'lucide-react';
 import type { AdCampaign } from '@pathixo/shared';
 
-// Default feather/leaf brand icon matching user's screenshot
+// Default brand icon fallback using Pathixo Rewards logo
 function BrandFeatherIcon({ className = 'h-5 w-5' }: { className?: string }) {
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="#0f766e" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" />
-      <line x1="16" y1="8" x2="2" y2="22" />
-      <line x1="17.5" y1="15" x2="9" y2="15" />
-    </svg>
+    <img
+      src={`${basePath}/pathixo-rewards.svg`}
+      alt="Brand Icon"
+      className={`${className} object-contain`}
+    />
   );
 }
 

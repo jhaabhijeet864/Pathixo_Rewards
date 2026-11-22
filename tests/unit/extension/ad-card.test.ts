@@ -104,6 +104,26 @@ describe('Ad Card Component (apps/extension/entrypoints/content/ad-card.ts)', ()
     expect(newAnchor.nextElementSibling?.id).toBe('pathixo-ad-host');
   });
 
+  it('should automatically recover via ensureMounted if detached by host framework (Model 1 Persistence)', () => {
+    const card = new PathixoAdCard();
+    card.mount(anchor);
+    card.render(sampleAd);
+
+    expect(card.mounted).toBe(true);
+    expect(card.isConnected).toBe(true);
+
+    // Simulate Angular / React framework wiping unmanaged child nodes during stream swap
+    card.element.remove();
+    expect(card.isConnected).toBe(false);
+    expect(card.mounted).toBe(false);
+
+    // Ensure resilience kicks in
+    card.ensureMounted(anchor);
+    expect(card.isConnected).toBe(true);
+    expect(card.mounted).toBe(true);
+    expect(anchor.nextElementSibling?.id).toBe('pathixo-ad-host');
+  });
+
   it('should cleanly unmount and reset state', () => {
     const card = new PathixoAdCard();
     card.mount(anchor);

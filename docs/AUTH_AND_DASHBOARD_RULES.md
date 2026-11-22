@@ -43,3 +43,13 @@
    - The convenience `user@gmail.com` stub / single-click bypass is strictly restricted to local development environments (`process.env.NODE_ENV !== 'production'`).
 2. **Production Safeguard**:
    - In production (`process.env.NODE_ENV === 'production'`), `user@gmail.com` **MUST NEVER** be hardcoded or used as an automatic fallback bypass. Real OAuth flows (Google / GitHub) or verified email magic link authentication must be strictly enforced.
+
+---
+
+## 4. Admin Command Console Rules (`/admin`)
+
+1. **Access Allowlist**:
+   - Access to `/admin` and all `/api/admin/*` endpoints is strictly limited to `jhaabhijeet864@gmail.com`.
+2. **Zero Stub Data**:
+   - Never inject mock companies, fake users, fake payouts, or fallback fake metric numbers into the Admin Console.
+   - For complete specifications, auto-sync rules, and architectural invariants, refer to [ADMIN_CONSOLE_SPEC.md](file:///e:/Open Source/Ad_AI/docs/ADMIN_CONSOLE_SPEC.md).

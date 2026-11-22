@@ -4,7 +4,7 @@ export interface CampaignStoreItem extends AdCampaign {
   ad_token: string;
 }
 
-// Initial demo campaigns for seamless local testing & demo display
+// Default live startup house ads (displayed until external advertisers sponsor wait-time slots)
 const initialCampaigns: CampaignStoreItem[] = [
   {
     id: 'cmp_house_vakxo',
@@ -17,17 +17,17 @@ const initialCampaigns: CampaignStoreItem[] = [
     currency: 'USD',
     cpm_rate_usd: 25.0,
     budget_total_usd: 500.0,
-    budget_remaining_usd: 485.0,
+    budget_remaining_usd: 500.0,
     target_platforms: ['chatgpt', 'claude', 'gemini', 'perplexity', 'deepseek'],
     status: 'active',
     created_at: new Date().toISOString(),
     ad_token: 'tok_house_vakxo_001',
     metrics: {
-      total_impressions: 420,
-      total_clicks: 38,
-      spent_usd: 15.0,
-      avg_dwell_ms: 5400,
-      platform_impressions: { chatgpt: 180, claude: 120, gemini: 80, perplexity: 30, deepseek: 10 },
+      total_impressions: 0,
+      total_clicks: 0,
+      spent_usd: 0,
+      avg_dwell_ms: 0,
+      platform_impressions: { chatgpt: 0, claude: 0, gemini: 0, perplexity: 0, deepseek: 0 },
     },
   },
   {
@@ -41,17 +41,17 @@ const initialCampaigns: CampaignStoreItem[] = [
     currency: 'USD',
     cpm_rate_usd: 22.0,
     budget_total_usd: 500.0,
-    budget_remaining_usd: 490.0,
+    budget_remaining_usd: 500.0,
     target_platforms: ['chatgpt', 'claude', 'gemini', 'perplexity', 'deepseek'],
     status: 'active',
     created_at: new Date().toISOString(),
     ad_token: 'tok_house_pathixo_002',
     metrics: {
-      total_impressions: 310,
-      total_clicks: 29,
-      spent_usd: 10.0,
-      avg_dwell_ms: 5900,
-      platform_impressions: { chatgpt: 140, claude: 90, gemini: 50, perplexity: 20, deepseek: 10 },
+      total_impressions: 0,
+      total_clicks: 0,
+      spent_usd: 0,
+      avg_dwell_ms: 0,
+      platform_impressions: { chatgpt: 0, claude: 0, gemini: 0, perplexity: 0, deepseek: 0 },
     },
   },
   {
@@ -65,17 +65,17 @@ const initialCampaigns: CampaignStoreItem[] = [
     currency: 'USD',
     cpm_rate_usd: 20.0,
     budget_total_usd: 300.0,
-    budget_remaining_usd: 292.0,
+    budget_remaining_usd: 300.0,
     target_platforms: ['chatgpt', 'claude', 'gemini', 'perplexity', 'deepseek'],
     status: 'active',
     created_at: new Date().toISOString(),
     ad_token: 'tok_house_krocpdf_003',
     metrics: {
-      total_impressions: 250,
-      total_clicks: 19,
-      spent_usd: 8.0,
-      avg_dwell_ms: 4800,
-      platform_impressions: { chatgpt: 110, claude: 70, gemini: 40, perplexity: 20, deepseek: 10 },
+      total_impressions: 0,
+      total_clicks: 0,
+      spent_usd: 0,
+      avg_dwell_ms: 0,
+      platform_impressions: { chatgpt: 0, claude: 0, gemini: 0, perplexity: 0, deepseek: 0 },
     },
   },
   {
@@ -89,77 +89,17 @@ const initialCampaigns: CampaignStoreItem[] = [
     currency: 'USD',
     cpm_rate_usd: 20.0,
     budget_total_usd: 300.0,
-    budget_remaining_usd: 295.0,
+    budget_remaining_usd: 300.0,
     target_platforms: ['chatgpt', 'claude', 'gemini', 'perplexity', 'deepseek'],
     status: 'active',
     created_at: new Date().toISOString(),
     ad_token: 'tok_house_blip_004',
     metrics: {
-      total_impressions: 180,
-      total_clicks: 14,
-      spent_usd: 5.0,
-      avg_dwell_ms: 5100,
-      platform_impressions: { chatgpt: 80, claude: 50, gemini: 30, perplexity: 15, deepseek: 5 },
-    },
-  },
-  {
-    id: 'cmp_demo_cursor',
-    advertiser_email: 'team@cursor.com',
-    headline: 'Build software 10x faster with Cursor — The AI code editor.',
-    sponsor_name: 'Cursor',
-    target_url: 'https://cursor.com/?ref=pathixo',
-    icon_url: 'https://cursor.com/favicon.ico',
-    badge: 'Developer Tool',
-    currency: 'USD',
-    cpm_rate_usd: 25.0,
-    budget_total_usd: 100.0,
-    budget_remaining_usd: 68.50,
-    target_platforms: ['chatgpt', 'claude', 'gemini', 'perplexity', 'deepseek'],
-    status: 'active',
-    created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
-    ad_token: 'tok_b2b_cursor_2026',
-    metrics: {
-      total_impressions: 1260,
-      total_clicks: 84,
-      spent_usd: 31.50,
-      avg_dwell_ms: 5840,
-      platform_impressions: {
-        chatgpt: 580,
-        claude: 340,
-        gemini: 210,
-        perplexity: 90,
-        deepseek: 40,
-      },
-    },
-  },
-  {
-    id: 'cmp_demo_perplexity',
-    advertiser_email: 'growth@perplexity.ai',
-    headline: 'Instant research with verified sources using Perplexity Pro.',
-    sponsor_name: 'Perplexity',
-    target_url: 'https://perplexity.ai/pro?ref=pathixo',
-    icon_url: 'https://www.perplexity.ai/favicon.ico',
-    badge: 'Pro Pick',
-    currency: 'USD',
-    cpm_rate_usd: 22.0,
-    budget_total_usd: 50.0,
-    budget_remaining_usd: 28.00,
-    target_platforms: ['chatgpt', 'claude', 'gemini', 'perplexity', 'deepseek'],
-    status: 'active',
-    created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
-    ad_token: 'tok_b2b_pplx_2026',
-    metrics: {
-      total_impressions: 1000,
-      total_clicks: 62,
-      spent_usd: 22.00,
-      avg_dwell_ms: 6120,
-      platform_impressions: {
-        chatgpt: 450,
-        claude: 260,
-        gemini: 180,
-        perplexity: 80,
-        deepseek: 30,
-      },
+      total_impressions: 0,
+      total_clicks: 0,
+      spent_usd: 0,
+      avg_dwell_ms: 0,
+      platform_impressions: { chatgpt: 0, claude: 0, gemini: 0, perplexity: 0, deepseek: 0 },
     },
   },
 ];
@@ -193,8 +133,8 @@ class CampaignStore {
   }): CampaignStoreItem {
     const id = `cmp_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
     const adToken = `tok_${id}_${Date.now().toString(36)}`;
-    const cpm = Number(data.cpm_rate_usd) || 20.0;
-    const budget = Number(data.budget_usd) || 50.0;
+    const cpm = Number(data.cpm_rate_usd) || 2.50;
+    const budget = Number(data.budget_usd) || 5.0;
 
     const newCampaign: CampaignStoreItem = {
       id,
@@ -246,6 +186,10 @@ class CampaignStore {
     return Array.from(this.campaigns.values()).sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
+  }
+
+  public getAll(): CampaignStoreItem[] {
+    return this.getAllCampaigns();
   }
 
   public updateCampaign(
@@ -349,6 +293,7 @@ class CampaignStore {
           headline: 'Get paid while AI thinks — Join Pathixo Rewards today.',
           sponsor_name: 'Pathixo',
           url: 'https://pathixorewards.com',
+          icon_url: '/house-ads/pathixo-icon.png',
           badge: 'House Ad',
           is_house_ad: true,
           target_cpm: 15.0,

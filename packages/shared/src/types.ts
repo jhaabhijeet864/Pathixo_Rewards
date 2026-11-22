@@ -276,7 +276,7 @@ export interface AdminAuditLogEntry {
   id: string;
   admin_email: string;
   action_type: string;
-  target_entity: 'user' | 'device' | 'campaign' | 'payout' | 'circuit_breaker';
+  target_entity: 'user' | 'device' | 'campaign' | 'payout' | 'circuit_breaker' | 'cws_telemetry';
   target_id: string;
   previous_state?: unknown;
   new_state?: unknown;

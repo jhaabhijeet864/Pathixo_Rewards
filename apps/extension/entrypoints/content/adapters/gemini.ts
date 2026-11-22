@@ -91,22 +91,23 @@ export class GeminiAdapter implements PromptAdapter {
       if (!newEl || newEl === this.preSubmitUserMsg) return;
       this.anchorObserver?.disconnect();
       this.cb?.onAnchorReady(newEl);
-      this.watchForReanchor();
+      this.watchForReanchor(newEl);
       this.watchForDone();
     });
     this.anchorObserver.observe(document.body, { childList: true, subtree: true });
   }
 
-  private watchForReanchor(): void {
+  private watchForReanchor(userMsgEl: HTMLElement): void {
     this.reanchorObserver?.disconnect();
     this.reanchorObserver = new MutationObserver(() => {
-      // When Gemini swaps <pending-request> for permanent <model-response>, re-anchor card
-      const responses = document.querySelectorAll<HTMLElement>(MODEL_RESPONSE);
-      const lastResp = lastOf(responses);
-      if (!lastResp) return;
-      const turnContainer = lastResp.closest<HTMLElement>('.conversation-turn, [data-turn-id]') ?? lastResp.parentElement;
-      if (turnContainer) {
-        this.cb?.onReanchor?.(turnContainer);
+      // Keep card anchored directly after userMsgEl if disconnected during template updates
+      if (userMsgEl.isConnected) {
+        this.cb?.onReanchor?.(userMsgEl);
+      }
+      // Once model-response has mounted, DOM structure is stable; disconnect observer to avoid stream churn
+      if (document.querySelector(MODEL_RESPONSE)) {
+        this.reanchorObserver?.disconnect();
+        this.reanchorObserver = null;
       }
     });
     this.reanchorObserver.observe(document.body, { childList: true, subtree: true });

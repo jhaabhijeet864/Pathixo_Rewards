@@ -38,7 +38,7 @@ const CARD_CSS = `
     overflow: hidden;
   }
   .pathixo-icon.has-img {
-    background: #0f172a;
+    background: transparent;
   }
   .pathixo-icon img {
     width: 100%;
@@ -133,6 +133,7 @@ export class PathixoAdCard {
   private container: HTMLElement;
   private shadow: ShadowRoot;
   private isMounted = false;
+  private anchor: HTMLElement | null = null;
   private currentAd: AdCreative | null = null;
   private onDismissCallback?: () => void;
   private onClickCallback?: () => void;
@@ -253,6 +254,20 @@ export class PathixoAdCard {
       this.iconImgEl.style.display = 'block';
       this.iconInitialEl.style.display = 'none';
       this.iconEl.classList.add('has-img');
+    } else if (ad.is_house_ad || ad.sponsor_name?.toLowerCase().includes('pathixo')) {
+      let iconSrc = '/pathixo-rewards.svg';
+      if (typeof browser !== 'undefined' && browser.runtime?.getURL) {
+        try {
+          iconSrc = (browser.runtime.getURL as (path: string) => string)(iconSrc);
+        } catch {
+          // Keep relative path
+        }
+      }
+      this.iconImgEl.src = iconSrc;
+      this.iconImgEl.alt = 'Pathixo Rewards';
+      this.iconImgEl.style.display = 'block';
+      this.iconInitialEl.style.display = 'none';
+      this.iconEl.classList.add('has-img');
     } else {
       this.iconImgEl.style.display = 'none';
       const initial = (ad.sponsor_name || 'P').charAt(0).toUpperCase();
@@ -268,7 +283,12 @@ export class PathixoAdCard {
    * Mounts the card element immediately after the anchor element.
    */
   mount(anchorEl: HTMLElement): void {
-    if (this.container.parentElement === anchorEl.parentElement && this.container.previousElementSibling === anchorEl) {
+    this.anchor = anchorEl;
+    if (
+      this.container.isConnected &&
+      this.container.parentElement === anchorEl.parentElement &&
+      this.container.previousElementSibling === anchorEl
+    ) {
       return; // Already cleanly positioned
     }
     anchorEl.after(this.container);
@@ -279,8 +299,22 @@ export class PathixoAdCard {
    * Re-anchors the card to a newly created/mutated turn element.
    */
   reanchor(newAnchorEl: HTMLElement): void {
+    this.anchor = newAnchorEl;
     if (!this.isMounted) return;
     this.mount(newAnchorEl);
+  }
+
+  /**
+   * Re-connects the card if host framework (e.g., Angular or React) wiped it from the DOM during streaming.
+   */
+  ensureMounted(fallbackAnchor?: HTMLElement): void {
+    if (!this.isMounted || this.container.style.display === 'none') return;
+    if (!this.container.isConnected) {
+      const targetAnchor = this.anchor && this.anchor.isConnected ? this.anchor : fallbackAnchor;
+      if (targetAnchor && targetAnchor.isConnected) {
+        targetAnchor.after(this.container);
+      }
+    }
   }
 
   /**
@@ -289,6 +323,7 @@ export class PathixoAdCard {
   unmount(): void {
     this.container.remove();
     this.isMounted = false;
+    this.anchor = null;
   }
 
   private handleDismiss(): void {
@@ -300,7 +335,11 @@ export class PathixoAdCard {
   }
 
   get mounted(): boolean {
-    return this.isMounted;
+    return this.isMounted && this.container.isConnected;
+  }
+
+  get isConnected(): boolean {
+    return this.container.isConnected;
   }
 
   get element(): HTMLElement {

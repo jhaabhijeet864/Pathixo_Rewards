@@ -78,15 +78,31 @@ function LoginContent() {
     const rawEmail = emailInput.trim();
     let email = rawEmail.toLowerCase();
 
-    // If clicking Google/GitHub without typing an email, default to standard user
+    const isLocalDev = process.env.NODE_ENV !== 'production';
+
+    // If clicking Google/GitHub without typing an email, default to standard user ONLY in local development
     if (!email) {
-      if (provider === 'google') {
-        email = 'user@gmail.com';
-      } else if (provider === 'github') {
-        email = 'user@github.com';
+      if (isLocalDev) {
+        if (provider === 'google') {
+          email = 'user@gmail.com';
+        } else if (provider === 'github') {
+          email = 'user@github.com';
+        } else {
+          setErrorMessage('Please enter your email address.');
+          return;
+        }
       } else {
-        setErrorMessage('Please enter your email address.');
-        return;
+        // In production: Never stub user@gmail.com! Real OAuth redirect or explicit email required.
+        if (provider === 'google') {
+          window.location.href = '/api/auth/google';
+          return;
+        } else if (provider === 'github') {
+          window.location.href = '/api/auth/github';
+          return;
+        } else {
+          setErrorMessage('Please enter your email address.');
+          return;
+        }
       }
     }
 
@@ -108,6 +124,7 @@ function LoginContent() {
 
     try {
       localStorage.setItem('pathixo_auth_session', JSON.stringify(user));
+      window.dispatchEvent(new Event('pathixo_auth_change'));
     } catch {}
 
     // Register user & device in backend store

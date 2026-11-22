@@ -6,7 +6,11 @@ const COMPOSER = '#prompt-textarea, [data-mobile-composer-prompt], [data-compose
 export const USER_MSG = '[data-message-author-role="user"], [data-user-message-bubble]';
 
 function anchorFor(el: HTMLElement): HTMLElement {
-  return el.closest<HTMLElement>('[data-chatgpt-search-unit-key]')?.parentElement ?? el;
+  const searchUnit = el.closest<HTMLElement>('[data-chatgpt-search-unit-key]');
+  if (searchUnit?.parentElement) return searchUnit.parentElement;
+  const turnArticle = el.closest<HTMLElement>('article');
+  if (turnArticle) return turnArticle;
+  return el;
 }
 
 function stopButton(): Element | null {
@@ -112,18 +116,19 @@ export class ChatGPTAdapter implements PromptAdapter {
       if (!newEl || lastMsgKey(all) === this.preSubmitUserMsgKey) return;
       this.anchorObserver?.disconnect();
       this.cb?.onAnchorReady(anchorFor(newEl));
-      this.watchForReanchor();
+      this.watchForReanchor(newEl);
       this.watchForDone();
     });
     this.anchorObserver.observe(document.body, { childList: true, subtree: true });
   }
 
-  private watchForReanchor(): void {
+  private watchForReanchor(userMsgEl: HTMLElement): void {
     this.reanchorObserver?.disconnect();
     this.reanchorObserver = new MutationObserver(() => {
-      const el = lastOf(document.querySelectorAll<HTMLElement>(USER_MSG));
-      if (!el) return;
-      this.cb?.onReanchor?.(anchorFor(el));
+      const anchor = anchorFor(userMsgEl);
+      if (anchor && anchor.isConnected) {
+        this.cb?.onReanchor?.(anchor);
+      }
     });
     this.reanchorObserver.observe(document.body, { childList: true, subtree: true });
   }

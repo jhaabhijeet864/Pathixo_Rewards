@@ -34,6 +34,29 @@ export const REFERRAL_MAX_CAP_USD = 10.00; // $10 cap per referred user
 export const WELCOME_CREDIT_USD = 0.25; // $0.25 instant milestone credit
 export const WELCOME_CREDIT_IMPRESSIONS_REQUIRED = 10; // 10 verified impressions
 
+/**
+ * Deterministic permanent referral code generator.
+ * Tied to user's email address or device ID so it never changes across sessions.
+ */
+export function getPermanentReferralCode(identifier: string): string {
+  if (!identifier) return 'ref_member';
+  const clean = identifier.trim().toLowerCase();
+  let hash = 5381;
+  for (let i = 0; i < clean.length; i++) {
+    hash = ((hash << 5) + hash) + clean.charCodeAt(i);
+    hash |= 0;
+  }
+  const hex = Math.abs(hash).toString(16).padStart(6, '0').slice(0, 6);
+  if (clean.includes('@')) {
+    const prefix = clean.split('@')[0].replace(/[^a-z0-9]/gi, '').slice(0, 8);
+    return `${prefix || 'usr'}_${hex}`;
+  }
+  if (clean.startsWith('dev_')) {
+    return clean;
+  }
+  return `ref_${clean.slice(0, 6)}_${hex}`;
+}
+
 class ReferralEngine {
   private relationships = new Map<string, ReferralRelationship>(); // key: referred_device_id
 
@@ -188,6 +211,42 @@ class ReferralEngine {
    */
   public getRefereeStatus(referredDeviceId: string): ReferralRelationship | null {
     return this.relationships.get(referredDeviceId) || null;
+  }
+
+  /**
+   * Retrieve list of all referred users and their generated earnings for this referrer
+   */
+  public getReferralList(referrerDeviceId: string): Array<{
+    id: string;
+    referred_id: string;
+    date_joined: string;
+    impressions: number;
+    commission_usd: number;
+    status: 'active' | 'capped';
+  }> {
+    const list: Array<{
+      id: string;
+      referred_id: string;
+      date_joined: string;
+      impressions: number;
+      commission_usd: number;
+      status: 'active' | 'capped';
+    }> = [];
+
+    for (const rel of this.relationships.values()) {
+      if (rel.referrer_device_id === referrerDeviceId) {
+        list.push({
+          id: rel.id,
+          referred_id: rel.referred_device_id,
+          date_joined: rel.created_at,
+          impressions: rel.welcome_credit_impressions,
+          commission_usd: rel.total_commission_usd,
+          status: rel.is_active ? 'active' : 'capped',
+        });
+      }
+    }
+
+    return list.sort((a, b) => new Date(b.date_joined).getTime() - new Date(a.date_joined).getTime());
   }
 
   /**
