@@ -4,6 +4,21 @@ Thank you for your interest in contributing to Pathixo Rewards. We welcome contr
 
 ---
 
+> [!IMPORTANT]
+> ### THE PARAMOUNT PRINCIPLE: NO RAPID PROTOTYPING
+> **There is no such thing as "rapid prototyping" or "college-project code" in this repository.**
+> We do not accept temporary hacks, fragile proofs-of-concept, or code shortcuts. Pathixo Rewards is engineered as **substantial, production-ready, bank-grade industrial software** serving an unbounded number of concurrent users and financial transactions.
+>
+> Every PR, contribution, and AI-assisted change must meet complete production standards:
+> 1. Strict TypeScript validation (zero loose `any` types).
+> 2. Full error handling and edge-case protection (network timeouts, offline modes, rate-limits).
+> 3. Zero security bypasses (open Shadow DOM isolation, zero `innerHTML`, zero prompt-reading).
+> 4. 100% passing automated test and QA suite verification (`pnpm run check:all`).
+>
+> *(Read [SUBSTANTIAL_DEVELOPMENT.md](./SUBSTANTIAL_DEVELOPMENT.md) and [AGENTS.md](./AGENTS.md) before submitting any work).*
+
+---
+
 ## 1. Development Prerequisites
 
 - **Node.js**: v20.0.0 or later (v22 LTS recommended)

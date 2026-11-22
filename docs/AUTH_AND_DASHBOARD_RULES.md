@@ -1,0 +1,45 @@
+# Authentication & Dashboard Display Rules
+
+> **CRITICAL ARCHITECTURAL DIRECTIVE FOR ALL DEVELOPERS & AI ASSISTANTS**
+>
+> **Do not alter or violate these rules under any circumstances.**
+> **SUBSTANTIAL ENGINEERING ENFORCEMENT:** No temporary auth removal, bypasses, or "prototype shortcuts" are permitted.
+> The rewards dashboard (`/dashboard` and `/dashboard/referrals`) and the `Dashboard` navigation link in `Navbar.tsx` are strictly gated behind verified user authentication.
+
+---
+
+## 1. Navbar Rules (`apps/web/components/Navbar.tsx`)
+
+1. **Dashboard Link Visibility**:
+   - The `Dashboard` link located beside the `Add to Chrome` button (and inside the mobile menu drawer) **MUST ONLY APPEAR WHEN A USER IS PROPERLY LOGGED IN** (verified `pathixo_auth_session` in `localStorage` with `logged_in === true` and a valid `email`).
+   - When a user is **unauthenticated** / logged out:
+     - The `Dashboard` link **MUST NOT** be visible beside `Add to Chrome`.
+     - In its place, only a subtle `Sign in` link (or nothing) is shown.
+     - In the mobile menu drawer, `Sign in` is shown instead of `Dashboard`.
+
+2. **Hydration & State Sync**:
+   - `Navbar.tsx` must verify authentication after mounting (`isMounted`) to avoid SSR/hydration mismatches or visual flashes.
+   - Listen to `storage` events and the custom `pathixo_auth_change` DOM event so navbar links update immediately upon login or logout without requiring a hard page refresh.
+
+---
+
+## 2. Dashboard Route Rules (`apps/web/app/dashboard/page.tsx` & `/referrals`)
+
+1. **Strict Route Protection**:
+   - The user rewards console, metric cards, telemetry/impression logs, and withdrawal forms **MUST NEVER RENDER** for unauthenticated visitors.
+   - If a visitor navigates directly to `/dashboard` or `/dashboard/referrals` without a valid `pathixo_auth_session`:
+     - The page must immediately redirect them to `/login`.
+     - While redirecting, the page must show an authentication barrier ("Sign in required"), never the rewards console or stub metrics.
+
+2. **Sign Out Functionality**:
+   - The authenticated dashboard header must include the user's logged-in email and a dedicated `Sign out` action.
+   - Signing out must clear `pathixo_auth_session`, dispatch `pathixo_auth_change`, and redirect to `/login`.
+
+---
+
+## 3. Environment & Local Testing Rules
+
+1. **Local Development Stubbing**:
+   - The convenience `user@gmail.com` stub / single-click bypass is strictly restricted to local development environments (`process.env.NODE_ENV !== 'production'`).
+2. **Production Safeguard**:
+   - In production (`process.env.NODE_ENV === 'production'`), `user@gmail.com` **MUST NEVER** be hardcoded or used as an automatic fallback bypass. Real OAuth flows (Google / GitHub) or verified email magic link authentication must be strictly enforced.

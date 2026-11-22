@@ -8,6 +8,11 @@ Pathixo Rewards is an open-source browser extension and two-sided advertising pl
 
 Users earn real money with instant low-threshold cashouts ($2 floor) while AI generates, while advertisers reach laser-focused AI power users via non-intrusive, privacy-first inline cards that never read or harvest user chats.
 
+## Engineering Standard: Substantial Development (No Rapid Prototyping)
+
+**Crucial Mandate for All Agents & Engineers:**
+There is NO such thing as "rapid development" or "quick throwaway prototyping" on Pathixo Rewards. We build substantial, industrial-grade software engineered for unbounded scale, rock-solid security, and financial ledger integrity. Temporary hacks, unhandled errors, mock stubs in production, or superficial feature implementation are categorically forbidden. Refer to `SUBSTANTIAL_DEVELOPMENT.md` and `AGENTS.md`.
+
 ## Requirements
 
 ### Validated
@@ -29,7 +34,13 @@ Users earn real money with instant low-threshold cashouts ($2 floor) while AI ge
 - [ ] **WEB-04**: Interactive Earnings Estimator slider and transparent revenue split breakdown (60% User / 40% Platform).
 - [ ] **WEB-05**: Strict Privacy & Trust section proving zero chat reading, open-source code link, and single-purpose permission compliance.
 - [ ] **WEB-06**: Self-serve Advertiser Portal (`/advertise`) with a live interactive ad creative previewer (type headline/link and see it render inside mock ChatGPT/Claude), CPM budget calculator, and campaign checkout.
-- [ ] **WEB-07**: User Earnings Dashboard (`/dashboard`) displaying balance, verified impression history, referral statistics (10% bonus tier), and cashout request flow ($2 minimum via instant rails: UPI, PayPal, or Gift Cards).
+- [ ] **WEB-07**: User Earnings Dashboard (`/dashboard`) displaying balance, verified impression history, referral statistics (10% bonus tier), and cashout request flow ($2 minimum via instant rails: UPI, PayPal, or Gift Cards). Note: STRICTLY GATED. The Dashboard route and the Navbar Dashboard link appear ONLY when a user is authenticated.
+
+### Authentication & Dashboard Invariants (Mandatory Rule for All Agents)
+
+1. **Navbar Link Visibility**: The `Dashboard` button beside `Add to Chrome` and inside the mobile drawer **ONLY** appears when a user is properly logged in (`pathixo_auth_session` exists with `logged_in === true` and a valid email). When unauthenticated, it is hidden and replaced by `Sign in`.
+2. **Route Gating**: Direct access to `/dashboard` or `/dashboard/referrals` without authentication immediately redirects to `/login`. Unauthenticated visitors must never see the rewards console, metric cards, or cashout forms.
+3. **Environment Security**: The `user@gmail.com` stub / 1-click test bypass is restricted exclusively to local development (`process.env.NODE_ENV !== 'production'`) and is strictly forbidden in production.
 - [ ] **API-01**: Secure Ad Engine API endpoints: `/api/ads/bundle` (targeted ad delivery), `/api/events/impression` (tamper-proof dwell-time verification and impression debit/credit), and `/api/device/sync`.
 - [ ] **API-02**: Default high-yield fallback inventory (AI & devtool affiliate deals e.g., Cursor, Perplexity, Notion) ensuring users always earn even before initial advertiser volume ramps up.
 

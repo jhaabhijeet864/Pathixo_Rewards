@@ -10,6 +10,10 @@
 
 Pathixo Rewards turns the idle seconds you spend waiting for AI chatbot responses (ChatGPT, Claude, Gemini, Perplexity, and DeepSeek) into cash rewards. Users receive **60% of all verified ad revenue**, cash out at an industry-low **$2.00 threshold**, while advertisers reach high-intent AI developers and founders with non-intrusive, 1-line sponsored cards.
 
+> [!IMPORTANT]
+> **Substantial Engineering Standard (No Rapid Prototyping):**  
+> Pathixo Rewards is engineered as an industrial-grade, production-ready platform designed for unbounded scale. We reject temporary hacks, superficial mocks, and "rapid development" shortcuts. Every component, API endpoint, and extension adapter adheres strictly to [SUBSTANTIAL_DEVELOPMENT.md](./SUBSTANTIAL_DEVELOPMENT.md) and [AGENTS.md](./AGENTS.md).
+
 ---
 
 ## Competitive Edge
@@ -30,6 +34,7 @@ Pathixo Rewards turns the idle seconds you spend waiting for AI chatbot response
 
 ```text
 Pathixo_Rewards/
+├── AGENTS.md                  # Master Multi-Agent Contract & Single Point of Contact (SPOC)
 ├── apps/
 │   ├── extension/             # WXT Manifest V3 browser extension
 │   │   ├── entrypoints/
@@ -167,6 +172,24 @@ Pathixo Rewards follows a domain-qualified semantic tagging system tailored to m
 - Dynamic DOM Selector Hot-Patches: `selectors-<YYYY>.<MM>.<DD>-r<N>` (e.g. `selectors-2026.11.21-r1`)
 
 Read the complete [Release Tagging Specification](file:///e:/Open%20Source/Ad_AI/RELEASE_CONVENTION.md) before cutting release tags.
+
+---
+
+## Authentication & Dashboard Policy
+
+The User Rewards Console (`/dashboard` and `/dashboard/referrals`) and the `Dashboard` navigation link in `Navbar.tsx` (beside `Add to Chrome` and inside the mobile drawer) are strictly gated behind verified user authentication.
+
+- **Unauthenticated Visitors**: The `Dashboard` link in the navbar is completely hidden (showing `Sign in`), and visiting `/dashboard` directly redirects immediately to `/login`. Unauthenticated visitors never see the console, stats, or payout forms.
+- **Authenticated Users**: The `Dashboard` link appears in the navbar upon login, and the user gains access to their console and referral stats with an integrated `Sign out` option.
+- **Local Dev vs Production**: The convenience `user@gmail.com` stub is restricted exclusively to local development (`process.env.NODE_ENV !== 'production'`) and is never used in production deployments.
+
+For architectural details, see [docs/AUTH_AND_DASHBOARD_RULES.md](file:///e:/Open%20Source/Ad_AI/docs/AUTH_AND_DASHBOARD_RULES.md) and the master [AGENTS.md](file:///e:/Open%20Source/Ad_AI/AGENTS.md) operational contract.
+
+---
+
+## Multi-Agent SPOC (Single Point of Contact)
+
+To coordinate multiple concurrent AI agents (UI bot, Homepage bot, Backend bot, Extension bot, QA bot), the repository strictly adheres to **[AGENTS.md](file:///e:/Open%20Source/Ad_AI/AGENTS.md)**. All AI agents must consult this file before making modifications and must update it alongside code changes to prevent regressions.
 
 ---
 

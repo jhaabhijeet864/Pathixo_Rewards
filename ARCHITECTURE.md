@@ -2,6 +2,10 @@
 
 Pathixo Rewards is an open-source browser extension and two-sided advertising platform designed to deliver relevant sponsor messages while users wait for AI conversational responses to generate.
 
+> [!IMPORTANT]
+> **Substantial Engineering Architecture (No Rapid Development):**  
+> Every subsystem detailed in this document is designed for enterprise-grade fault tolerance, high-concurrency throughput, zero data-harvesting privacy guarantees, and banking-grade financial ledgers. We do not design or accept throwaway prototypes. Refer to [SUBSTANTIAL_DEVELOPMENT.md](./SUBSTANTIAL_DEVELOPMENT.md) for architectural invariants.
+
 ---
 
 ## 1. High-Level System Architecture
@@ -74,3 +78,10 @@ Each supported AI platform has a dedicated content script adapter that:
 1. **Zero Prompt Inspection**: The extension monitors only UI control state (e.g. stop/send buttons). It does not access, store, or transmit chat queries or generated responses.
 2. **No Dynamic Execution**: All executable code is bundled within the extension package to comply with Manifest V3 policies.
 3. **DOM Isolation**: Injected elements are encapsulated in Shadow DOM trees with zero `innerHTML` usage.
+4. **Strict Authentication Gate**: The user rewards console and dashboard navigation are strictly protected. The `Dashboard` button beside `Add to Chrome` is hidden when unauthenticated, and `/dashboard` immediately redirects unauthenticated visitors to `/login`. Local `user@gmail.com` stubbing is restricted exclusively to non-production environments.
+
+---
+
+## 6. Multi-Agent Operational Model (SPOC)
+
+To coordinate simultaneous development across specialized AI agents (UI bot, Homepage bot, Backend bot, Extension bot, QA bot), the repository is governed by **[AGENTS.md](file:///e:/Open%20Source/Ad_AI/AGENTS.md)** as the Single Point of Contact (SPOC). Every agent must read `AGENTS.md` before planning and update project documentation upon completing changes to eliminate multi-agent divergence and visual regressions.
