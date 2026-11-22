@@ -115,9 +115,9 @@ Colors, No-AI-Slop       Calculator, Mockups DB, Cashout, Referrals Shadow DOM, 
 - **Navbar Rules & Strict Lock:**
   - **Locked Navigation Links:** Center links are locked strictly to: `How it works` (`/#how-it-works`), `FAQ` (`/#faq`), and `Advertise` (`/advertise`).
   - **NO Extra Navbar Elements:** **DO NOT** add any extra buttons, links, calculators, badges, or controls to the Navbar unless explicitly requested by the user.
-  - The `Dashboard` link beside `Add to Chrome` is **ONLY visible when logged in**.
-  - When unauthenticated, show `Sign in` (pointing to `/login`).
-  - Mobile hamburger drawer must mirror this exact behavior.
+  - The button beside `Add to Chrome` displays `Login` in normal unauthenticated cases.
+  - Once a user logs in, this button changes to `Dashboard`. Non-login users must ONLY see `Login`.
+  - Mobile hamburger drawer mirrors this exact behavior (`Login` when logged out, `Dashboard` when logged in).
   - Section anchor links in Navbar (`How it works`, `FAQ`) must **ALWAYS** use root path prefixes (`/#how-it-works`, `/#faq`) so navigation functions seamlessly from all subpages (`/advertise`, `/dashboard`, `/privacy`, `/login`, etc.).
 
 ### Agent 3: Auth & Dashboard Console Bot
@@ -156,7 +156,7 @@ Every agent must audit its work against this checklist:
 
 | Category | BANNED Anti-Pattern (DO NOT DO) | Correct Pattern |
 | :--- | :--- | :--- |
-| **Auth** | Showing the Dashboard or Navbar "Dashboard" link to unauthenticated visitors | Show "Sign in"; redirect unauthenticated visitors to `/login` |
+| **Auth** | Showing the Dashboard or Navbar "Dashboard" link to unauthenticated visitors | Show "Login"; dynamically switch to "Dashboard" once user logs in; redirect unauthenticated direct visits to `/login` |
 | **Auth** | Hardcoding `user@gmail.com` in production code | Local dev stub ONLY (`process.env.NODE_ENV !== 'production'`) |
 | **Copy / Text** | Writing "AI slop" or developer jargon (e.g. "Telemetry log", "Zero prompt reading • DOM timing", buzzwords) | Clean, executive, benefit-driven copy ("Ads seen so far", "Dwell time", "$2.00 Floor") |
 | **UI Layout** | Unbounded full-screen stretching (`max-w-none` on 2K/4K displays) | Strict clamping (`max-w-6xl` / `max-w-7xl` with `mx-auto`) |
@@ -184,3 +184,57 @@ Whenever you complete a task or make an architectural adjustment:
    - Update **`AGENTS.md`** if a project rule, user flow, or agent responsibility evolved.
    - Update **`docs/`** or the matching subsystem doc (e.g. `docs/AUTH_AND_DASHBOARD_RULES.md`).
 4. **Clean Handoff:** Provide concise, executive summaries of what was touched, why, and how downstream agents can build on it without regressions.
+
+---
+
+## 6. The Multi-Agent Network Wiring Framework & Sequential Documentation Tree
+
+To guarantee that any AI coding agent—whether operating via **Claude Code, Antigravity, Cursor, Windsurf, GitHub Copilot, Codex, or Gemini CLI**—acts with full context and zero drift, this repository employs a deterministic **Multi-Agent Wiring Framework**.
+
+### 6.1 The 8 Specialized Squad Channels
+Every task belongs to an explicit squad channel. An agent modifying a subsystem **MUST** traverse that channel's sequential documentation tree before planning or generating code:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│               CHANNEL 0: SPOC ORCHESTRATOR & SUPREME LAW               │
+│          AGENTS.md ──> SUBSTANTIAL_DEVELOPMENT.md ──> ARCHITECTURE.md  │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+    ┌──────────────┬────────────────┼────────────────┬───────────────────┐
+    ▼              ▼                ▼                ▼                   ▼
+[CHANNEL 1]   [CHANNEL 2]      [CHANNEL 3]      [CHANNEL 4]         [CHANNEL 5]
+UI & Design   Web / Homepage   Auth & Security  Admin Command       Extension & MV3
+globals.css   page.tsx         admin-auth.ts    ADMIN_CONSOLE_SPEC  wxt.config.ts
+UI rules      Navbar.tsx       user-store.ts    admin-store.ts      Shadow DOM
+    │              │                │                │                   │
+    └──────────────┴────────────────┼────────────────┴───────────────────┘
+                                    │
+                    ┌───────────────┴───────────────┐
+                    ▼                               ▼
+               [CHANNEL 6]                     [CHANNEL 7]
+               Backend API & Financials        QA Gatekeeper & Pre-Merge
+               impression/route.ts             vitest (84 tests)
+               cashout/route.ts                tsc --noEmit
+               campaign-store.ts               audit-financials.mjs
+```
+
+Full channel topologies, exact document order, and domain bounds are documented in:  
+👉 **[`docs/AGENT_NETWORK_TREE.md`](./docs/AGENT_NETWORK_TREE.md)**
+
+### 6.2 The Deterministic CLI Router
+Agents and contributors run the automated CLI router directly from the terminal:
+
+| Command | Action |
+| :--- | :--- |
+| `pnpm agent:route` | Auto-detects modified files via git status and displays the exact sequential documentation reading tree for the active squad channel. |
+| `pnpm agent:route --channel=<id>` | Explicitly loads a squad channel (`ui`, `home`, `auth`, `admin`, `ext`, `api`, `qa`, `all`). |
+| `pnpm agent:route --read` | Streams the full contents of the required channel documents sequentially in order. |
+| `pnpm agent:verify` | Verifies that all 42+ documentation nodes in the network wiring tree exist and resolve without broken links. |
+| `pnpm pre-merge` | Pre-merge compliance gatekeeper. Validates zero-stub invariants, doc tree integrity, full monorepo `tsc --noEmit`, and `vitest run`. |
+
+### 6.3 Multi-Tool AI Entrypoints
+Every AI interface has an entrypoint configuration binding it to this framework:
+- **Claude Code:** Configured in [`CLAUDE.md`](./CLAUDE.md) to execute `pnpm agent:route` upon arrival.
+- **Cursor / Windsurf:** Governed by [`.cursorrules`](./.cursorrules) to respect channel boundaries and invariants.
+- **GitHub Copilot / Codex:** Governed by [`.github/copilot-instructions.md`](./.github/copilot-instructions.md).
+

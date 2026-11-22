@@ -86,6 +86,17 @@ export default defineContentScript({
           // ignore
         }
       }
+
+      if (event.data.type === 'PATHIXO_SYNC_EARNINGS' && event.data.earnings) {
+        try {
+          await browser.runtime.sendMessage({
+            type: 'SET_EARNINGS',
+            earnings: event.data.earnings,
+          });
+        } catch {
+          // ignore
+        }
+      }
     });
 
     // Forward real-time impression notifications from extension background worker to web page

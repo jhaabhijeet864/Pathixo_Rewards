@@ -127,10 +127,38 @@ function LoginContent() {
       window.dispatchEvent(new Event('pathixo_auth_change'));
     } catch {}
 
-    // Register user & device in backend store
+    // Register user & device in backend store with self-repairing local earnings linkage
     const targetDevice = resolvedDeviceId || `dev_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
-    fetch(`/api/user/earnings?device_id=${encodeURIComponent(targetDevice)}&email=${encodeURIComponent(email)}`)
-      .catch(() => {});
+    
+    let localEarnings = null;
+    let localAds = null;
+    try {
+      const storedEarnings =
+        localStorage.getItem(`pathixo_earnings_${targetDevice}`) ||
+        localStorage.getItem('pathixo_earnings_backup');
+      if (storedEarnings) localEarnings = JSON.parse(storedEarnings);
+
+      const storedAds =
+        localStorage.getItem(`pathixo_viewed_ads_${targetDevice}`) ||
+        localStorage.getItem('pathixo_viewed_ads_backup');
+      if (storedAds) localAds = JSON.parse(storedAds);
+    } catch {}
+
+    if (localEarnings && Number(localEarnings.balance_usd || 0) > 0) {
+      fetch('/api/user/earnings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          device_id: targetDevice,
+          email,
+          earnings: localEarnings,
+          viewed_ads: localAds,
+        }),
+      }).catch(() => {});
+    } else {
+      fetch(`/api/user/earnings?device_id=${encodeURIComponent(targetDevice)}&email=${encodeURIComponent(email)}`)
+        .catch(() => {});
+    }
 
     // Bridge authentication session to Chrome extension via postMessage
     window.postMessage(

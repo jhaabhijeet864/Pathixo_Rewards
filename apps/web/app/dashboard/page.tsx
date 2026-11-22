@@ -113,18 +113,69 @@ export default function DashboardPage() {
       setIsNewLogin(true);
     }
 
-    try {
-      const storedEarnings = localStorage.getItem(`pathixo_earnings_${currentId}`);
-      if (storedEarnings) {
-        setEarnings(JSON.parse(storedEarnings));
-      }
+    // Self-repairing storage discovery fallback: never start from 0 if browser has prior earnings
+    let bestEarnings: UserEarnings | null = null;
+    let bestAds: ViewedAdItem[] = [];
 
-      const storedAds = localStorage.getItem(`pathixo_viewed_ads_${currentId}`);
-      if (storedAds) {
-        setViewedAds(JSON.parse(storedAds));
+    try {
+      const stored = localStorage.getItem(`pathixo_earnings_${currentId}`);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Number(parsed?.balance_usd || 0) > 0) bestEarnings = parsed;
       }
-    } catch {
-      // Storage parse fallback
+    } catch {}
+
+    try {
+      const backup = localStorage.getItem('pathixo_earnings_backup');
+      if (backup) {
+        const parsed = JSON.parse(backup);
+        if (Number(parsed?.balance_usd || 0) > Number(bestEarnings?.balance_usd || 0)) {
+          bestEarnings = parsed;
+        }
+      }
+    } catch {}
+
+    // Fallback: search all other device keys on this browser
+    if (!bestEarnings || Number(bestEarnings.balance_usd || 0) === 0) {
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('pathixo_earnings_') && key !== 'pathixo_earnings_backup') {
+            const val = localStorage.getItem(key);
+            if (val) {
+              const parsed = JSON.parse(val);
+              if (Number(parsed?.balance_usd || 0) > Number(bestEarnings?.balance_usd || 0)) {
+                bestEarnings = parsed;
+              }
+            }
+          }
+        }
+      } catch {}
+    }
+
+    try {
+      const storedAds =
+        localStorage.getItem(`pathixo_viewed_ads_${currentId}`) ||
+        localStorage.getItem('pathixo_viewed_ads_backup');
+      if (storedAds) {
+        bestAds = JSON.parse(storedAds);
+      }
+    } catch {}
+
+    if (bestEarnings) {
+      setEarnings(bestEarnings);
+      try {
+        localStorage.setItem(`pathixo_earnings_${currentId}`, JSON.stringify(bestEarnings));
+        localStorage.setItem('pathixo_earnings_backup', JSON.stringify(bestEarnings));
+      } catch {}
+    }
+
+    if (bestAds && bestAds.length > 0) {
+      setViewedAds(bestAds);
+      try {
+        localStorage.setItem(`pathixo_viewed_ads_${currentId}`, JSON.stringify(bestAds));
+        localStorage.setItem('pathixo_viewed_ads_backup', JSON.stringify(bestAds));
+      } catch {}
     }
 
     const code = getPermanentReferralCode(session?.email || currentId);
@@ -180,10 +231,14 @@ export default function DashboardPage() {
                 };
 
                 localStorage.setItem(`pathixo_earnings_${currentId}`, JSON.stringify(merged));
+                localStorage.setItem('pathixo_earnings_backup', JSON.stringify(merged));
 
                 // If client balance is higher than server balance, push synced state to server
                 if (clientBal > serverBal) {
                   syncToServer(merged);
+                } else if (serverBal > clientBal) {
+                  // If server had more, update extension overlay
+                  window.postMessage({ type: 'PATHIXO_SYNC_EARNINGS', earnings: merged }, '*');
                 }
 
                 return merged;
@@ -203,6 +258,7 @@ export default function DashboardPage() {
                   .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
                   .slice(0, 50);
                 localStorage.setItem(`pathixo_viewed_ads_${currentId}`, JSON.stringify(merged));
+                localStorage.setItem('pathixo_viewed_ads_backup', JSON.stringify(merged));
                 return merged;
               });
             }
@@ -233,14 +289,17 @@ export default function DashboardPage() {
         if (event.data.earnings) {
           const inc = event.data.earnings;
           setEarnings((prev) => {
+            const clientBal = Number(prev.balance_usd || 0);
+            const extBal = Number(inc.balance_usd || 0);
+            const maxBal = Number(Math.max(clientBal, extBal).toFixed(5));
             const merged: UserEarnings = {
               ...prev,
-              balance_usd: Number(Math.max(Number(prev.balance_usd || 0), Number(inc.balance_usd || 0)).toFixed(5)),
+              balance_usd: maxBal,
               lifetime_earned_usd: Number(
                 Math.max(
                   Number(prev.lifetime_earned_usd || 0),
                   Number(inc.lifetime_earned_usd || 0),
-                  Number(inc.balance_usd || 0)
+                  maxBal
                 ).toFixed(5)
               ),
               impressions_today: Math.max(Number(prev.impressions_today || 0), Number(inc.impressions_today || 0)),
@@ -248,7 +307,14 @@ export default function DashboardPage() {
               referral_bonus_usd: Math.max(Number(prev.referral_bonus_usd || 0), Number(inc.referral_bonus_usd || 0)),
             };
             localStorage.setItem(`pathixo_earnings_${currentId}`, JSON.stringify(merged));
+            localStorage.setItem('pathixo_earnings_backup', JSON.stringify(merged));
             updatedEarningsSnapshot = merged;
+
+            // If dashboard was ahead of extension, sync extension overlay immediately
+            if (clientBal > extBal) {
+              window.postMessage({ type: 'PATHIXO_SYNC_EARNINGS', earnings: merged }, '*');
+            }
+
             return merged;
           });
         }
@@ -266,6 +332,7 @@ export default function DashboardPage() {
               .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
               .slice(0, 50);
             localStorage.setItem(`pathixo_viewed_ads_${currentId}`, JSON.stringify(merged));
+            localStorage.setItem('pathixo_viewed_ads_backup', JSON.stringify(merged));
             updatedAdsSnapshot = merged;
             return merged;
           });
@@ -284,19 +351,23 @@ export default function DashboardPage() {
         if (event.data.earnings) {
           const inc = event.data.earnings;
           setEarnings((prev) => {
+            const clientBal = Number(prev.balance_usd || 0);
+            const extBal = Number(inc.balance_usd || 0);
+            const maxBal = Number(Math.max(clientBal, extBal).toFixed(5));
             const merged: UserEarnings = {
               ...prev,
-              balance_usd: Number(Math.max(Number(prev.balance_usd || 0), Number(inc.balance_usd || 0)).toFixed(5)),
+              balance_usd: maxBal,
               lifetime_earned_usd: Number(
                 Math.max(
                   Number(prev.lifetime_earned_usd || 0),
                   Number(inc.lifetime_earned_usd || 0),
-                  Number(inc.balance_usd || 0)
+                  maxBal
                 ).toFixed(5)
               ),
               impressions_today: Math.max(Number(prev.impressions_today || 0), Number(inc.impressions_today || 0)),
             };
             localStorage.setItem(`pathixo_earnings_${currentId}`, JSON.stringify(merged));
+            localStorage.setItem('pathixo_earnings_backup', JSON.stringify(merged));
             updatedEarningsSnapshot = merged;
             return merged;
           });
@@ -306,6 +377,7 @@ export default function DashboardPage() {
           setViewedAds((prev) => {
             const next = [event.data.ad, ...prev.filter((a) => a.id !== event.data.ad.id)].slice(0, 50);
             localStorage.setItem(`pathixo_viewed_ads_${currentId}`, JSON.stringify(next));
+            localStorage.setItem('pathixo_viewed_ads_backup', JSON.stringify(next));
             updatedAdsSnapshot = next;
             return next;
           });
@@ -318,7 +390,13 @@ export default function DashboardPage() {
     };
 
     window.addEventListener('message', handleExtensionMessage);
+
+    // Staggered handshake burst: ping immediately + short intervals to guarantee instant handshake
     window.postMessage({ type: 'PATHIXO_PING_EXTENSION' }, '*');
+    const t1 = setTimeout(() => window.postMessage({ type: 'PATHIXO_PING_EXTENSION' }, '*'), 150);
+    const t2 = setTimeout(() => window.postMessage({ type: 'PATHIXO_PING_EXTENSION' }, '*'), 400);
+    const t3 = setTimeout(() => window.postMessage({ type: 'PATHIXO_PING_EXTENSION' }, '*'), 1000);
+
     fetchBackendEarnings();
 
     // Auto-sync when switching back from Gemini / ChatGPT to Dashboard tab
@@ -340,6 +418,9 @@ export default function DashboardPage() {
       window.removeEventListener('message', handleExtensionMessage);
       document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
       window.removeEventListener('focus', handleVisibilityOrFocus);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
       clearInterval(intervalId);
     };
   }, []);

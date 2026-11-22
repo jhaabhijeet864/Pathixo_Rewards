@@ -205,13 +205,80 @@ export default defineBackground(() => {
 
     if (msg.type === 'AUTH_LOGIN_SUCCESS' && msg.user) {
       const user = msg.user;
-      Promise.all([
-        setAuthUser(user),
-        resetEarningsForNewUser(),
-      ]).then(([_, freshEarnings]) => {
-        console.log('[Pathixo Rewards] User signed in and verified:', user.email);
-        sendResponse({ success: true, earnings: freshEarnings, user });
-      });
+      (async () => {
+        await setAuthUser(user);
+        const deviceId = await getDeviceId();
+        const currentEarnings = await getEarnings();
+        const currentAds = await getViewedAds();
+
+        let reconciledEarnings = { ...currentEarnings };
+        let reconciledAds = [...currentAds];
+
+        // Self-repairing server reconciliation: fetch existing account record
+        try {
+          const res = await fetch(
+            `${DASHBOARD_BASE}/api/user/earnings?device_id=${encodeURIComponent(deviceId)}&email=${encodeURIComponent(user.email)}`
+          );
+          if (res.ok) {
+            const data = await res.json();
+            if (data.status === 'ok' && data.earnings) {
+              const maxBal = Number(
+                Math.max(Number(currentEarnings.balance_usd || 0), Number(data.earnings.balance_usd || 0)).toFixed(5)
+              );
+              const maxLife = Number(
+                Math.max(
+                  Number(currentEarnings.lifetime_earned_usd || 0),
+                  Number(data.earnings?.lifetime_earned_usd || 0),
+                  maxBal
+                ).toFixed(5)
+              );
+              const maxImp = Math.max(
+                Number(currentEarnings.impressions_today || 0),
+                Number(data.earnings?.impressions_today || 0)
+              );
+
+              reconciledEarnings = {
+                ...data.earnings,
+                balance_usd: maxBal,
+                lifetime_earned_usd: maxLife,
+                impressions_today: maxImp,
+              };
+
+              // Merge viewed ads
+              const serverAds = Array.isArray(data.viewed_ads) ? data.viewed_ads : [];
+              const adMap = new Map<string, ViewedAdRecord>();
+              for (const ad of [...currentAds, ...serverAds]) {
+                if (ad && ad.id) adMap.set(ad.id, ad);
+              }
+              reconciledAds = Array.from(adMap.values())
+                .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+                .slice(0, 50);
+
+              // If local balance was higher than server, sync back to server immediately
+              if (Number(currentEarnings.balance_usd || 0) > Number(data.earnings.balance_usd || 0)) {
+                fetch(`${DASHBOARD_BASE}/api/user/earnings`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    device_id: deviceId,
+                    email: user.email,
+                    earnings: reconciledEarnings,
+                    viewed_ads: reconciledAds,
+                  }),
+                }).catch(() => {});
+              }
+            }
+          }
+        } catch (err) {
+          console.debug('[Pathixo Rewards] Could not fetch server earnings during login sync:', err);
+        }
+
+        await setEarnings(reconciledEarnings);
+        await browser.storage.local.set({ viewed_ads: reconciledAds });
+
+        console.log('[Pathixo Rewards] User signed in and verified:', user.email, 'Balance: $' + reconciledEarnings.balance_usd);
+        sendResponse({ success: true, earnings: reconciledEarnings, user, viewedAds: reconciledAds });
+      })();
       return true;
     }
 

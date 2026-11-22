@@ -10,12 +10,10 @@
 
 ## 1. Navbar Rules (`apps/web/components/Navbar.tsx`)
 
-1. **Dashboard Link Visibility**:
-   - The `Dashboard` link located beside the `Add to Chrome` button (and inside the mobile menu drawer) **MUST ONLY APPEAR WHEN A USER IS PROPERLY LOGGED IN** (verified `pathixo_auth_session` in `localStorage` with `logged_in === true` and a valid `email`).
-   - When a user is **unauthenticated** / logged out:
-     - The `Dashboard` link **MUST NOT** be visible beside `Add to Chrome`.
-     - In its place, only a subtle `Sign in` link (or nothing) is shown.
-     - In the mobile menu drawer, `Sign in` is shown instead of `Dashboard`.
+1. **Login & Dashboard Button Switching**:
+   - In normal unauthenticated cases, the button beside `Add to Chrome` (and in the mobile menu drawer) displays **`Login`**. Non-login users must ONLY see `Login`.
+   - Once a user logs in (verified `pathixo_auth_session` in `localStorage` with `logged_in === true` and a valid `email`), this button dynamically switches to **`Dashboard`**.
+   - When a user logs out / signs out, the button immediately switches back to **`Login`**.
 
 2. **Hydration & State Sync**:
    - `Navbar.tsx` must verify authentication after mounting (`isMounted`) to avoid SSR/hydration mismatches or visual flashes.
