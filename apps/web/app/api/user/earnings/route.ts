@@ -31,3 +31,45 @@ export async function GET(request: Request) {
     },
   });
 }
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const deviceId = body.device_id || 'dev_guest';
+    const email = body.email || undefined;
+    const earnings = body.earnings;
+    const viewedAds = body.viewed_ads;
+
+    const user = userStore.syncUserEarnings(deviceId, {
+      email,
+      earnings,
+      viewedAds,
+    });
+
+    const refStats = referralEngine.getReferrerStats(user.deviceId);
+
+    return NextResponse.json({
+      status: 'ok',
+      device_id: user.deviceId,
+      referral_code: user.referralCode,
+      referral_url: `https://pathixorewards.com/?ref=${user.referralCode}`,
+      earnings: {
+        ...user.earnings,
+        referral_count: refStats.totalReferrals,
+        referral_bonus_usd: refStats.totalEarnedUsd,
+      },
+      viewed_ads: user.viewedAds,
+      can_cashout: user.earnings.balance_usd >= 2.0,
+      min_threshold_usd: 2.0,
+      referral_stats: {
+        ...refStats,
+        commission_rate: '10%',
+        max_cap_per_referee_usd: 10.0,
+        turnaround_cycle: 'weekly',
+      },
+    });
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ status: 'error', message: errorMsg }, { status: 400 });
+  }
+}

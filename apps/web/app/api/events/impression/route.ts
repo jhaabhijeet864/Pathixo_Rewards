@@ -67,10 +67,16 @@ export async function POST(request: Request) {
         dwellMs: evt.dwell_ms,
         timestamp: evt.timestamp,
         cpmRateUsd,
+        earnedUsd: evt.earned_usd,
+        id: evt.event_id,
+        email: evt.user_email,
       });
     }
 
     const totalCreditedUsd = qualifiedEvents.reduce((acc, evt) => {
+      if (typeof evt.earned_usd === 'number' && evt.earned_usd > 0) {
+        return acc + evt.earned_usd;
+      }
       const cmp = campaignStore.getCampaign(evt.ad_id);
       const cpm = cmp?.cpm_rate_usd || 2.20;
       return acc + (cpm / 1000) * 0.60;

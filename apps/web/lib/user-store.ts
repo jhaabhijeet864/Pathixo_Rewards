@@ -53,7 +53,13 @@ class UserStore {
   public getOrCreateUser(deviceId: string, email?: string): UserDeviceRecord {
     let resolvedId = deviceId;
     if (email && this.emailToDevice.has(email.toLowerCase())) {
-      resolvedId = this.emailToDevice.get(email.toLowerCase())!;
+      const mappedId = this.emailToDevice.get(email.toLowerCase())!;
+      if (deviceId && deviceId !== 'dev_guest') {
+        resolvedId = deviceId;
+        this.emailToDevice.set(email.toLowerCase(), deviceId);
+      } else {
+        resolvedId = mappedId;
+      }
     }
 
     const existing = this.users.get(resolvedId);
@@ -101,6 +107,61 @@ class UserStore {
     return user;
   }
 
+  public syncUserEarnings(
+    deviceId: string,
+    data: {
+      email?: string;
+      earnings?: Partial<UserEarnings>;
+      viewedAds?: ViewedAdItem[];
+    }
+  ): UserDeviceRecord {
+    const user = this.getOrCreateUser(deviceId, data.email);
+
+    if (data.email) {
+      user.email = data.email;
+      user.referralCode = getPermanentReferralCode(data.email);
+      this.emailToDevice.set(data.email.toLowerCase(), user.deviceId);
+    }
+
+    if (data.earnings) {
+      const incomingBalance = Number(data.earnings.balance_usd || 0);
+      const incomingLifetime = Number(data.earnings.lifetime_earned_usd || 0);
+      const incomingImpressions = Number(data.earnings.impressions_today || 0);
+
+      user.earnings.balance_usd = Number(
+        Math.max(user.earnings.balance_usd, incomingBalance).toFixed(5)
+      );
+      user.earnings.lifetime_earned_usd = Number(
+        Math.max(user.earnings.lifetime_earned_usd, incomingLifetime, incomingBalance).toFixed(5)
+      );
+      user.earnings.impressions_today = Math.max(
+        user.earnings.impressions_today,
+        incomingImpressions
+      );
+    }
+
+    if (Array.isArray(data.viewedAds) && data.viewedAds.length > 0) {
+      const adMap = new Map<string, ViewedAdItem>();
+      for (const ad of user.viewedAds) {
+        if (ad && ad.id) adMap.set(ad.id, ad);
+      }
+      for (const ad of data.viewedAds) {
+        if (ad && ad.id) adMap.set(ad.id, ad);
+      }
+      user.viewedAds = Array.from(adMap.values())
+        .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+        .slice(0, 50);
+
+      if (user.earnings.impressions_today < user.viewedAds.length) {
+        user.earnings.impressions_today = user.viewedAds.length;
+      }
+    }
+
+    user.lastActive = new Date().toISOString();
+    this.syncToAdmin(user);
+    return user;
+  }
+
   public recordImpression(params: {
     deviceId: string;
     adId: string;
@@ -110,11 +171,16 @@ class UserStore {
     dwellMs: number;
     timestamp?: number;
     cpmRateUsd?: number;
+    earnedUsd?: number;
+    id?: string;
+    email?: string;
   }): { earnings: UserEarnings; viewedAd: ViewedAdItem } {
-    const user = this.getOrCreateUser(params.deviceId);
-    const creditPerImpression = typeof params.cpmRateUsd === 'number'
-      ? Number(((params.cpmRateUsd / 1000) * 0.60).toFixed(4))
-      : 0.009; // 60% of verified ad revenue ($15 CPM blended)
+    const user = this.getOrCreateUser(params.deviceId, params.email);
+    const creditPerImpression = typeof params.earnedUsd === 'number' && params.earnedUsd > 0
+      ? params.earnedUsd
+      : (typeof params.cpmRateUsd === 'number'
+          ? Number(((params.cpmRateUsd / 1000) * 0.60).toFixed(5))
+          : 0.009); // 60% of verified ad revenue
 
     user.earnings.balance_usd = Number((user.earnings.balance_usd + creditPerImpression).toFixed(5));
     user.earnings.lifetime_earned_usd = Number((user.earnings.lifetime_earned_usd + creditPerImpression).toFixed(5));
@@ -123,7 +189,7 @@ class UserStore {
 
     const formattedModel = this.formatPlatformName(params.platform);
     const viewedAd: ViewedAdItem = {
-      id: `ad_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      id: params.id || `ad_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       sponsor: params.sponsorName,
       headline: params.headline,
       model: formattedModel,
@@ -133,7 +199,12 @@ class UserStore {
       verified: true,
     };
 
-    user.viewedAds.unshift(viewedAd);
+    const existingIndex = user.viewedAds.findIndex((a) => a.id === viewedAd.id);
+    if (existingIndex >= 0) {
+      user.viewedAds[existingIndex] = viewedAd;
+    } else {
+      user.viewedAds.unshift(viewedAd);
+    }
     if (user.viewedAds.length > 50) {
       user.viewedAds = user.viewedAds.slice(0, 50);
     }

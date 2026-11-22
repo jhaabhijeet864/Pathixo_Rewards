@@ -183,6 +183,13 @@ export default defineContentScript({
     let dismissedThisTurn = false;
     let registeredDeviceId = 'dev_guest';
 
+    // Eagerly resolve canonical device ID
+    browser.runtime.sendMessage({ type: 'GET_STATE' }).then((state: any) => {
+      if (state?.deviceId) {
+        registeredDeviceId = state.deviceId;
+      }
+    }).catch(() => {});
+
     // Self-healing continuous persistence enforcer:
     // When host frameworks (React, Angular, Next.js) re-render message turns after streaming,
     // they remove or reorder foreign DOM nodes. This reconciler ensures all ad cards remain permanently sustained in the conversation.
