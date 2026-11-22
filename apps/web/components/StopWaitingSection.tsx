@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Lock, ArrowRight } from 'lucide-react';
 
 export function ChromeIcon({ className = 'h-5 w-5' }: { className?: string }) {
@@ -12,8 +13,8 @@ export function ChromeIcon({ className = 'h-5 w-5' }: { className?: string }) {
 
 export function StopWaitingSection() {
   return (
-    <section className="relative w-full py-16 sm:py-24 px-6 sm:px-10 lg:px-14">
-      <div className="relative mx-auto w-full max-w-5xl overflow-hidden rounded-3xl sm:rounded-[36px] border border-[#162534] bg-[#080d14] px-6 py-16 sm:px-16 sm:py-24 text-center shadow-2xl">
+    <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 lg:px-8">
+      <div className="relative mx-auto w-full max-w-4xl lg:max-w-5xl overflow-hidden rounded-3xl sm:rounded-[36px] border border-[#162534] bg-[#080d14] px-6 py-14 sm:px-14 sm:py-20 text-center shadow-2xl">
         {/* Soft Ambient Radial Glow (Exact match to Chatwait Screenshot) */}
         <div
           className="pointer-events-none absolute inset-0 -top-24 bg-[radial-gradient(ellipse_70%_60%_at_50%_30%,rgba(16,185,129,0.18),rgba(6,78,59,0.08)_50%,transparent_80%)]"
@@ -37,16 +38,14 @@ export function StopWaitingSection() {
 
           {/* Add to Chrome CTA Button */}
           <div className="mt-8 flex flex-col items-center">
-            <a
-              href="https://github.com/jhaabhijeet864/Pathixo_Rewards"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2.5 rounded-xl bg-[#10b981] px-7 py-3.5 text-base sm:text-lg font-bold text-white shadow-lg shadow-emerald-500/25 transition-all hover:bg-[#0ea371] hover:shadow-emerald-500/40 hover:-translate-y-0.5 active:translate-y-0"
+            <Link
+              href="/coming-soon"
+              className="inline-flex items-center gap-2.5 rounded-xl bg-[#10b981] px-7 py-3.5 text-base sm:text-lg font-bold text-white shadow-lg shadow-emerald-500/25 transition-all hover:bg-[#0ea371] hover:shadow-emerald-500/40 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
             >
               <ChromeIcon className="h-5 w-5" />
               <span>Add to Chrome</span>
               <ArrowRight className="h-4 w-4" />
-            </a>
+            </Link>
 
             {/* Micro-Trust Copy */}
             <div className="mt-4 flex items-center justify-center gap-1.5 text-xs sm:text-sm text-slate-400">

@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { HeroChatMockup } from '@/components/HeroChatMockup';
@@ -15,7 +16,7 @@ export default function HomePage() {
       <main className="flex-1">
         {/* HERO SECTION */}
         <section className="relative overflow-hidden pt-12 pb-20 sm:pt-20 sm:pb-28">
-          <div className="mx-auto w-full max-w-7xl px-6 sm:px-10 lg:px-14 text-center">
+          <div className="mx-auto w-full max-w-5xl lg:max-w-6xl px-4 sm:px-6 lg:px-8 text-center">
             {/* Main Headline */}
             <h1 className="text-5xl font-black tracking-tight text-white sm:text-7xl lg:text-8xl sm:leading-[1.05]">
               Get paid while AI{' '}
@@ -36,16 +37,14 @@ export default function HomePage() {
 
             {/* Primary Action Button & Safe Open Source Notice */}
             <div className="mt-8 flex flex-col items-center justify-center">
-              <a
-                href="https://github.com/jhaabhijeet864/Pathixo_Rewards"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2.5 rounded-xl bg-[#10b981] px-7 py-3.5 text-base sm:text-lg font-bold text-white shadow-lg shadow-emerald-500/25 transition-all hover:bg-[#0ea371] hover:shadow-emerald-500/40 hover:-translate-y-0.5 active:translate-y-0"
+              <Link
+                href="/coming-soon"
+                className="inline-flex items-center gap-2.5 rounded-xl bg-[#10b981] px-7 py-3.5 text-base sm:text-lg font-bold text-white shadow-lg shadow-emerald-500/25 transition-all hover:bg-[#0ea371] hover:shadow-emerald-500/40 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
               >
                 <ChromeIcon className="h-5 w-5" />
                 <span>Add to Chrome</span>
                 <ArrowRight className="h-4 w-4" />
-              </a>
+              </Link>
 
               <div className="mt-3.5 flex items-center justify-center gap-1.5 text-xs sm:text-sm text-slate-400">
                 <Lock className="h-3.5 w-3.5 text-slate-400" />
@@ -70,7 +69,7 @@ export default function HomePage() {
 
         {/* 3-STEP "HOW IT WORKS" */}
         <section id="how-it-works" className="border-t border-slate-800/80 bg-[#090d14] py-20 sm:py-28">
-          <div className="mx-auto w-full max-w-7xl px-6 sm:px-10 lg:px-14">
+          <div className="mx-auto w-full max-w-5xl lg:max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="text-center">
               <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#10e599]">Simple &amp; Frictionless</span>
               <h2 className="mt-3 text-3xl sm:text-5xl font-black tracking-tight text-white">
@@ -120,14 +119,14 @@ export default function HomePage() {
 
         {/* EARNINGS CALCULATOR & SPLIT */}
         <section id="calculator" className="border-t border-slate-800/80 py-20 sm:py-28">
-          <div className="mx-auto flex w-full max-w-7xl flex-col items-center px-6 sm:px-10 lg:px-14">
+          <div className="mx-auto flex w-full max-w-5xl lg:max-w-6xl flex-col items-center px-4 sm:px-6 lg:px-8">
             <EarningsCalculator />
           </div>
         </section>
 
         {/* PRIVACY & TRUST GUARANTEE */}
         <section id="privacy" className="border-t border-slate-800/80 bg-[#090d14] py-20 sm:py-28">
-          <div className="mx-auto w-full max-w-7xl px-6 sm:px-10 lg:px-14">
+          <div className="mx-auto w-full max-w-5xl lg:max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="text-center">
               <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#10e599]">Privacy First</span>
               <h2 className="mt-3 text-3xl sm:text-5xl font-black tracking-tight text-white">
@@ -174,7 +173,7 @@ export default function HomePage() {
 
         {/* FAQ SECTION */}
         <section id="faq" className="border-t border-slate-800/80 py-20 sm:py-28">
-          <div className="mx-auto flex w-full max-w-5xl flex-col items-center px-6 sm:px-10">
+          <div className="mx-auto flex w-full max-w-3xl lg:max-w-4xl flex-col items-center px-4 sm:px-6">
             <div className="text-center mb-14">
               <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#10e599]">FAQ</span>
               <h2 className="mt-3 text-3xl sm:text-5xl font-black tracking-tight text-white">

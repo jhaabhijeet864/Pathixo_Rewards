@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { ShieldCheck, Zap, Minus, Plus, Clock, ArrowRight } from 'lucide-react';
 import { DEFAULT_USD_INR_RATE } from '@pathixo/shared';
 
@@ -12,7 +13,7 @@ const PRESETS = [
   { label: 'Power', value: 100 },
 ];
 
-const USER_CREDIT_PER_PROMPT_USD = 0.012; // $0.0120 USD (60% split on $20 CPM)
+const USER_CREDIT_PER_PROMPT_USD = 0.0015; // $0.0015 USD avg (60% split on $2.50 blended CPM, dynamic per-ad auction)
 const CASHOUT_FLOOR_USD = 2.0;
 
 export function EarningsCalculator() {
@@ -34,20 +35,35 @@ export function EarningsCalculator() {
     return `$${usdVal.toFixed(2)}`;
   };
 
+  const formatDaily = (usdVal: number) => {
+    if (currency === 'INR') {
+      const inrVal = usdVal * inrRate;
+      return `₹${inrVal.toFixed(2)}`;
+    }
+    if (usdVal < 0.01) {
+      return `$${usdVal.toFixed(3)}`;
+    }
+    return `$${usdVal.toFixed(2)}`;
+  };
+
   const handleSliderChange = (val: number) => {
     const clamped = Math.max(1, Math.min(150, val));
     setDailyPrompts(clamped);
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto rounded-3xl border border-slate-800/80 bg-[#0a0f18] p-6 sm:p-10 lg:p-12 shadow-2xl">
-      <div className="grid gap-8 lg:gap-12 lg:grid-cols-12 items-center">
+    <div className="w-full max-w-4xl lg:max-w-5xl mx-auto rounded-2xl border border-slate-800/80 bg-[#0a0f18] p-5 sm:p-8 lg:p-10 shadow-xl">
+      <div className="grid gap-8 lg:gap-10 lg:grid-cols-12 items-center">
         {/* Left Column: Interactive Controls */}
         <div className="lg:col-span-7 space-y-6">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3.5 py-1 text-xs font-semibold text-emerald-400">
               <Zap className="h-3.5 w-3.5" />
-              <span>Transparent 60% User Split • Instant $2.00 Floor</span>
+              <span>
+                {currency === 'USD'
+                  ? 'Transparent 60% User Split • Instant $2.00 Floor'
+                  : 'Transparent 60% User Split • Instant ₹170 Floor'}
+              </span>
             </div>
             <h3 className="mt-3.5 text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white">
               Estimate your monthly payout
@@ -124,29 +140,26 @@ export function EarningsCalculator() {
           </div>
 
           {/* Simple Feature Callouts */}
-          <div className="grid grid-cols-3 gap-2.5 text-xs">
-            <div className="rounded-xl border border-slate-800/70 bg-[#0e1624]/60 p-3 flex items-start gap-2">
-              <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-              <div>
-                <strong className="text-white block font-semibold">$2.00 Floor</strong>
-                <span className="text-slate-400 text-[11px]">Instant UPI or PayPal.</span>
-              </div>
+          <div className="grid grid-cols-3 gap-2.5">
+            <div className="rounded-xl border border-slate-800/80 bg-[#0e1624]/70 px-3 py-2.5 flex items-center justify-center gap-2 text-center transition-colors hover:border-slate-700">
+              <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
+              <span className="font-semibold text-slate-100 text-xs sm:text-[13px] whitespace-nowrap">
+                {currency === 'USD' ? '$2.00 Minimum' : '₹170 Minimum'}
+              </span>
             </div>
 
-            <div className="rounded-xl border border-slate-800/70 bg-[#0e1624]/60 p-3 flex items-start gap-2">
-              <Clock className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-              <div>
-                <strong className="text-white block font-semibold">4s Dwell</strong>
-                <span className="text-slate-400 text-[11px]">Zero prompt reading.</span>
-              </div>
+            <div className="rounded-xl border border-slate-800/80 bg-[#0e1624]/70 px-3 py-2.5 flex items-center justify-center gap-2 text-center transition-colors hover:border-slate-700">
+              <Clock className="h-4 w-4 text-emerald-400 shrink-0" />
+              <span className="font-semibold text-slate-100 text-xs sm:text-[13px] whitespace-nowrap">
+                4s View Time
+              </span>
             </div>
 
-            <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/20 p-3 flex items-start gap-2">
-              <Zap className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-              <div>
-                <strong className="text-emerald-300 block font-semibold">10% Royalty</strong>
-                <span className="text-emerald-400/80 text-[11px]">Weekly turnaround, $10 cap.</span>
-              </div>
+            <div className="rounded-xl border border-slate-800/80 bg-[#0e1624]/70 px-3 py-2.5 flex items-center justify-center gap-2 text-center transition-colors hover:border-slate-700">
+              <Zap className="h-4 w-4 text-emerald-400 shrink-0" />
+              <span className="font-semibold text-slate-100 text-xs sm:text-[13px] whitespace-nowrap">
+                10% Referral Bonus
+              </span>
             </div>
           </div>
         </div>
@@ -191,17 +204,22 @@ export function EarningsCalculator() {
             <div className="mt-1 text-sm font-medium text-emerald-400">
               per month in passive cash
             </div>
+            <div className="text-[11px] text-slate-400 mt-1">
+              Based on ~$0.0015 avg reward (60% split on $2.50 blended CPM)
+            </div>
           </div>
 
           {/* 3 Clean Spaced Metrics */}
           <div className="rounded-xl border border-slate-800/80 bg-slate-900/60 p-3.5 space-y-2 text-xs text-left">
             <div className="flex items-center justify-between">
               <span className="text-slate-400">Daily average</span>
-              <span className="font-mono font-bold text-emerald-400">+{formatMoney(dailyEarningsUsd)} / day</span>
+              <span className="font-mono font-bold text-emerald-400">+{formatDaily(dailyEarningsUsd)} / day</span>
             </div>
             <div className="flex items-center justify-between border-t border-slate-800/60 pt-2">
               <span className="text-slate-400">Minimum cashout</span>
-              <span className="font-semibold text-white">{formatMoney(CASHOUT_FLOOR_USD)} instant floor</span>
+              <span className="font-semibold text-white">
+                {currency === 'USD' ? '$2.00 instant floor' : '₹170 instant floor'}
+              </span>
             </div>
             <div className="flex items-center justify-between border-t border-slate-800/60 pt-2">
               <span className="text-slate-400">First payout in</span>
@@ -210,15 +228,13 @@ export function EarningsCalculator() {
           </div>
 
           {/* Direct CTA */}
-          <a
-            href="https://github.com/jhaabhijeet864/Pathixo_Rewards"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/coming-soon"
             className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 py-3.5 text-sm sm:text-base font-bold text-slate-950 shadow-lg shadow-emerald-500/20 transition hover:-translate-y-0.5 cursor-pointer"
           >
             <span>Start Earning Now — Free</span>
             <ArrowRight className="h-4 w-4" />
-          </a>
+          </Link>
         </div>
       </div>
     </div>
