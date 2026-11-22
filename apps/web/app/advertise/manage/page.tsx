@@ -133,20 +133,20 @@ function CampaignManagerContent() {
   if (!campaignId) {
     return (
       <div className="mx-auto w-full max-w-xl px-4 py-20 text-center">
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 sm:p-12 shadow-sm space-y-5">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
+        <div className="rounded-2xl border border-[#162534] bg-[#0c1219] p-8 sm:p-12 shadow-xl space-y-5">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
             <Sparkles className="h-6 w-6" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
             Manage your campaign
           </h1>
-          <p className="text-sm text-slate-600 leading-relaxed max-w-md mx-auto">
+          <p className="text-sm text-slate-400 leading-relaxed max-w-md mx-auto">
             This page unlocks when an advertiser launches a campaign. No active campaign ID was provided.
           </p>
           <div className="pt-2">
             <Link
               href="/advertise"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#059669] hover:bg-[#047857] px-6 py-3 text-sm font-bold text-white shadow-sm transition active:scale-[0.99]"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-950/50 transition active:scale-[0.99]"
             >
               <span>Create an Ad Campaign</span>
               <ArrowRight className="h-4 w-4" />
@@ -160,8 +160,8 @@ function CampaignManagerContent() {
   if (loading) {
     return (
       <div className="py-24 text-center space-y-3">
-        <Sparkles className="h-6 w-6 text-emerald-600 animate-spin mx-auto" />
-        <div className="text-sm text-slate-500 font-medium">Loading campaign details...</div>
+        <Sparkles className="h-6 w-6 text-emerald-400 animate-spin mx-auto" />
+        <div className="text-sm text-slate-400 font-medium">Loading campaign details...</div>
       </div>
     );
   }
@@ -169,17 +169,17 @@ function CampaignManagerContent() {
   if (errorMsg && !campaign) {
     return (
       <div className="mx-auto w-full max-w-xl px-4 py-20 text-center">
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 sm:p-12 shadow-sm space-y-4">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+        <div className="rounded-2xl border border-[#162534] bg-[#0c1219] p-8 sm:p-12 shadow-xl space-y-4">
+          <h1 className="text-2xl font-bold tracking-tight text-white">
             Campaign Not Found
           </h1>
-          <p className="text-sm text-slate-600 leading-relaxed max-w-md mx-auto">
+          <p className="text-sm text-slate-400 leading-relaxed max-w-md mx-auto">
             {errorMsg}. Please verify the campaign link or create a new campaign on the Advertise page.
           </p>
           <div className="pt-3">
             <Link
               href="/advertise"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 px-6 py-2.5 text-xs font-bold text-white shadow-sm transition"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-800 hover:bg-slate-700 px-6 py-2.5 text-xs font-bold text-white shadow-sm transition"
             >
               <span>Go to Campaign Builder</span>
             </Link>
@@ -202,84 +202,84 @@ function CampaignManagerContent() {
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:py-12">
       {/* Page Title */}
-      <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 mb-8">
+      <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-8">
         Manage your campaign
       </h1>
 
       {saveSuccess && (
-        <div className="mb-6 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 shadow-xs">
-          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+        <div className="mb-6 flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-400 shadow-xs">
+          <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
           <span>Your ad changes have been saved and applied to live preview!</span>
         </div>
       )}
 
       {errorMsg && (
-        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">
           {errorMsg}
         </div>
       )}
 
       {/* CARD 1: Your Campaign & Metrics Grid */}
-      <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
+      <div className="mb-6 rounded-2xl border border-[#162534] bg-[#0c1219] p-6 sm:p-8 shadow-xl">
         <div className="flex items-start justify-between gap-4">
-          <h2 className="text-xl font-bold text-slate-900">Your campaign</h2>
+          <h2 className="text-xl font-bold text-white">Your campaign</h2>
           <span
             className={`rounded-full px-3 py-0.5 text-xs font-semibold ${
               isPending
-                ? 'border border-amber-300 bg-amber-50 text-amber-700'
+                ? 'border border-amber-500/30 bg-amber-500/10 text-amber-400'
                 : campaign?.status === 'active'
-                ? 'border border-emerald-300 bg-emerald-50 text-emerald-700'
-                : 'border border-slate-300 bg-slate-100 text-slate-700'
+                ? 'border border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+                : 'border border-slate-700 bg-slate-800 text-slate-300'
             }`}
           >
             {isPending ? 'Pending review' : campaign?.status === 'active' ? 'Active' : 'Paused'}
           </span>
         </div>
 
-        <p className="mt-2 text-sm leading-relaxed text-slate-600">
+        <p className="mt-2 text-sm leading-relaxed text-slate-400">
           We review every campaign before it goes live, usually within 24 hours. You can edit your ad below until the review starts.
         </p>
 
         {/* 2 Rows x 3 Columns Metrics Grid */}
-        <div className="mt-6 grid grid-cols-3 gap-y-6 gap-x-4 border-t border-slate-100 pt-6">
+        <div className="mt-6 grid grid-cols-3 gap-y-6 gap-x-4 border-t border-slate-800 pt-6">
           <div>
-            <span className="text-sm font-normal text-slate-500">Bid per 1,000</span>
-            <div className="mt-1 text-lg sm:text-xl font-bold text-slate-900">
+            <span className="text-sm font-normal text-slate-400">Bid per 1,000</span>
+            <div className="mt-1 text-lg sm:text-xl font-bold text-white">
               ${cpm.toFixed(2)}
             </div>
           </div>
 
           <div>
-            <span className="text-sm font-normal text-slate-500">Budget remaining</span>
-            <div className="mt-1 text-lg sm:text-xl font-bold text-slate-900">
+            <span className="text-sm font-normal text-slate-400">Budget remaining</span>
+            <div className="mt-1 text-lg sm:text-xl font-bold text-white">
               ${budgetRemaining.toFixed(2)}
             </div>
           </div>
 
           <div>
-            <span className="text-sm font-normal text-slate-500">Impressions remaining</span>
-            <div className="mt-1 text-lg sm:text-xl font-bold text-slate-900">
+            <span className="text-sm font-normal text-slate-400">Impressions remaining</span>
+            <div className="mt-1 text-lg sm:text-xl font-bold text-white">
               {impressionsRemaining.toLocaleString()}
             </div>
           </div>
 
           <div>
-            <span className="text-sm font-normal text-slate-500">Impressions served</span>
-            <div className="mt-1 text-lg sm:text-xl font-bold text-slate-900">
+            <span className="text-sm font-normal text-slate-400">Impressions served</span>
+            <div className="mt-1 text-lg sm:text-xl font-bold text-white">
               {impressionsServed.toLocaleString()}
             </div>
           </div>
 
           <div>
-            <span className="text-sm font-normal text-slate-500">Clicks</span>
-            <div className="mt-1 text-lg sm:text-xl font-bold text-slate-900">
+            <span className="text-sm font-normal text-slate-400">Clicks</span>
+            <div className="mt-1 text-lg sm:text-xl font-bold text-white">
               {clicks.toLocaleString()}
             </div>
           </div>
 
           <div>
-            <span className="text-sm font-normal text-slate-500">CTR</span>
-            <div className="mt-1 text-lg sm:text-xl font-bold text-slate-900">
+            <span className="text-sm font-normal text-slate-400">CTR</span>
+            <div className="mt-1 text-lg sm:text-xl font-bold text-white">
               {ctrText}
             </div>
           </div>
@@ -287,19 +287,19 @@ function CampaignManagerContent() {
       </div>
 
       {/* CARD 2: Live Preview */}
-      <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
-        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+      <div className="mb-6 rounded-2xl border border-[#162534] bg-[#0c1219] p-6 sm:p-8 shadow-xl">
+        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
           LIVE PREVIEW
         </span>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-slate-400">
           Your ad shows in the chat while the AI is thinking, right under the user&apos;s message.
         </p>
 
         {/* Mock Chat Frame */}
-        <div className="mt-6 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-2xs">
+        <div className="mt-6 rounded-2xl border border-slate-800 bg-[#131314] p-6 shadow-inner">
           {/* User Prompt (Right-aligned bubble) */}
           <div className="flex justify-end">
-            <div className="rounded-2xl bg-slate-100 px-4 py-2.5 text-sm font-normal text-slate-800 shadow-2xs">
+            <div className="rounded-2xl bg-[#1e1f20] border border-slate-800 px-4 py-2.5 text-sm font-normal text-slate-200 shadow-xs">
               Help me plan a weekend getaway
             </div>
           </div>
@@ -308,7 +308,7 @@ function CampaignManagerContent() {
           <div className="mt-5 space-y-3">
             <div className="flex items-center gap-2.5 min-w-0">
               {!removeIcon && (
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-50 border border-slate-200/70 overflow-hidden">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#070a0e] border border-slate-800 overflow-hidden">
                   {iconUrl ? (
                     <img src={iconUrl} alt="Logo" className="h-5 w-5 object-contain" />
                   ) : (
@@ -320,18 +320,18 @@ function CampaignManagerContent() {
                 href={targetUrl || '#'}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="truncate text-sm sm:text-base font-medium text-[#1d4ed8] hover:underline"
+                className="truncate text-sm sm:text-base font-medium text-emerald-400 hover:underline"
               >
                 {adCopy || 'Your ad copy appears here'}
               </a>
             </div>
 
             {/* Separator Line */}
-            <div className="border-t border-slate-200/80"></div>
+            <div className="border-t border-slate-800"></div>
 
             {/* Thinking Status */}
             <div className="flex items-center gap-2 text-sm text-slate-400 font-medium">
-              <span className="h-2 w-2 rounded-full bg-slate-400"></span>
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
               <span>Thinking</span>
             </div>
           </div>
@@ -339,13 +339,13 @@ function CampaignManagerContent() {
       </div>
 
       {/* CARD 3: Edit your ad */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
-        <h2 className="text-xl font-bold text-slate-900 mb-6">Edit your ad</h2>
+      <div className="rounded-2xl border border-[#162534] bg-[#0c1219] p-6 sm:p-8 shadow-xl">
+        <h2 className="text-xl font-bold text-white mb-6">Edit your ad</h2>
 
         <form onSubmit={handleSaveChanges} className="space-y-5">
           {/* Sponsor name */}
           <div>
-            <label className="block text-sm font-semibold text-slate-800 mb-1.5">
+            <label className="block text-sm font-semibold text-slate-300 mb-1.5">
               Sponsor name
             </label>
             <input
@@ -353,14 +353,14 @@ function CampaignManagerContent() {
               required
               value={sponsorName}
               onChange={(e) => setSponsorName(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-emerald-500 transition"
+              className="w-full rounded-xl border border-slate-800 bg-[#070a0e] px-3.5 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500 transition"
               placeholder="e.g. Acme Corp"
             />
           </div>
 
           {/* Ad copy */}
           <div>
-            <label className="block text-sm font-semibold text-slate-800 mb-1.5">
+            <label className="block text-sm font-semibold text-slate-300 mb-1.5">
               Ad copy
             </label>
             <input
@@ -369,17 +369,17 @@ function CampaignManagerContent() {
               maxLength={64}
               value={adCopy}
               onChange={(e) => setAdCopy(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-emerald-500 transition"
+              className="w-full rounded-xl border border-slate-800 bg-[#070a0e] px-3.5 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500 transition"
               placeholder="e.g. Your ad copy appears here"
             />
-            <div className="mt-1.5 text-xs text-slate-400">
+            <div className="mt-1.5 text-xs text-slate-500">
               {adCopy.length}/64 characters (min 3)
             </div>
           </div>
 
           {/* Destination URL */}
           <div>
-            <label className="block text-sm font-semibold text-slate-800 mb-1.5">
+            <label className="block text-sm font-semibold text-slate-300 mb-1.5">
               Destination URL
             </label>
             <input
@@ -387,22 +387,22 @@ function CampaignManagerContent() {
               required
               value={targetUrl}
               onChange={(e) => setTargetUrl(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-emerald-500 transition"
+              className="w-full rounded-xl border border-slate-800 bg-[#070a0e] px-3.5 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500 transition"
               placeholder="https://example.com"
             />
           </div>
 
           {/* Icon (optional) */}
           <div>
-            <label className="block text-sm font-semibold text-slate-800 mb-0.5">
+            <label className="block text-sm font-semibold text-slate-300 mb-0.5">
               Icon (optional)
             </label>
-            <p className="text-xs text-slate-500 mb-3 leading-relaxed">
+            <p className="text-xs text-slate-400 mb-3 leading-relaxed">
               A small square logo shown next to your ad. JPG, PNG, or WEBP. Large images are resized automatically.
             </p>
 
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white p-1">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-800 bg-[#070a0e] p-1">
                 {iconUrl && !removeIcon ? (
                   <img src={iconUrl} alt="Ad icon" className="h-7 w-7 object-contain" />
                 ) : (
@@ -410,7 +410,7 @@ function CampaignManagerContent() {
                 )}
               </div>
 
-              <label className="inline-flex cursor-pointer items-center rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition">
+              <label className="inline-flex cursor-pointer items-center rounded-lg border border-slate-800 bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800 transition">
                 <span>Choose File</span>
                 <input
                   type="file"
@@ -420,15 +420,15 @@ function CampaignManagerContent() {
                 />
               </label>
 
-              <span className="text-xs text-slate-500 truncate max-w-xs">{iconFileName}</span>
+              <span className="text-xs text-slate-400 truncate max-w-xs">{iconFileName}</span>
             </div>
 
-            <label className="mt-2.5 flex items-center gap-2 text-xs text-slate-600 cursor-pointer select-none">
+            <label className="mt-2.5 flex items-center gap-2 text-xs text-slate-400 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={removeIcon}
                 onChange={(e) => setRemoveIcon(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                className="h-4 w-4 rounded border-slate-800 bg-[#070a0e] text-emerald-600 focus:ring-emerald-500"
               />
               <span>Remove the current icon</span>
             </label>
@@ -438,7 +438,7 @@ function CampaignManagerContent() {
           <button
             type="submit"
             disabled={isSaving || adCopy.length < 3}
-            className="w-full rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold py-3 text-sm shadow-sm transition active:scale-[0.99] disabled:opacity-50 mt-6 cursor-pointer"
+            className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 text-sm shadow-lg shadow-emerald-950/50 transition active:scale-[0.99] disabled:opacity-50 mt-6 cursor-pointer"
           >
             {isSaving ? 'Saving changes...' : 'Save changes'}
           </button>
@@ -450,12 +450,12 @@ function CampaignManagerContent() {
 
 export default function CampaignManagePage() {
   return (
-    <div className="flex min-h-screen flex-col bg-[#f8fafc]">
+    <div className="flex min-h-screen flex-col bg-[#070a0e] text-slate-100 selection:bg-emerald-500/30 font-sans antialiased">
       <Navbar />
       <main className="flex-1">
         <Suspense
           fallback={
-            <div className="py-24 text-center text-sm text-slate-500">
+            <div className="py-24 text-center text-sm text-slate-400">
               Loading campaign dashboard...
             </div>
           }
