@@ -24,6 +24,10 @@ const FAQS = [
     q: 'Can I pause or disable ads if I need full focus?',
     a: 'Yes. Simply click the extension icon in your browser toolbar and toggle the switch to "Off" at any time. You can also dismiss any individual ad with a single click.',
   },
+  {
+    q: 'How does the 10% Referral Royalty program work?',
+    a: 'When you share your personal referral link, your friends receive an instant $0.25 Welcome Milestone Credit unlocked upon their first 10 verified impressions. Every Sunday at the weekly turnaround, you receive 10% of their verified earnings for that week, capped at $10.00 max per friend. Crucially, this 10% royalty is funded entirely out of Pathixo’s 40% platform take (User 60% • Referrer 4% • Platform 36%) — your friend always receives their complete 60% earnings.',
+  },
 ];
 
 export function FaqSection() {

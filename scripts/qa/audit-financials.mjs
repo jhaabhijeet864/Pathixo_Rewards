@@ -31,6 +31,26 @@ for (const cpm of cpmRates) {
   }
 }
 
+// 1b. Referral Royalty Economic Safeguard (User 60% • Referrer 4% • Platform 36%)
+console.log('\n🤝 1b. Referral Royalty Economic Safeguard Split (User 60% / Referrer 4% / Platform 36%):');
+for (const cpm of cpmRates) {
+  const pricePerView = cpm / 1000;
+  const userCut = pricePerView * 0.60;
+  const referrerCut = pricePerView * 0.04;
+  const platformRetained = pricePerView * 0.36;
+  const sum = Number((userCut + referrerCut + platformRetained).toFixed(6));
+
+  const isValid = Math.abs(sum - pricePerView) < 0.00001;
+  if (!isValid) {
+    console.error(`   ❌ Referral split error at CPM $${cpm}: sum $${sum} !== expected $${pricePerView}`);
+    pass = false;
+  } else {
+    console.log(
+      `   ✅ CPM $${cpm.toFixed(2)} -> User: $${userCut.toFixed(4)} | Referrer: $${referrerCut.toFixed(4)} | Platform: $${platformRetained.toFixed(4)}`
+    );
+  }
+}
+
 // 2. Float Rounding & Ledger Precision Test (1000 increments)
 console.log('\n🧮 2. Micro-Credit Accumulation Precision (1,000 increments @ $0.009):');
 let rawBalance = 0;

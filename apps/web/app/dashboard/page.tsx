@@ -289,7 +289,7 @@ export default function DashboardPage() {
                 <div className="mt-2 text-3xl sm:text-4xl font-extrabold text-emerald-400">
                   ${earnings.referral_bonus_usd.toFixed(2)}
                 </div>
-                <p className="mt-2 text-xs text-slate-500">10% lifetime share from {earnings.referral_count} friends</p>
+                <p className="mt-2 text-xs text-slate-500">10% weekly royalty (capped at $10/friend)</p>
               </div>
             </div>
           </div>
@@ -408,10 +408,18 @@ export default function DashboardPage() {
               {/* Referrals Box */}
               <div className="rounded-2xl border border-slate-800 bg-[#0d121c] p-6 sm:p-8 shadow-sm space-y-5">
                 <div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Earn 10% Forever</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">10% Weekly Royalty</span>
+                    <span className="text-[11px] font-semibold text-slate-400 bg-slate-800/60 px-2 py-0.5 rounded-md border border-slate-700/50">
+                      $10 Cap / Friend
+                    </span>
+                  </div>
                   <h2 className="mt-1 text-2xl font-bold text-white">Invite Friends</h2>
-                  <p className="text-xs sm:text-sm text-slate-400 mt-1">
-                    Share your personal referral link. Whenever someone you invite views sponsored cards while AI thinks, you get 10% of their earnings for life.
+                  <p className="text-xs sm:text-sm text-slate-400 mt-1 leading-relaxed">
+                    Share your personal referral link. Each invited peer receives an instant <strong className="text-emerald-400">$0.25 Welcome Milestone Credit</strong> after their first 10 verified impressions.
+                  </p>
+                  <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                    You receive a <strong className="text-white">10% weekly royalty</strong> on their verified earnings (settled every week) until reaching <strong className="text-white">$10.00 max per friend</strong>. Funded entirely from Pathixo&apos;s 40% platform take — never deducted from your friend&apos;s 60%.
                   </p>
                 </div>
 
@@ -435,6 +443,22 @@ export default function DashboardPage() {
                   <div className="rounded-xl bg-[#090d14] p-3.5 border border-slate-800">
                     <span className="text-slate-400 block mb-1">Commission Earned</span>
                     <strong className="text-xl font-bold text-emerald-400">${earnings.referral_bonus_usd.toFixed(2)}</strong>
+                  </div>
+                </div>
+
+                {/* Economics breakdown pill */}
+                <div className="rounded-xl bg-[#090d14]/70 p-3 border border-slate-800/80 text-[11px] text-slate-400 space-y-1">
+                  <div className="flex justify-between">
+                    <span>Weekly Turnaround:</span>
+                    <span className="text-slate-200 font-medium">Every Sunday 23:59 UTC</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Active Revenue Split:</span>
+                    <span className="text-emerald-400 font-mono font-medium">User 60% • Referrer 4% • Platform 36%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Welcome Incentive:</span>
+                    <span className="text-slate-200 font-medium">$0.25 after 10 impressions</span>
                   </div>
                 </div>
               </div>
@@ -468,7 +492,7 @@ export default function DashboardPage() {
                       3
                     </span>
                     <span>
-                      <strong className="text-slate-200">Share with developer peers:</strong> Friends who use AI for coding and research quickly earn, building up your 10% commission.
+                      <strong className="text-slate-200">Share with developer peers:</strong> Friends receive a $0.25 bonus on their first 10 impressions, and you collect 10% of their weekly earnings up to $10.00/person.
                     </span>
                   </li>
                 </ul>

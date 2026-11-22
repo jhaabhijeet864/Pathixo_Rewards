@@ -124,20 +124,28 @@ export function EarningsCalculator() {
           </div>
 
           {/* Simple Feature Callouts */}
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            <div className="rounded-xl border border-slate-800/70 bg-[#0e1624]/60 p-3 flex items-start gap-2.5">
+          <div className="grid grid-cols-3 gap-2.5 text-xs">
+            <div className="rounded-xl border border-slate-800/70 bg-[#0e1624]/60 p-3 flex items-start gap-2">
               <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
               <div>
-                <strong className="text-white block font-semibold">$2.00 Instant Floor</strong>
-                <span className="text-slate-400 text-[11px]">Withdraw via UPI (India) or PayPal globally.</span>
+                <strong className="text-white block font-semibold">$2.00 Floor</strong>
+                <span className="text-slate-400 text-[11px]">Instant UPI or PayPal.</span>
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-800/70 bg-[#0e1624]/60 p-3 flex items-start gap-2.5">
+            <div className="rounded-xl border border-slate-800/70 bg-[#0e1624]/60 p-3 flex items-start gap-2">
               <Clock className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
               <div>
-                <strong className="text-white block font-semibold">4s Active Dwell</strong>
-                <span className="text-slate-400 text-[11px]">Zero prompt reading. Tab must be active.</span>
+                <strong className="text-white block font-semibold">4s Dwell</strong>
+                <span className="text-slate-400 text-[11px]">Zero prompt reading.</span>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/20 p-3 flex items-start gap-2">
+              <Zap className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+              <div>
+                <strong className="text-emerald-300 block font-semibold">10% Royalty</strong>
+                <span className="text-emerald-400/80 text-[11px]">Weekly turnaround, $10 cap.</span>
               </div>
             </div>
           </div>
