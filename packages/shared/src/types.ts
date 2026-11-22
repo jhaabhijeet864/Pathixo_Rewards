@@ -58,6 +58,7 @@ export interface RemoteSelectorConfig {
 export interface UserEarnings {
   balance_usd: number;
   lifetime_earned_usd: number;
+  lifetime_cashouts_usd?: number;
   impressions_today: number;
   referral_count: number;
   referral_bonus_usd: number;
@@ -90,39 +91,53 @@ export interface PricingTier {
 
 export const PRICING_TIERS: PricingTier[] = [
   {
-    id: 'tier_micro',
-    name: 'Micro-Test',
-    price_usd: 5,
-    price_inr: 425,
-    cpm_usd: 20,
-    estimated_impressions: 250,
-  },
-  {
     id: 'tier_starter',
-    name: 'Starter',
-    price_usd: 15,
-    price_inr: 1275,
-    cpm_usd: 20,
-    estimated_impressions: 750,
+    name: 'Starter Test',
+    price_usd: 2,
+    price_inr: 170,
+    cpm_usd: 2.0,
+    estimated_impressions: 1000,
   },
   {
     id: 'tier_growth',
-    name: 'Growth',
-    price_usd: 50,
-    price_inr: 4250,
-    cpm_usd: 20,
-    estimated_impressions: 2500,
+    name: 'Growth Pack',
+    price_usd: 5,
+    price_inr: 425,
+    cpm_usd: 2.5,
+    estimated_impressions: 2000,
     popular: true,
   },
   {
+    id: 'tier_pro',
+    name: 'Pro Priority',
+    price_usd: 15,
+    price_inr: 1275,
+    cpm_usd: 3.0,
+    estimated_impressions: 5000,
+  },
+  {
     id: 'tier_scale',
-    name: 'Scale',
-    price_usd: 150,
-    price_inr: 12750,
-    cpm_usd: 20,
-    estimated_impressions: 7500,
+    name: 'Scale Domination',
+    price_usd: 50,
+    price_inr: 4250,
+    cpm_usd: 3.33,
+    estimated_impressions: 15000,
   },
 ];
+
+/**
+ * Calculates variable dynamic user earnings per verified prompt based on the ad's CPM bid.
+ * 60% user revenue share with optional natural variance (±5%).
+ */
+export function calculateDynamicUserReward(cpmRateUsd: number = 2.0, applyJitter = false): number {
+  const baseGrossPerView = cpmRateUsd / 1000;
+  const userShare = baseGrossPerView * 0.60;
+  if (!applyJitter) {
+    return Number(userShare.toFixed(5));
+  }
+  const jitterFactor = 1 + (Math.random() * 0.10 - 0.05); // ±5% variance
+  return Number((userShare * jitterFactor).toFixed(5));
+}
 
 export interface CampaignMetrics {
   total_impressions: number;
@@ -178,4 +193,93 @@ export interface HealthCheckResponse {
       heap_total: number;
     };
   };
+}
+
+export type AdminRole = 'superadmin' | 'moderator' | 'finance_viewer';
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  role: AdminRole;
+  is_active: boolean;
+  created_at: string;
+  last_login_at?: string;
+}
+
+export type CircuitBreakerKey =
+  | 'PAUSE_PAID_ADS'
+  | 'EXTENSION_MAINTENANCE'
+  | 'FREEZE_PAYOUTS';
+
+export interface CircuitBreakerState {
+  breaker_key: CircuitBreakerKey;
+  is_tripped: boolean;
+  tripped_by?: string;
+  tripped_at?: string;
+  reason?: string;
+}
+
+export interface AIPlatformMetricDetail {
+  impressions: number;
+  avg_dwell_ms: number;
+  share_percentage: number;
+}
+
+export type AIPlatformDistribution = Record<SupportedPlatform, AIPlatformMetricDetail>;
+
+export interface AdminMetrics {
+  total_inflow_usd: number;
+  user_liability_usd: number;
+  platform_profit_usd: number;
+  referral_pool_usd: number;
+  active_campaigns_count: number;
+  live_extensions_today: number;
+  cws_installs: number;
+  registered_users_count: number;
+  logins_today: number;
+  platform_distribution: AIPlatformDistribution;
+  circuit_breakers: Record<CircuitBreakerKey, boolean>;
+}
+
+export interface AdminUserSummary {
+  id: string;
+  email: string;
+  full_name?: string;
+  device_ids: string[];
+  balance_usd: number;
+  lifetime_earned_usd: number;
+  impressions_count: number;
+  referral_code: string;
+  referred_by_code?: string;
+  referral_count: number;
+  is_banned: boolean;
+  fraud_risk_score?: 'low' | 'medium' | 'high';
+  created_at: string;
+}
+
+export interface PayoutSettlementRequest {
+  payout_id: string;
+  transaction_reference: string;
+  admin_email: string;
+}
+
+export interface UserBalanceAdjustment {
+  id: string;
+  user_id: string;
+  admin_email: string;
+  adjustment_usd: number;
+  reason: string;
+  created_at: string;
+}
+
+export interface AdminAuditLogEntry {
+  id: string;
+  admin_email: string;
+  action_type: string;
+  target_entity: 'user' | 'device' | 'campaign' | 'payout' | 'circuit_breaker';
+  target_id: string;
+  previous_state?: unknown;
+  new_state?: unknown;
+  justification_note?: string;
+  created_at: string;
 }
