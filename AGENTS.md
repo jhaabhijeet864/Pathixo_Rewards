@@ -112,10 +112,13 @@ Colors, No-AI-Slop       Calculator, Mockups DB, Cashout, Referrals Shadow DOM, 
 
 ### Agent 2: Web & Homepage Bot
 - **Owns:** `apps/web/app/page.tsx`, `Navbar.tsx`, `Footer.tsx`, `HeroChatMockup.tsx`, `EarningsCalculator.tsx`, `LiveImpressionCounter.tsx`.
-- **Navbar Rules:**
+- **Navbar Rules & Strict Lock:**
+  - **Locked Navigation Links:** Center links are locked strictly to: `How it works` (`/#how-it-works`), `FAQ` (`/#faq`), and `Advertise` (`/advertise`).
+  - **NO Extra Navbar Elements:** **DO NOT** add any extra buttons, links, calculators, badges, or controls to the Navbar unless explicitly requested by the user.
   - The `Dashboard` link beside `Add to Chrome` is **ONLY visible when logged in**.
   - When unauthenticated, show `Sign in` (pointing to `/login`).
   - Mobile hamburger drawer must mirror this exact behavior.
+  - Section anchor links in Navbar (`How it works`, `FAQ`) must **ALWAYS** use root path prefixes (`/#how-it-works`, `/#faq`) so navigation functions seamlessly from all subpages (`/advertise`, `/dashboard`, `/privacy`, `/login`, etc.).
 
 ### Agent 3: Auth & Dashboard Console Bot
 - **Owns:** `apps/web/app/dashboard/page.tsx`, `apps/web/app/dashboard/referrals/page.tsx`, `apps/web/app/login/page.tsx`, `apps/web/lib/user-store.ts`, `apps/web/lib/referral-engine.ts`.
@@ -161,6 +164,7 @@ Every agent must audit its work against this checklist:
 | **Extension** | Using `innerHTML` or external script tags | Pure `document.createElement()`, local WXT bundling, open Shadow DOM |
 | **Extension** | Reading, logging, or harvesting user prompt text or AI answers | Query only button states (`button[aria-label="Stop"]`); zero prompt reading |
 | **Financials** | Lowering user split below 60% or raising payout floor above $2.00 | Maintain strict 60/40 revenue split and $2.00 instant floor |
+| **Navbar** | Adding random links, calculator buttons, or new items to the Navbar without explicit instruction | Keep Navbar strictly locked to Brand, How it works, FAQ, Advertise, Sign in/Dashboard, and Add to Chrome |
 | **Workflow** | Modifying code without updating relevant documentation | **Update `AGENTS.md` and `docs/` on every architectural change** |
 
 ---

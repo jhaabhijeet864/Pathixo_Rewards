@@ -21,6 +21,11 @@
    - `Navbar.tsx` must verify authentication after mounting (`isMounted`) to avoid SSR/hydration mismatches or visual flashes.
    - Listen to `storage` events and the custom `pathixo_auth_change` DOM event so navbar links update immediately upon login or logout without requiring a hard page refresh.
 
+3. **Strict Navbar Element Lock**:
+   - The navigation links are strictly locked to: `How it works` (`/#how-it-works`), `FAQ` (`/#faq`), and `Advertise` (`/advertise`).
+   - The Calculator button is strictly removed from the navbar.
+   - **DO NOT** add any new links, buttons, calculators, dropdowns, or icons to the Navbar unless explicitly and unequivocally requested by the user.
+
 ---
 
 ## 2. Dashboard Route Rules (`apps/web/app/dashboard/page.tsx` & `/referrals`)

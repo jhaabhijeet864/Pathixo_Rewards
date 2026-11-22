@@ -62,9 +62,6 @@ export function Navbar() {
           <Link href="/#how-it-works" className="transition-colors hover:text-white">
             How it works
           </Link>
-          <Link href="/#calculator" className="transition-colors hover:text-white">
-            Calculator
-          </Link>
           <Link href="/#faq" className="transition-colors hover:text-white">
             FAQ
           </Link>
@@ -122,13 +119,6 @@ export function Navbar() {
               className="py-1 hover:text-white"
             >
               How it works
-            </Link>
-            <Link
-              href="/#calculator"
-              onClick={() => setMobileMenuOpen(false)}
-              className="py-1 hover:text-white"
-            >
-              Calculator
             </Link>
             <Link
               href="/#faq"

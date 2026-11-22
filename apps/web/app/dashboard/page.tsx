@@ -130,6 +130,91 @@ export default function DashboardPage() {
     const code = getPermanentReferralCode(session?.email || currentId);
     setReferralCode(code);
 
+    // Helper to push synced state to server
+    const syncToServer = (syncedEarnings: UserEarnings, adsToSync?: ViewedAdItem[]) => {
+      fetch('/api/user/earnings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          device_id: currentId,
+          email: session?.email,
+          earnings: syncedEarnings,
+          viewed_ads: adsToSync,
+        }),
+      }).catch(() => {});
+    };
+
+    // Helper to fetch from backend API
+    const fetchBackendEarnings = () => {
+      const query = new URLSearchParams({
+        device_id: currentId,
+        ...(session?.email ? { email: session.email } : {}),
+      });
+
+      fetch(`/api/user/earnings?${query.toString()}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.status === 'ok') {
+            if (data.earnings) {
+              setEarnings((prev) => {
+                const serverBal = Number(data.earnings?.balance_usd || 0);
+                const clientBal = Number(prev.balance_usd || 0);
+                const maxBal = Number(Math.max(clientBal, serverBal).toFixed(5));
+                const maxLifetime = Number(
+                  Math.max(
+                    Number(prev.lifetime_earned_usd || 0),
+                    Number(data.earnings?.lifetime_earned_usd || 0),
+                    maxBal
+                  ).toFixed(5)
+                );
+                const maxImpressions = Math.max(
+                  Number(prev.impressions_today || 0),
+                  Number(data.earnings?.impressions_today || 0)
+                );
+
+                const merged: UserEarnings = {
+                  ...data.earnings,
+                  balance_usd: maxBal,
+                  lifetime_earned_usd: maxLifetime,
+                  impressions_today: maxImpressions,
+                };
+
+                localStorage.setItem(`pathixo_earnings_${currentId}`, JSON.stringify(merged));
+
+                // If client balance is higher than server balance, push synced state to server
+                if (clientBal > serverBal) {
+                  syncToServer(merged);
+                }
+
+                return merged;
+              });
+            }
+
+            if (Array.isArray(data.viewed_ads)) {
+              setViewedAds((prev) => {
+                const adMap = new Map<string, ViewedAdItem>();
+                for (const ad of prev) {
+                  if (ad && ad.id) adMap.set(ad.id, ad);
+                }
+                for (const ad of data.viewed_ads) {
+                  if (ad && ad.id) adMap.set(ad.id, ad);
+                }
+                const merged = Array.from(adMap.values())
+                  .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+                  .slice(0, 50);
+                localStorage.setItem(`pathixo_viewed_ads_${currentId}`, JSON.stringify(merged));
+                return merged;
+              });
+            }
+
+            if (data.referral_code) {
+              setReferralCode(data.referral_code);
+            }
+          }
+        })
+        .catch(() => {});
+    };
+
     // Extension bridge message listener
     const handleExtensionMessage = (event: MessageEvent) => {
       if (!event.data || typeof event.data !== 'object') return;
@@ -141,61 +226,121 @@ export default function DashboardPage() {
           currentId = event.data.deviceId;
           localStorage.setItem('pathixo_device_id', event.data.deviceId);
         }
+
+        let updatedEarningsSnapshot: UserEarnings | null = null;
+        let updatedAdsSnapshot: ViewedAdItem[] | null = null;
+
         if (event.data.earnings) {
-          setEarnings(event.data.earnings);
-          localStorage.setItem(`pathixo_earnings_${currentId}`, JSON.stringify(event.data.earnings));
+          const inc = event.data.earnings;
+          setEarnings((prev) => {
+            const merged: UserEarnings = {
+              ...prev,
+              balance_usd: Number(Math.max(Number(prev.balance_usd || 0), Number(inc.balance_usd || 0)).toFixed(5)),
+              lifetime_earned_usd: Number(
+                Math.max(
+                  Number(prev.lifetime_earned_usd || 0),
+                  Number(inc.lifetime_earned_usd || 0),
+                  Number(inc.balance_usd || 0)
+                ).toFixed(5)
+              ),
+              impressions_today: Math.max(Number(prev.impressions_today || 0), Number(inc.impressions_today || 0)),
+              referral_count: Math.max(Number(prev.referral_count || 0), Number(inc.referral_count || 0)),
+              referral_bonus_usd: Math.max(Number(prev.referral_bonus_usd || 0), Number(inc.referral_bonus_usd || 0)),
+            };
+            localStorage.setItem(`pathixo_earnings_${currentId}`, JSON.stringify(merged));
+            updatedEarningsSnapshot = merged;
+            return merged;
+          });
         }
+
         if (Array.isArray(event.data.viewedAds)) {
-          setViewedAds(event.data.viewedAds);
-          localStorage.setItem(`pathixo_viewed_ads_${currentId}`, JSON.stringify(event.data.viewedAds));
+          setViewedAds((prev) => {
+            const adMap = new Map<string, ViewedAdItem>();
+            for (const ad of prev) {
+              if (ad && ad.id) adMap.set(ad.id, ad);
+            }
+            for (const ad of event.data.viewedAds) {
+              if (ad && ad.id) adMap.set(ad.id, ad);
+            }
+            const merged = Array.from(adMap.values())
+              .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+              .slice(0, 50);
+            localStorage.setItem(`pathixo_viewed_ads_${currentId}`, JSON.stringify(merged));
+            updatedAdsSnapshot = merged;
+            return merged;
+          });
+        }
+
+        // Reconcile extension state with server
+        if (updatedEarningsSnapshot) {
+          syncToServer(updatedEarningsSnapshot, updatedAdsSnapshot || undefined);
         }
       }
 
       if (event.data.type === 'PATHIXO_IMPRESSION_LOGGED') {
+        let updatedEarningsSnapshot: UserEarnings | null = null;
+        let updatedAdsSnapshot: ViewedAdItem[] | null = null;
+
         if (event.data.earnings) {
-          setEarnings(event.data.earnings);
-          localStorage.setItem(`pathixo_earnings_${currentId}`, JSON.stringify(event.data.earnings));
+          const inc = event.data.earnings;
+          setEarnings((prev) => {
+            const merged: UserEarnings = {
+              ...prev,
+              balance_usd: Number(Math.max(Number(prev.balance_usd || 0), Number(inc.balance_usd || 0)).toFixed(5)),
+              lifetime_earned_usd: Number(
+                Math.max(
+                  Number(prev.lifetime_earned_usd || 0),
+                  Number(inc.lifetime_earned_usd || 0),
+                  Number(inc.balance_usd || 0)
+                ).toFixed(5)
+              ),
+              impressions_today: Math.max(Number(prev.impressions_today || 0), Number(inc.impressions_today || 0)),
+            };
+            localStorage.setItem(`pathixo_earnings_${currentId}`, JSON.stringify(merged));
+            updatedEarningsSnapshot = merged;
+            return merged;
+          });
         }
+
         if (event.data.ad) {
           setViewedAds((prev) => {
             const next = [event.data.ad, ...prev.filter((a) => a.id !== event.data.ad.id)].slice(0, 50);
             localStorage.setItem(`pathixo_viewed_ads_${currentId}`, JSON.stringify(next));
+            updatedAdsSnapshot = next;
             return next;
           });
+        }
+
+        if (updatedEarningsSnapshot) {
+          syncToServer(updatedEarningsSnapshot, updatedAdsSnapshot || undefined);
         }
       }
     };
 
     window.addEventListener('message', handleExtensionMessage);
     window.postMessage({ type: 'PATHIXO_PING_EXTENSION' }, '*');
+    fetchBackendEarnings();
 
-    // Fetch from backend API
-    const query = new URLSearchParams({
-      device_id: currentId,
-      ...(session?.email ? { email: session.email } : {}),
-    });
+    // Auto-sync when switching back from Gemini / ChatGPT to Dashboard tab
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible') {
+        window.postMessage({ type: 'PATHIXO_PING_EXTENSION' }, '*');
+        fetchBackendEarnings();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+    window.addEventListener('focus', handleVisibilityOrFocus);
 
-    fetch(`/api/user/earnings?${query.toString()}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.status === 'ok') {
-          if (data.earnings) {
-            setEarnings(data.earnings);
-            localStorage.setItem(`pathixo_earnings_${currentId}`, JSON.stringify(data.earnings));
-          }
-          if (Array.isArray(data.viewed_ads)) {
-            setViewedAds(data.viewed_ads);
-            localStorage.setItem(`pathixo_viewed_ads_${currentId}`, JSON.stringify(data.viewed_ads));
-          }
-          if (data.referral_code) {
-            setReferralCode(data.referral_code);
-          }
-        }
-      })
-      .catch(() => {});
+    // Periodic sync ping
+    const intervalId = setInterval(() => {
+      window.postMessage({ type: 'PATHIXO_PING_EXTENSION' }, '*');
+    }, 5000);
 
     return () => {
       window.removeEventListener('message', handleExtensionMessage);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+      clearInterval(intervalId);
     };
   }, []);
 
@@ -315,6 +460,9 @@ export default function DashboardPage() {
         try {
           localStorage.setItem(`pathixo_earnings_${deviceId}`, JSON.stringify(updated));
         } catch {}
+
+        // Notify extension overlay to reset balance
+        window.postMessage({ type: 'PATHIXO_CASHOUT_SUCCESS', earnings: updated }, '*');
       }
     } catch (err) {
       console.error(err);
