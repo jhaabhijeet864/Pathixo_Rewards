@@ -17,32 +17,53 @@
           <p>Get paid while AI thinks.</p>
         </div>
       </div>
-      <label class="switch" title="Toggle sponsored cards">
+      <label class="switch" id="header-switch" title="Toggle sponsored cards">
         <input type="checkbox" id="toggle-enabled" checked />
         <span class="slider"></span>
       </label>
     </header>
 
-    <!-- Earnings Card -->
-    <section class="earnings-card">
-      <div class="earnings-label">EARNINGS</div>
-      <div class="earnings-prompt">You have earned</div>
-      <div class="earnings-amount" id="earnings-display">$0.0923</div>
-      <p class="earnings-subtext">waiting for ChatGPT, Claude, and Gemini.</p>
-    </section>
-
-    <!-- Status Pill -->
-    <div class="status-pill">
-      <span class="status-dot" id="status-dot"></span>
-      <span id="status-text">Sponsored cards are on</span>
+    <!-- Unauthenticated / Activation View -->
+    <div id="unauthenticated-view" class="view-panel" style="display: none;">
+      <section class="onboarding-card">
+        <div class="onboarding-badge">NEW INSTALL</div>
+        <h2>Activate Rewards</h2>
+        <p>Sign in with Google or GitHub to link this browser and unlock your wait-time earnings overlay.</p>
+        <button class="btn-dashboard" id="btn-login" type="button">Sign in to Activate</button>
+        <ul class="perks-list">
+          <li><span>✓</span> Earn $0.009 for every AI wait</li>
+          <li><span>✓</span> Cash out at $2 via UPI & PayPal</li>
+          <li><span>✓</span> Zero prompt reading — 100% private</li>
+        </ul>
+      </section>
     </div>
 
-    <!-- Account Card -->
-    <section class="account-card">
-      <h2>Your account</h2>
-      <p>Manage your referral link and earnings on the dashboard.</p>
-      <button class="btn-dashboard" id="btn-dashboard" type="button">Open dashboard</button>
-    </section>
+    <!-- Authenticated / Active View -->
+    <div id="authenticated-view" class="view-panel">
+      <!-- Earnings Card -->
+      <section class="earnings-card">
+        <div class="earnings-label">EARNINGS</div>
+        <div class="earnings-prompt">You have earned</div>
+        <div class="earnings-amount" id="earnings-display">$0.0000</div>
+        <p class="earnings-subtext">waiting for ChatGPT, Claude, and Gemini.</p>
+      </section>
+
+      <!-- Status Pill -->
+      <div class="status-pill">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="status-text">Sponsored cards are on</span>
+      </div>
+
+      <!-- Account Card -->
+      <section class="account-card">
+        <h2>Your account</h2>
+        <div class="user-badge-row" id="user-badge-row" style="display: none;">
+          <span class="user-email-badge" id="user-email-badge"></span>
+        </div>
+        <p>Manage your referral link and earnings on the dashboard.</p>
+        <button class="btn-dashboard" id="btn-dashboard" type="button">Open dashboard</button>
+      </section>
+    </div>
 
     <!-- Footer -->
     <footer class="popup-footer">

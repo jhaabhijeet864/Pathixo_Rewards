@@ -29,68 +29,50 @@ interface ViewedAdItem {
 const INITIAL_VIEWED_ADS: ViewedAdItem[] = [
   {
     id: 'ad-1',
-    sponsor: 'Cursor',
-    headline: 'Build software 10x faster with Cursor — The AI Code Editor.',
+    sponsor: 'Vakxo',
+    headline: 'Run AI Agents Locally: 0 API Cost',
     model: 'ChatGPT o3-mini',
-    dwellSeconds: 4.6,
-    earnedUsd: 0.012,
+    dwellSeconds: 4.8,
+    earnedUsd: 0.009,
     timeAgo: '4 mins ago',
     verified: true,
   },
   {
     id: 'ad-2',
-    sponsor: 'Neon',
-    headline: 'Serverless Postgres with instant branching and autoscaling.',
+    sponsor: 'Pathixo',
+    headline: 'Pathixo AI Labs: Builds AI Native Apps',
     model: 'Claude 3.7 Sonnet',
-    dwellSeconds: 6.2,
-    earnedUsd: 0.012,
+    dwellSeconds: 5.4,
+    earnedUsd: 0.009,
     timeAgo: '18 mins ago',
     verified: true,
   },
   {
     id: 'ad-3',
-    sponsor: 'Vercel',
-    headline: 'The Frontend Cloud — Build and deploy fullstack web apps.',
+    sponsor: 'KrocPDF',
+    headline: 'Create PDFs and Other Docs: 100% Locally, Anti-ilovePDF',
     model: 'DeepSeek R1',
-    dwellSeconds: 5.1,
-    earnedUsd: 0.012,
+    dwellSeconds: 6.2,
+    earnedUsd: 0.009,
     timeAgo: '42 mins ago',
     verified: true,
   },
   {
     id: 'ad-4',
-    sponsor: 'Superhuman',
-    headline: 'The fastest email experience ever made for high-volume teams.',
+    sponsor: 'Blip',
+    headline: 'Vanish From Meeting with just a snap',
     model: 'Google Gemini',
-    dwellSeconds: 4.0,
-    earnedUsd: 0.012,
+    dwellSeconds: 4.2,
+    earnedUsd: 0.009,
     timeAgo: '2 hours ago',
-    verified: true,
-  },
-  {
-    id: 'ad-5',
-    sponsor: 'Resend',
-    headline: 'Email for developers — The modern way to send transactional emails.',
-    model: 'ChatGPT',
-    dwellSeconds: 4.8,
-    earnedUsd: 0.012,
-    timeAgo: '5 hours ago',
-    verified: true,
-  },
-  {
-    id: 'ad-6',
-    sponsor: 'Linear',
-    headline: 'Issue tracking built for high-performance software teams.',
-    model: 'Claude',
-    dwellSeconds: 5.5,
-    earnedUsd: 0.012,
-    timeAgo: 'Yesterday',
     verified: true,
   },
 ];
 
 export default function DashboardPage() {
   const [deviceId, setDeviceId] = useState('dev_usr_8829');
+  const [userSession, setUserSession] = useState<{ email: string; name: string } | null>(null);
+  const [isNewLogin, setIsNewLogin] = useState(false);
   const [earnings, setEarnings] = useState<UserEarnings>({
     balance_usd: 2.148,
     lifetime_earned_usd: 5.62,
@@ -110,8 +92,30 @@ export default function DashboardPage() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const devParam = params.get('device_id');
+      const loginParam = params.get('login');
       if (devParam) {
         setDeviceId(devParam);
+      }
+      if (loginParam === 'success') {
+        setIsNewLogin(true);
+        // Fresh user onboarding state
+        setEarnings({
+          balance_usd: 0.0000,
+          lifetime_earned_usd: 0.0000,
+          impressions_today: 0,
+          referral_count: 0,
+          referral_bonus_usd: 0,
+        });
+      }
+
+      try {
+        const stored = localStorage.getItem('pathixo_auth_session');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          setUserSession(parsed);
+        }
+      } catch {
+        // Local storage fallback
       }
     }
   }, []);
@@ -183,6 +187,13 @@ export default function DashboardPage() {
 
           {/* Right Header Status Bar */}
           <div className="flex items-center gap-3 sm:gap-5">
+            {userSession && (
+              <div className="hidden md:flex items-center gap-2 rounded-full border border-slate-800 bg-[#0d121c] px-3.5 py-1.5 text-xs text-slate-300">
+                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span className="font-mono text-xs">{userSession.email}</span>
+              </div>
+            )}
+
             <div className="hidden sm:flex items-center gap-2 rounded-full border border-slate-800 bg-[#0d121c] px-3.5 py-1.5 text-xs text-slate-400">
               <span className="text-slate-500">Device ID:</span>
               <span className="font-mono text-slate-300 font-semibold">{deviceId}</span>
@@ -199,6 +210,24 @@ export default function DashboardPage() {
       {/* DASHBOARD CONTENT BODY */}
       <main className="flex-1 py-10 sm:py-14">
         <div className="mx-auto w-full max-w-7xl px-6 sm:px-10 lg:px-14 space-y-10">
+
+          {/* ONBOARDING SUCCESS BANNER */}
+          {isNewLogin && (
+            <div className="rounded-xl border border-emerald-500/40 bg-emerald-950/50 p-4 text-emerald-200 text-sm flex items-center justify-between shadow-lg">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                <div>
+                  <p className="font-semibold text-emerald-300">Account Linked Successfully!</p>
+                  <p className="text-xs text-emerald-400/90 mt-0.5">
+                    Your browser extension overlay is activated and synced at $0.0000 balance. Keep using ChatGPT, Claude, and Gemini to accumulate earnings!
+                  </p>
+                </div>
+              </div>
+              <span className="text-xs font-mono bg-emerald-900/60 text-emerald-300 px-2.5 py-1 rounded-md border border-emerald-700/50 hidden sm:inline-block">
+                {userSession?.email || 'Logged In'}
+              </span>
+            </div>
+          )}
 
           {/* WELCOME BANNER & METRICS */}
           <div className="space-y-6">

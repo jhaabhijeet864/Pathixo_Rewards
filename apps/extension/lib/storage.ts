@@ -1,5 +1,14 @@
 import type { AdCreative, ImpressionEvent, UserEarnings } from '@pathixo/shared';
 
+export interface AuthUser {
+  email: string;
+  name: string;
+  avatar_url?: string;
+  provider?: 'google' | 'github' | 'developer';
+  logged_in: boolean;
+  logged_in_at?: string;
+}
+
 export interface PathixoStorageSchema {
   device_id: string;
   enabled: boolean;
@@ -7,6 +16,7 @@ export interface PathixoStorageSchema {
   cached_ads: AdCreative[];
   queued_events: ImpressionEvent[];
   last_sync: number;
+  auth_user?: AuthUser;
 }
 
 const DEFAULT_EARNINGS: UserEarnings = {
@@ -81,4 +91,32 @@ export async function drainQueuedEvents(): Promise<ImpressionEvent[]> {
   const queue = Array.isArray(data.queued_events) ? (data.queued_events as ImpressionEvent[]) : [];
   await browser.storage.local.set({ queued_events: [] });
   return queue;
+}
+
+export async function getAuthUser(): Promise<AuthUser | null> {
+  const data = await browser.storage.local.get('auth_user');
+  if (data.auth_user && typeof data.auth_user === 'object' && (data.auth_user as AuthUser).logged_in) {
+    return data.auth_user as AuthUser;
+  }
+  return null;
+}
+
+export async function setAuthUser(user: AuthUser | null): Promise<void> {
+  if (user) {
+    await browser.storage.local.set({ auth_user: user });
+  } else {
+    await browser.storage.local.remove('auth_user');
+  }
+}
+
+export async function resetEarningsForNewUser(): Promise<UserEarnings> {
+  const zeroEarnings: UserEarnings = {
+    balance_usd: 0.0000,
+    lifetime_earned_usd: 0.0000,
+    impressions_today: 0,
+    referral_count: 0,
+    referral_bonus_usd: 0,
+  };
+  await browser.storage.local.set({ earnings: zeroEarnings });
+  return zeroEarnings;
 }

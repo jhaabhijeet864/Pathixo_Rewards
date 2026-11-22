@@ -11,7 +11,7 @@ export default defineConfig({
     description:
       'Earn cash rewards while ChatGPT, Claude, Gemini, Perplexity, and DeepSeek generate responses. Open source and privacy first: never reads your chats.',
     version: '0.1.0',
-    permissions: ['storage'],
+    permissions: ['storage', 'alarms'],
     host_permissions: [
       'https://chatgpt.com/*',
       'https://claude.ai/*',
@@ -20,6 +20,15 @@ export default defineConfig({
       'https://chat.deepseek.com/*',
       'https://api.pathixo.com/*',
       'http://localhost:3000/*',
+      'https://*.github.io/*',
+      'https://pathixo.com/*',
+      'https://*.pathixo.com/*',
+    ],
+    web_accessible_resources: [
+      {
+        resources: ['house-ads/*', 'icon/*', 'pathixo-icon-round.svg'],
+        matches: ['*://*/*'],
+      },
     ],
     action: {
       default_title: 'Pathixo Rewards',

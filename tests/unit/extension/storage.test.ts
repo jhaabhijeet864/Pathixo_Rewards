@@ -9,6 +9,9 @@ import {
   setCachedAds,
   enqueueEvent,
   drainQueuedEvents,
+  getAuthUser,
+  setAuthUser,
+  resetEarningsForNewUser,
 } from '../../../apps/extension/lib/storage';
 import { resetMockStorage } from '../../setup';
 import type { AdCreative, ImpressionEvent } from '@pathixo/shared';
@@ -123,5 +126,38 @@ describe('Extension Storage Library (apps/extension/lib/storage.ts)', () => {
     // Oldest 10 (0..9) should have been pruned, remaining starts at evt_10
     expect(drained[0].event_id).toBe('evt_10');
     expect(drained[99].event_id).toBe('evt_109');
+  });
+
+  it('should manage authenticated user session and reset earnings to $0.0000 on fresh login', async () => {
+    // 1. Initially no user logged in
+    expect(await getAuthUser()).toBeNull();
+
+    // 2. Set authenticated user
+    const mockUser = {
+      email: 'founder@pathixo.com',
+      name: 'Pathixo Founder',
+      logged_in: true,
+      logged_in_at: new Date().toISOString(),
+      provider: 'developer' as const,
+    };
+
+    await setAuthUser(mockUser);
+    const loggedUser = await getAuthUser();
+    expect(loggedUser).not.toBeNull();
+    expect(loggedUser?.email).toBe('founder@pathixo.com');
+    expect(loggedUser?.logged_in).toBe(true);
+
+    // 3. Reset earnings for new user onboarding
+    const reset = await resetEarningsForNewUser();
+    expect(reset.balance_usd).toBe(0.0);
+    expect(reset.lifetime_earned_usd).toBe(0.0);
+    expect(reset.impressions_today).toBe(0);
+
+    const activeEarnings = await getEarnings();
+    expect(activeEarnings.balance_usd).toBe(0.0);
+
+    // 4. Log out user
+    await setAuthUser(null);
+    expect(await getAuthUser()).toBeNull();
   });
 });

@@ -27,7 +27,7 @@ const CARD_CSS = `
     width: 22px;
     height: 22px;
     border-radius: 6px;
-    background: #10b981;
+    background: #0f172a;
     color: #ffffff;
     font-size: 11px;
     font-weight: 700;
@@ -38,12 +38,12 @@ const CARD_CSS = `
     overflow: hidden;
   }
   .pathixo-icon.has-img {
-    background: transparent;
+    background: #0f172a;
   }
   .pathixo-icon img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     display: block;
   }
   .pathixo-content {
@@ -240,7 +240,15 @@ export class PathixoAdCard {
 
     // Icon setup
     if (ad.icon_url) {
-      this.iconImgEl.src = ad.icon_url;
+      let iconSrc = ad.icon_url;
+      if (iconSrc.startsWith('/') && typeof browser !== 'undefined' && browser.runtime?.getURL) {
+        try {
+          iconSrc = (browser.runtime.getURL as (path: string) => string)(iconSrc);
+        } catch {
+          // Keep relative path if getURL fails
+        }
+      }
+      this.iconImgEl.src = iconSrc;
       this.iconImgEl.alt = ad.sponsor_name;
       this.iconImgEl.style.display = 'block';
       this.iconInitialEl.style.display = 'none';

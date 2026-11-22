@@ -7,6 +7,10 @@ import {
   enqueueEvent,
   drainQueuedEvents,
   setCachedAds,
+  getAuthUser,
+  setAuthUser,
+  resetEarningsForNewUser,
+  type AuthUser,
 } from '../lib/storage';
 import { fetchAdBundle, sendImpressionEvents } from '../lib/api';
 import type { ImpressionEvent } from '@pathixo/shared';
@@ -15,6 +19,7 @@ interface RuntimeMessage {
   type: string;
   enabled?: boolean;
   event?: ImpressionEvent;
+  user?: AuthUser;
 }
 
 const DASHBOARD_BASE = (typeof process !== 'undefined' && process.env?.PATHIXO_WEB_URL)
@@ -28,6 +33,22 @@ export default defineBackground(() => {
   getDeviceId().then(async (deviceId) => {
     console.log('[Pathixo Rewards] Device registered:', deviceId);
     syncAds(deviceId);
+  });
+
+  // Auto-open login/activation page on install / unpack
+  browser.runtime.onInstalled.addListener(async (details) => {
+    if (details.reason === 'install') {
+      const deviceId = await getDeviceId();
+      const existingUser = await getAuthUser();
+      if (!existingUser) {
+        const loginUrl = `${DASHBOARD_BASE}/login?source=extension&deviceId=${encodeURIComponent(deviceId)}`;
+        try {
+          browser.tabs.create({ url: loginUrl });
+        } catch (err) {
+          console.debug('[Pathixo Rewards] Could not auto-open install tab:', err);
+        }
+      }
+    }
   });
 
   // Periodic alarm for flushing impression events and refreshing ads
@@ -47,9 +68,9 @@ export default defineBackground(() => {
     if (!msg || !msg.type) return true;
 
     if (msg.type === 'GET_STATE') {
-      Promise.all([getDeviceId(), isEnabled(), getEarnings()]).then(
-        ([deviceId, enabled, earnings]) => {
-          sendResponse({ deviceId, enabled, earnings });
+      Promise.all([getDeviceId(), isEnabled(), getEarnings(), getAuthUser()]).then(
+        ([deviceId, enabled, earnings, user]) => {
+          sendResponse({ deviceId, enabled, earnings, user });
         }
       );
       return true;
@@ -79,6 +100,34 @@ export default defineBackground(() => {
       getDeviceId().then((deviceId) => {
         const url = `${DASHBOARD_BASE}/dashboard?device_id=${encodeURIComponent(deviceId)}`;
         browser.tabs.create({ url });
+        sendResponse({ success: true });
+      });
+      return true;
+    }
+
+    if (msg.type === 'OPEN_LOGIN') {
+      getDeviceId().then((deviceId) => {
+        const url = `${DASHBOARD_BASE}/login?source=extension&deviceId=${encodeURIComponent(deviceId)}`;
+        browser.tabs.create({ url });
+        sendResponse({ success: true });
+      });
+      return true;
+    }
+
+    if (msg.type === 'AUTH_LOGIN_SUCCESS' && msg.user) {
+      const user = msg.user;
+      Promise.all([
+        setAuthUser(user),
+        resetEarningsForNewUser(),
+      ]).then(([_, freshEarnings]) => {
+        console.log('[Pathixo Rewards] User signed in and verified:', user.email);
+        sendResponse({ success: true, earnings: freshEarnings, user });
+      });
+      return true;
+    }
+
+    if (msg.type === 'AUTH_LOGOUT') {
+      setAuthUser(null).then(() => {
         sendResponse({ success: true });
       });
       return true;
