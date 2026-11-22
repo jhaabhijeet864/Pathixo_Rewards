@@ -3,13 +3,13 @@
 import { Suspense, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ShieldCheck, Sparkles, CheckCircle2, ArrowRight, Laptop } from 'lucide-react';
+import { ShieldCheck, CheckCircle2, Laptop } from 'lucide-react';
 
 interface AuthSessionUser {
   email: string;
   name: string;
   avatar_url?: string;
-  provider: 'google' | 'github' | 'developer';
+  provider: 'google' | 'github';
   logged_in: boolean;
   logged_in_at: string;
 }
@@ -61,22 +61,12 @@ function LoginContent() {
     };
   }, [resolvedDeviceId]);
 
-  const handleSignIn = (provider: 'google' | 'github' | 'developer') => {
+  const handleSignIn = (provider: 'google' | 'github') => {
     setIsSigningIn(true);
 
     const user: AuthSessionUser = {
-      email:
-        provider === 'google'
-          ? 'user@gmail.com'
-          : provider === 'github'
-          ? 'octocat@github.com'
-          : 'developer@pathixo.com',
-      name:
-        provider === 'google'
-          ? 'Google User'
-          : provider === 'github'
-          ? 'GitHub Developer'
-          : 'Pathixo Developer',
+      email: provider === 'google' ? 'user@gmail.com' : 'user@github.com',
+      name: provider === 'google' ? 'Google User' : 'GitHub User',
       provider,
       logged_in: true,
       logged_in_at: new Date().toISOString(),
@@ -216,33 +206,6 @@ function LoginContent() {
                 Continue with GitHub
               </button>
             </div>
-
-            {/* Divider */}
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-800" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase tracking-wider">
-                <span className="bg-slate-900 px-3 text-slate-500 font-medium">
-                  Instant Developer Testing
-                </span>
-              </div>
-            </div>
-
-            {/* 1-Click Test Sign-In */}
-            <button
-              type="button"
-              disabled={isSigningIn}
-              onClick={() => handleSignIn('developer')}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm rounded-xl transition duration-150 shadow-lg shadow-emerald-500/20 disabled:opacity-50 cursor-pointer"
-            >
-              <Sparkles className="w-4 h-4" />
-              1-Click Developer Sign-In
-              <ArrowRight className="w-4 h-4 ml-1" />
-            </button>
-            <p className="text-[11px] text-slate-400 text-center mt-2">
-              Instantly activates extension overlay at $0.0000 without requiring live OAuth keys.
-            </p>
 
             {/* Privacy & Cashout Guarantees */}
             <div className="mt-8 pt-6 border-t border-slate-800/80 space-y-2.5">

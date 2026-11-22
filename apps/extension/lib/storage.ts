@@ -4,7 +4,7 @@ export interface AuthUser {
   email: string;
   name: string;
   avatar_url?: string;
-  provider?: 'google' | 'github' | 'developer';
+  provider?: 'google' | 'github';
   logged_in: boolean;
   logged_in_at?: string;
 }

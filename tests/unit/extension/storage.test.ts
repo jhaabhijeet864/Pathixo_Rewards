@@ -138,7 +138,7 @@ describe('Extension Storage Library (apps/extension/lib/storage.ts)', () => {
       name: 'Pathixo Founder',
       logged_in: true,
       logged_in_at: new Date().toISOString(),
-      provider: 'developer' as const,
+      provider: 'google' as const,
     };
 
     await setAuthUser(mockUser);
