@@ -25,6 +25,8 @@ export interface ImpressionEvent {
   timestamp: number;
   dwell_ms: number;
   ai_platform: SupportedPlatform;
+  earned_usd?: number;
+  user_email?: string;
 }
 
 export interface PromptCallbacks {

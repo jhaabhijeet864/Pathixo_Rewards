@@ -59,13 +59,13 @@ export function Navbar() {
 
         {/* Center: Perfectly Centered Navigation Links */}
         <nav className="hidden md:flex items-center justify-center gap-8 lg:gap-10 text-sm font-medium text-slate-300">
-          <Link href="#how-it-works" className="transition-colors hover:text-white">
+          <Link href="/#how-it-works" className="transition-colors hover:text-white">
             How it works
           </Link>
-          <Link href="#calculator" className="transition-colors hover:text-white">
+          <Link href="/#calculator" className="transition-colors hover:text-white">
             Calculator
           </Link>
-          <Link href="#faq" className="transition-colors hover:text-white">
+          <Link href="/#faq" className="transition-colors hover:text-white">
             FAQ
           </Link>
           <Link href="/advertise" className="transition-colors hover:text-white">
@@ -117,21 +117,21 @@ export function Navbar() {
         <div className="border-b border-slate-800 bg-[#090d14] px-6 py-5 md:hidden space-y-3">
           <div className="flex flex-col space-y-3 text-base font-medium text-slate-300">
             <Link
-              href="#how-it-works"
+              href="/#how-it-works"
               onClick={() => setMobileMenuOpen(false)}
               className="py-1 hover:text-white"
             >
               How it works
             </Link>
             <Link
-              href="#calculator"
+              href="/#calculator"
               onClick={() => setMobileMenuOpen(false)}
               className="py-1 hover:text-white"
             >
               Calculator
             </Link>
             <Link
-              href="#faq"
+              href="/#faq"
               onClick={() => setMobileMenuOpen(false)}
               className="py-1 hover:text-white"
             >

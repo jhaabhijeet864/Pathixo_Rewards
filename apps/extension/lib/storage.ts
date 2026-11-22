@@ -80,6 +80,10 @@ export async function addEarnings(amountUsd: number): Promise<UserEarnings> {
   return updated;
 }
 
+export async function setEarnings(earnings: UserEarnings): Promise<void> {
+  await browser.storage.local.set({ earnings });
+}
+
 export async function getCachedAds(): Promise<AdCreative[]> {
   const data = await browser.storage.local.get('cached_ads');
   return Array.isArray(data.cached_ads) ? (data.cached_ads as AdCreative[]) : [];

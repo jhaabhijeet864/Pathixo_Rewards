@@ -3,6 +3,7 @@ import {
   isEnabled,
   setEnabled,
   getEarnings,
+  setEarnings,
   addEarnings,
   enqueueEvent,
   drainQueuedEvents,
@@ -16,7 +17,7 @@ import {
   type ViewedAdRecord,
 } from '../lib/storage';
 import { fetchAdBundle, sendImpressionEvents } from '../lib/api';
-import type { ImpressionEvent } from '@pathixo/shared';
+import type { ImpressionEvent, UserEarnings } from '@pathixo/shared';
 
 interface RuntimeMessage {
   type: string;
@@ -24,6 +25,7 @@ interface RuntimeMessage {
   event?: ImpressionEvent;
   ad?: { sponsor_name?: string; headline?: string; target_cpm?: number };
   user?: AuthUser;
+  earnings?: UserEarnings;
 }
 
 const DASHBOARD_BASE = (typeof process !== 'undefined' && process.env?.PATHIXO_WEB_URL)
@@ -88,59 +90,97 @@ export default defineBackground(() => {
     }
 
     if (msg.type === 'RECORD_QUALIFIED_IMPRESSION' && msg.event) {
-      const event = msg.event;
-      // Dynamic per-ad variable payout: 60% of (target_cpm / 1000) with subtle natural variance (±5%)
-      const cpm = Number(msg.ad?.target_cpm) || 2.20;
-      const baseCredit = (cpm / 1000) * 0.60;
-      const jitter = 1 + (Math.random() * 0.10 - 0.05); // ±5% subtle variance
-      const creditPerImpression = Number((baseCredit * jitter).toFixed(5));
+      (async () => {
+        const canonicalDeviceId = await getDeviceId();
+        const authUser = await getAuthUser();
 
-      const formatPlatform = (p: string) => {
-        const lower = (p || '').toLowerCase();
-        if (lower.includes('chatgpt')) return 'ChatGPT o3-mini';
-        if (lower.includes('claude')) return 'Claude 3.7 Sonnet';
-        if (lower.includes('gemini')) return 'Google Gemini 4 Argon';
-        if (lower.includes('perplexity')) return 'Perplexity Pro';
-        if (lower.includes('deepseek')) return 'DeepSeek R1';
-        return p ? p.charAt(0).toUpperCase() + p.slice(1) : 'AI Wait';
-      };
+        const event = msg.event!;
+        // Guarantee canonical device ID and user email on event
+        event.device_id = canonicalDeviceId;
+        if (authUser?.email && !event.user_email) {
+          event.user_email = authUser.email;
+        }
 
-      const viewedRecord: ViewedAdRecord = {
-        id: event.event_id,
-        sponsor: msg.ad?.sponsor_name || 'Sponsored Partner',
-        headline: msg.ad?.headline || 'Wait-time sponsored message',
-        model: formatPlatform(event.ai_platform),
-        dwellSeconds: Number(((event.dwell_ms || 4000) / 1000).toFixed(1)),
-        earnedUsd: creditPerImpression,
-        timestamp: event.timestamp || Date.now(),
-        verified: true,
-      };
+        // Dynamic per-ad variable payout: 60% of (target_cpm / 1000) with subtle natural variance (±5%)
+        const cpm = Number(msg.ad?.target_cpm) || 2.20;
+        const baseCredit = (cpm / 1000) * 0.60;
+        const jitter = 1 + (Math.random() * 0.10 - 0.05); // ±5% subtle variance
+        const creditPerImpression = Number((baseCredit * jitter).toFixed(5));
 
-      Promise.all([
-        addEarnings(creditPerImpression),
-        enqueueEvent(event),
-        addViewedAd(viewedRecord),
-      ]).then(([updatedEarnings, _, updatedAds]) => {
+        event.earned_usd = creditPerImpression;
+
+        const formatPlatform = (p: string) => {
+          const lower = (p || '').toLowerCase();
+          if (lower.includes('chatgpt')) return 'ChatGPT o3-mini';
+          if (lower.includes('claude')) return 'Claude 3.7 Sonnet';
+          if (lower.includes('gemini')) return 'Google Gemini 4 Argon';
+          if (lower.includes('perplexity')) return 'Perplexity Pro';
+          if (lower.includes('deepseek')) return 'DeepSeek R1';
+          return p ? p.charAt(0).toUpperCase() + p.slice(1) : 'AI Wait';
+        };
+
+        const viewedRecord: ViewedAdRecord = {
+          id: event.event_id,
+          sponsor: msg.ad?.sponsor_name || 'Sponsored Partner',
+          headline: msg.ad?.headline || 'Wait-time sponsored message',
+          model: formatPlatform(event.ai_platform),
+          dwellSeconds: Number(((event.dwell_ms || 4000) / 1000).toFixed(1)),
+          earnedUsd: creditPerImpression,
+          timestamp: event.timestamp || Date.now(),
+          verified: true,
+        };
+
+        const [updatedEarnings, _, updatedAds] = await Promise.all([
+          addEarnings(creditPerImpression),
+          enqueueEvent(event),
+          addViewedAd(viewedRecord),
+        ]);
+
         console.log('[Pathixo Rewards] Qualified impression logged! New balance: $' + updatedEarnings.balance_usd);
+
+        // IMMEDIATELY dispatch HTTP event to backend server so userStore & campaignStore are in sync instantly
+        sendImpressionEvents([event]).then(async (sent) => {
+          if (sent) {
+            // Also drain and flush any previously queued offline events
+            const queued = await drainQueuedEvents();
+            if (queued.length > 0) {
+              const flushed = await sendImpressionEvents(queued);
+              if (!flushed) {
+                for (const evt of queued) {
+                  await enqueueEvent(evt);
+                }
+              }
+            }
+          }
+        }).catch((err) => {
+          console.debug('[Pathixo Rewards] Immediate dispatch failed, left in queue:', err);
+        });
 
         // Notify open dashboard tabs in real time
         try {
-          browser.tabs.query({}).then((tabs) => {
-            for (const tab of tabs) {
-              if (tab.id) {
-                browser.tabs.sendMessage(tab.id, {
-                  type: 'PATHIXO_NEW_IMPRESSION',
-                  earnings: updatedEarnings,
-                  ad: viewedRecord,
-                }).catch(() => {});
-              }
+          const tabs = await browser.tabs.query({});
+          for (const tab of tabs) {
+            if (tab.id) {
+              browser.tabs.sendMessage(tab.id, {
+                type: 'PATHIXO_NEW_IMPRESSION',
+                deviceId: canonicalDeviceId,
+                earnings: updatedEarnings,
+                ad: viewedRecord,
+              }).catch(() => {});
             }
-          }).catch(() => {});
+          }
         } catch {
           // ignore
         }
 
         sendResponse({ success: true, earnings: updatedEarnings, viewedAds: updatedAds });
+      })();
+      return true;
+    }
+
+    if (msg.type === 'SET_EARNINGS' && msg.earnings) {
+      setEarnings(msg.earnings).then(() => {
+        sendResponse({ success: true, earnings: msg.earnings });
       });
       return true;
     }

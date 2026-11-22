@@ -19,12 +19,36 @@ import {
 
 export default function ComingSoonPage() {
   const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [responseMsg, setResponseMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) {
-      setSubmitted(true);
+    if (!email) return;
+
+    setLoading(true);
+    setErrorMsg('');
+
+    try {
+      const res = await fetch('/api/preregister', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, source: 'coming_soon' }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.status === 'ok') {
+        setResponseMsg(data.message);
+        setSubmitted(true);
+      } else {
+        setErrorMsg(data.message || 'Something went wrong. Please check your email.');
+      }
+    } catch {
+      setErrorMsg('Unable to reach server. Please try again in a moment.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -58,7 +82,7 @@ export default function ComingSoonPage() {
 
             {/* Subtitle */}
             <p className="mt-5 text-base sm:text-lg text-slate-400 max-w-xl mx-auto leading-relaxed">
-              We have submitted the Manifest V3 package to the Google Chrome Web Store &amp; Firefox AMO. Public 1-click install is arriving shortly!
+              We are finalizing store approvals for the official Chrome Web Store and Firefox Add-ons listings. 1-click install is arriving shortly!
             </p>
 
             {/* NOTIFY ME EMAIL FORM */}
@@ -67,27 +91,33 @@ export default function ComingSoonPage() {
                 <div className="rounded-2xl border border-emerald-500/40 bg-emerald-950/30 p-5 text-center">
                   <CheckCircle2 className="h-6 w-6 text-emerald-400 mx-auto mb-2" />
                   <p className="text-sm font-semibold text-white">You&apos;re on the early access VIP list!</p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    We&apos;ll ping <strong className="text-emerald-300">{email}</strong> the second the Chrome Web Store listing goes live.
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    {responseMsg || `We'll ping ${email} the moment the store listing goes live.`}
                   </p>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2.5">
-                  <input
-                    type="email"
-                    required
-                    placeholder="Enter your email to get notified..."
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="flex-1 rounded-xl border border-slate-800 bg-[#0d121c] px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none transition-colors"
-                  />
-                  <button
-                    type="submit"
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 text-sm font-bold text-slate-950 hover:bg-emerald-400 transition-all cursor-pointer shadow-lg shadow-emerald-500/20"
-                  >
-                    <Bell className="h-4 w-4" />
-                    <span>Notify Me</span>
-                  </button>
+                <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2.5">
+                    <input
+                      type="email"
+                      required
+                      placeholder="Enter your email to get notified..."
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="flex-1 rounded-xl border border-slate-800 bg-[#0d121c] px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none transition-colors"
+                    />
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 text-sm font-bold text-slate-950 hover:bg-emerald-400 disabled:opacity-50 transition-all cursor-pointer shadow-lg shadow-emerald-500/20"
+                    >
+                      <Bell className="h-4 w-4" />
+                      <span>{loading ? 'Saving...' : 'Notify Me'}</span>
+                    </button>
+                  </div>
+                  {errorMsg && (
+                    <p className="text-xs text-rose-400 text-left px-1 mt-1 font-medium">{errorMsg}</p>
+                  )}
                 </form>
               )}
             </div>
