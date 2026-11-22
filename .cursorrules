@@ -1,0 +1,33 @@
+# .cursorrules — Master Multi-Agent Rules & Network Directory
+
+You are an expert engineer working on Pathixo Rewards.
+
+## 0. Paramount Law: Substantial Development Only
+- Read `AGENTS.md` and `SUBSTANTIAL_DEVELOPMENT.md` before making any code changes.
+- Never write rapid prototypes, student-tier toys, or mock assumptions.
+- ZERO STUB DATA: Never reintroduce fake demo companies or mock analytics.
+
+## 1. Multi-Agent Channel Routing
+Identify the subsystem you are touching and read its sequential documentation tree:
+- **UI / Styles:** `apps/web/ADS_KNOWLEDGE_BASE_FOR_UI.md` -> `apps/web/app/globals.css`
+- **Homepage & Navbar:** `docs/AUTH_AND_DASHBOARD_RULES.md` -> `apps/web/app/page.tsx` -> `apps/web/components/Navbar.tsx`
+- **Auth & Dashboard:** `docs/AUTH_AND_DASHBOARD_RULES.md` -> `apps/web/lib/admin-auth.ts` -> `apps/web/app/login/page.tsx`
+- **Admin Console:** `docs/ADMIN_CONSOLE_SPEC.md` -> `apps/web/app/admin/page.tsx` -> `apps/web/lib/admin-store.ts`
+- **Browser Extension:** `apps/extension/wxt.config.ts` -> `ad-card.ts` -> `storage.ts`
+- **Backend APIs:** `docs/ADMIN_CONSOLE_SPEC.md` -> `apps/web/app/api/` -> `apps/web/lib/campaign-store.ts`
+- **QA & Verification:** `pnpm pre-merge` -> `pnpm test` -> `pnpm typecheck`
+
+Run `pnpm agent:route` in terminal to auto-detect your channel and stream requirements.
+
+## 2. Hard Invariants
+1. **Auth & Public Privacy:** The login page must never expose admin emails or test selection modals. Admin redirection to `/admin` must happen silently based on `isSuperAdminEmail()`. Unauthenticated users can NEVER access `/dashboard` or see "Dashboard" in the navbar.
+2. **Admin Console:** Only `jhaabhijeet864@gmail.com` can access `/admin`. Impersonation mode (`impersonate=true`) must be read-only (disable cashout buttons). Payout settlements must record bank UTR/ref.
+3. **Extension Safety:** Manifest V3 compliant. Open Shadow DOM with pure DOM APIs. ZERO `innerHTML`. 4-second minimum dwell timer. Never inspect prompt text or AI answers.
+4. **Financial Split:** Strict 60% user / 30% platform / 10% referral reserve. Minimum cashout floor is strictly $2.00.
+
+## 3. Pre-Merge Verification
+Before finishing any task, run:
+```bash
+pnpm pre-merge
+```
+All 84+ Vitest tests must pass and TypeScript must have 0 errors.

@@ -70,9 +70,9 @@ export function Navbar() {
           </Link>
         </nav>
 
-        {/* Right: Actions & Dashboard */}
+        {/* Right: Actions & Dashboard / Login */}
         <div className="flex items-center flex-1 justify-end gap-4 sm:gap-6 shrink-0">
-          {/* Dashboard link ONLY visible when user is logged in */}
+          {/* Default for non-login users is 'Login'; changes to 'Dashboard' when logged in */}
           {isMounted && isLoggedIn ? (
             <Link
               href="/dashboard"
@@ -80,14 +80,14 @@ export function Navbar() {
             >
               Dashboard
             </Link>
-          ) : isMounted ? (
+          ) : (
             <Link
               href="/login"
-              className="hidden md:inline-flex text-sm font-semibold text-slate-400 hover:text-slate-200 transition-colors"
+              className="hidden md:inline-flex text-sm font-semibold text-slate-300 hover:text-emerald-400 transition-colors"
             >
-              Sign in
+              Login
             </Link>
-          ) : null}
+          )}
 
           <Link
             href="/coming-soon"
@@ -142,15 +142,15 @@ export function Navbar() {
               >
                 Dashboard
               </Link>
-            ) : isMounted ? (
+            ) : (
               <Link
                 href="/login"
                 onClick={() => setMobileMenuOpen(false)}
                 className="py-1 text-slate-300 font-medium hover:text-white"
               >
-                Sign in
+                Login
               </Link>
-            ) : null}
+            )}
           </div>
         </div>
       )}

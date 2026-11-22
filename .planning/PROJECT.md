@@ -39,8 +39,9 @@ There is NO such thing as "rapid development" or "quick throwaway prototyping" o
 ### Authentication & Dashboard Invariants (Mandatory Rule for All Agents)
 
 1. **Navbar Link Visibility**: The `Dashboard` button beside `Add to Chrome` and inside the mobile drawer **ONLY** appears when a user is properly logged in (`pathixo_auth_session` exists with `logged_in === true` and a valid email). When unauthenticated, it is hidden and replaced by `Sign in`.
-2. **Route Gating**: Direct access to `/dashboard` or `/dashboard/referrals` without authentication immediately redirects to `/login`. Unauthenticated visitors must never see the rewards console, metric cards, or cashout forms.
-3. **Environment Security**: The `user@gmail.com` stub / 1-click test bypass is restricted exclusively to local development (`process.env.NODE_ENV !== 'production'`) and is strictly forbidden in production.
+2. **Strict Navbar Element Lock**: The center navigation links are strictly locked to `How it works` (`/#how-it-works`), `FAQ` (`/#faq`), and `Advertise` (`/advertise`). The Calculator button is removed. **DO NOT** add any other buttons, links, or elements to the Navbar unless explicitly requested by the user.
+3. **Route Gating**: Direct access to `/dashboard` or `/dashboard/referrals` without authentication immediately redirects to `/login`. Unauthenticated visitors must never see the rewards console, metric cards, or cashout forms.
+4. **Environment Security**: The `user@gmail.com` stub / 1-click test bypass is restricted exclusively to local development (`process.env.NODE_ENV !== 'production'`) and is strictly forbidden in production.
 - [ ] **API-01**: Secure Ad Engine API endpoints: `/api/ads/bundle` (targeted ad delivery), `/api/events/impression` (tamper-proof dwell-time verification and impression debit/credit), and `/api/device/sync`.
 - [ ] **API-02**: Default high-yield fallback inventory (AI & devtool affiliate deals e.g., Cursor, Perplexity, Notion) ensuring users always earn even before initial advertiser volume ramps up.
 
