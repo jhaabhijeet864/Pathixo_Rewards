@@ -4,10 +4,14 @@ import { campaignStore } from '../../../../lib/campaign-store';
 import { checkRateLimit, createRateLimitExceededResponse } from '@/lib/rate-limit';
 import { userStore } from '@/lib/user-store';
 
-// In-memory ledger for fast demonstration & event auditing
+// This local-only ledger keeps unit/development behavior deterministic; it is not production storage.
 const verifiedImpressionsLedger: ImpressionEvent[] = [];
+const processedEventIds = new Set<string>();
 
 export async function POST(request: Request) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ status: 'error', message: 'Verified impression storage is not configured. No credit was issued.' }, { status: 503 });
+  }
   try {
     const rateLimit = checkRateLimit(request, { maxRequests: 120, windowMs: 60_000, prefix: 'impression' });
     if (!rateLimit.success) {
@@ -15,7 +19,10 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const events: ImpressionEvent[] = body.events || [];
+    const events: ImpressionEvent[] = Array.isArray(body.events) ? body.events.slice(0, 20) : [];
+    if (events.length === 0) {
+      return NextResponse.json({ status: 'error', message: 'Provide at least one impression event.' }, { status: 400 });
+    }
 
     const qualifiedEvents: ImpressionEvent[] = [];
     const disqualifiedEvents: { event_id: string; reason: string }[] = [];
@@ -24,6 +31,20 @@ export async function POST(request: Request) {
       // 1. Verify required fields
       if (!evt.event_id || !evt.ad_token || !evt.ai_platform) {
         disqualifiedEvents.push({ event_id: evt.event_id, reason: 'Malformed payload' });
+        continue;
+      }
+      if (processedEventIds.has(evt.event_id)) {
+        disqualifiedEvents.push({ event_id: evt.event_id, reason: 'Duplicate event' });
+        continue;
+      }
+      if (!['chatgpt', 'claude', 'gemini', 'perplexity', 'deepseek'].includes(evt.ai_platform)) {
+        disqualifiedEvents.push({ event_id: evt.event_id, reason: 'Unsupported platform' });
+        continue;
+      }
+
+      const campaign = campaignStore.getAllCampaigns().find((item) => item.ad_token === evt.ad_token);
+      if (!campaign || campaign.status !== 'active' || campaign.budget_remaining_usd <= 0) {
+        disqualifiedEvents.push({ event_id: evt.event_id, reason: 'Unknown, inactive, or exhausted ad' });
         continue;
       }
 
@@ -38,6 +59,7 @@ export async function POST(request: Request) {
 
       // 3. Qualified impression: record in ledger and deduct from campaign balance
       qualifiedEvents.push(evt);
+      processedEventIds.add(evt.event_id);
       verifiedImpressionsLedger.push(evt);
 
       // Record in campaignStore (updates campaign metrics, platform breakdown & deducts budget)
@@ -51,13 +73,10 @@ export async function POST(request: Request) {
       // Record in userStore for live user dashboard tracking
       let sponsorName = 'Sponsored Partner';
       let headline = 'Wait-time sponsored message';
-      let cpmRateUsd = 2.20;
-      const cmp = campaignStore.getCampaign(evt.ad_id);
-      if (cmp) {
-        sponsorName = cmp.sponsor_name;
-        headline = cmp.headline;
-        cpmRateUsd = cmp.cpm_rate_usd;
-      }
+      const cmp = campaign;
+      sponsorName = cmp.sponsor_name;
+      headline = cmp.headline;
+      const cpmRateUsd = cmp.cpm_rate_usd;
       userStore.recordImpression({
         deviceId: evt.device_id || 'dev_guest',
         adId: evt.ad_id,
@@ -67,19 +86,14 @@ export async function POST(request: Request) {
         dwellMs: evt.dwell_ms,
         timestamp: evt.timestamp,
         cpmRateUsd,
-        earnedUsd: evt.earned_usd,
+        earnedUsd: Number(((cpmRateUsd / 1000) * 0.6).toFixed(5)),
         id: evt.event_id,
-        email: evt.user_email,
       });
     }
 
     const totalCreditedUsd = qualifiedEvents.reduce((acc, evt) => {
-      if (typeof evt.earned_usd === 'number' && evt.earned_usd > 0) {
-        return acc + evt.earned_usd;
-      }
-      const cmp = campaignStore.getCampaign(evt.ad_id);
-      const cpm = cmp?.cpm_rate_usd || 2.20;
-      return acc + (cpm / 1000) * 0.60;
+      const cmp = campaignStore.getAllCampaigns().find((item) => item.ad_token === evt.ad_token);
+      return acc + ((cmp?.cpm_rate_usd || 0) / 1000) * 0.60;
     }, 0);
 
     return NextResponse.json({
@@ -99,6 +113,5 @@ export async function POST(request: Request) {
 export async function GET() {
   return NextResponse.json({
     total_verified_impressions: verifiedImpressionsLedger.length,
-    recent: verifiedImpressionsLedger.slice(-10),
   });
 }

@@ -3,9 +3,7 @@ import { defineContentScript } from 'wxt/sandbox';
 export default defineContentScript({
   matches: [
     'http://localhost:3000/*',
-    'https://*.github.io/*',
-    'https://pathixo.com/*',
-    'https://*.pathixo.com/*',
+    'https://pathixorewards.com/*',
   ],
   runAt: 'document_idle',
   main() {
@@ -57,44 +55,11 @@ export default defineContentScript({
         }
       }
 
-      if (event.data.type === 'PATHIXO_AUTH_LOGIN') {
-        const { user } = event.data;
+      if (event.data.type === 'PATHIXO_CLEAR_HISTORY') {
         try {
-          const res = (await browser.runtime.sendMessage({
-            type: 'AUTH_LOGIN_SUCCESS',
-            user,
-          })) as { success: boolean; earnings?: unknown; user?: unknown } | undefined;
-
-          window.postMessage({
-            type: 'PATHIXO_AUTH_ACK',
-            success: res?.success ?? true,
-            earnings: res?.earnings,
-            user: res?.user,
-          }, '*');
-        } catch (err) {
-          console.debug('[Pathixo Rewards] Failed to forward auth to background:', err);
-        }
-      }
-
-      if (event.data.type === 'PATHIXO_CASHOUT_SUCCESS' && event.data.earnings) {
-        try {
-          await browser.runtime.sendMessage({
-            type: 'SET_EARNINGS',
-            earnings: event.data.earnings,
-          });
+          await browser.runtime.sendMessage({ type: 'CLEAR_VIEWED_ADS' });
         } catch {
-          // ignore
-        }
-      }
-
-      if (event.data.type === 'PATHIXO_SYNC_EARNINGS' && event.data.earnings) {
-        try {
-          await browser.runtime.sendMessage({
-            type: 'SET_EARNINGS',
-            earnings: event.data.earnings,
-          });
-        } catch {
-          // ignore
+          console.debug('[Pathixo Rewards] Could not clear extension ad history.');
         }
       }
     });

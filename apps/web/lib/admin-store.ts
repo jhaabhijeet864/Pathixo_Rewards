@@ -309,12 +309,21 @@ class AdminStore {
     const existing = campaignStore.getCampaign(campaignId);
     if (!existing) return undefined;
 
+    const spentBudget = Number((existing.budget_total_usd - existing.budget_remaining_usd).toFixed(4));
+    if (updates.budget_total_usd !== undefined) {
+      const spent = spentBudget;
+      if (!Number.isFinite(updates.budget_total_usd) || updates.budget_total_usd < spent) return undefined;
+    }
+
     const prevState = JSON.parse(JSON.stringify(existing));
     const updated = campaignStore.updateCampaign(campaignId, updates);
 
     if (updated) {
       if (updates.cpm_rate_usd !== undefined) updated.cpm_rate_usd = updates.cpm_rate_usd;
-      if (updates.budget_total_usd !== undefined) updated.budget_total_usd = updates.budget_total_usd;
+      if (updates.budget_total_usd !== undefined) {
+        updated.budget_total_usd = updates.budget_total_usd;
+        updated.budget_remaining_usd = Number((updates.budget_total_usd - spentBudget).toFixed(4));
+      }
       if ((updates as Record<string, unknown>).total_budget_usd !== undefined) {
         updated.budget_total_usd = Number((updates as Record<string, unknown>).total_budget_usd);
       }
@@ -348,7 +357,7 @@ class AdminStore {
     const payout = this.payouts.get(payoutId);
     if (!payout || payout.status !== 'pending') return false;
 
-    payout.status = 'settled' as any;
+    payout.status = 'completed';
     payout.transaction_reference = transactionReference.trim();
     payout.processed_at = new Date().toISOString();
 

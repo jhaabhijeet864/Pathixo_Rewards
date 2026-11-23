@@ -13,7 +13,6 @@ import {
   TrendingUp,
   ShieldCheck,
   Sparkles,
-  Play,
   CheckCircle2,
 } from 'lucide-react';
 import { getPermanentReferralCode } from '@/lib/referral-engine';
@@ -40,6 +39,7 @@ function formatTimeAgo(timestamp: string): string {
 export default function ReferralsPage() {
   const router = useRouter();
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [isServerAuthenticated, setIsServerAuthenticated] = useState(false);
   const [deviceId, setDeviceId] = useState('');
   const [userSession, setUserSession] = useState<{ email: string; name: string } | null>(null);
   const [referralCode, setReferralCode] = useState('');
@@ -51,32 +51,36 @@ export default function ReferralsPage() {
     activeReferrals: 0,
     cappedReferrals: 0,
   });
-  const [isSimulating, setIsSimulating] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    // STRICT AUTH CHECK: The dashboard section must only appear when properly logged in
-    let session: { email: string; name: string; logged_in?: boolean } | null = null;
-    try {
-      const storedAuth = localStorage.getItem('pathixo_auth_session');
-      if (storedAuth) {
-        const parsed = JSON.parse(storedAuth);
-        if (parsed?.logged_in && parsed?.email) {
-          session = parsed;
-          setUserSession(session);
+    let active = true;
+    fetch('/api/auth/session', { cache: 'no-store' })
+      .then(async (response) => response.ok ? response.json() : null)
+      .then((data) => {
+        if (!active) return;
+        if (data?.authenticated && data.user?.email) {
+          setUserSession({ email: data.user.email, name: data.user.name });
+          setIsServerAuthenticated(true);
+        } else {
+          setIsAuthLoading(false);
+          router.replace('/login');
         }
-      }
-    } catch {}
+      })
+      .catch(() => {
+        if (active) {
+          setIsAuthLoading(false);
+          router.replace('/login');
+        }
+      });
+    return () => { active = false; };
+  }, [router]);
 
-    if (!session) {
-      setIsAuthLoading(false);
-      router.replace('/login');
-      return;
-    }
+  useEffect(() => {
+    if (!isServerAuthenticated || !userSession) return;
+    const session = userSession;
 
     setIsAuthLoading(false);
 
@@ -119,7 +123,7 @@ export default function ReferralsPage() {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [isServerAuthenticated, userSession]);
 
   const fullReferralUrl = `https://pathixorewards.com/?ref=${referralCode || deviceId || 'member'}`;
 
@@ -131,41 +135,6 @@ export default function ReferralsPage() {
       setCopied(false);
       setToastMessage(null);
     }, 2500);
-  };
-
-  const handleSimulateReferral = async () => {
-    setIsSimulating(true);
-    try {
-      const res = await fetch('/api/referrals', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'simulate_referral',
-          referrer_id: deviceId,
-        }),
-      });
-
-      const data = await res.json();
-      if (res.ok && data.status === 'ok') {
-        if (Array.isArray(data.referrals)) {
-          setReferrals(data.referrals);
-        }
-        if (data.stats) {
-          setStats({
-            totalReferrals: data.stats.totalReferrals || 0,
-            totalEarnedUsd: data.stats.totalEarnedUsd || 0,
-            activeReferrals: data.stats.activeReferrals || 0,
-            cappedReferrals: data.stats.cappedReferrals || 0,
-          });
-        }
-        setToastMessage('Simulated peer referral recorded & 10% royalty added!');
-        setTimeout(() => setToastMessage(null), 3000);
-      }
-    } catch {
-      // Local fallback
-    } finally {
-      setIsSimulating(false);
-    }
   };
 
   if (isAuthLoading) {
@@ -322,16 +291,6 @@ export default function ReferralsPage() {
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={handleSimulateReferral}
-                disabled={isSimulating}
-                className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-700 hover:text-white transition cursor-pointer disabled:opacity-50"
-                title="Simulate a friend using your referral link"
-              >
-                <Play className="h-3 w-3 text-emerald-400" />
-                <span>{isSimulating ? 'Simulating...' : 'Simulate Peer Referral'}</span>
-              </button>
             </div>
 
             {/* TABLE / EMPTY STATE */}
@@ -344,16 +303,6 @@ export default function ReferralsPage() {
                 <p className="mt-1 text-xs sm:text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
                   Share your permanent link above with fellow developers. As they use AI chatbots, their activity and your 10% royalties will appear here in real-time.
                 </p>
-                <div className="mt-4">
-                  <button
-                    type="button"
-                    onClick={handleSimulateReferral}
-                    className="inline-flex items-center gap-1.5 text-xs text-emerald-400 font-semibold hover:underline cursor-pointer"
-                  >
-                    <Play className="h-3 w-3" />
-                    <span>Click to simulate a test referral to see live updates</span>
-                  </button>
-                </div>
               </div>
             ) : (
               <div className="overflow-x-auto">

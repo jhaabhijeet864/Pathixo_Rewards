@@ -4,7 +4,7 @@ import { Suspense, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
-import { isSuperAdminEmail } from '@/lib/admin-auth';
+import { isSuperAdminEmail } from '@/lib/admin-identity';
 
 interface AuthSessionUser {
   email: string;
@@ -74,119 +74,61 @@ function LoginContent() {
     };
   }, [paramDeviceId]);
 
-  const handleSignIn = (provider: 'google' | 'github' | 'email') => {
+  const handleSignIn = async (provider: 'google' | 'github' | 'email') => {
     const rawEmail = emailInput.trim();
-    let email = rawEmail.toLowerCase();
-
-    const isLocalDev = process.env.NODE_ENV !== 'production';
-
-    // If clicking Google/GitHub without typing an email, default to standard user ONLY in local development
-    if (!email) {
-      if (isLocalDev) {
-        if (provider === 'google') {
-          email = 'user@gmail.com';
-        } else if (provider === 'github') {
-          email = 'user@github.com';
-        } else {
-          setErrorMessage('Please enter your email address.');
-          return;
-        }
-      } else {
-        // In production: Never stub user@gmail.com! Real OAuth redirect or explicit email required.
-        if (provider === 'google') {
-          window.location.href = '/api/auth/google';
-          return;
-        } else if (provider === 'github') {
-          window.location.href = '/api/auth/github';
-          return;
-        } else {
-          setErrorMessage('Please enter your email address.');
-          return;
-        }
-      }
+    const email = rawEmail.toLowerCase();
+    if (provider !== 'email' && process.env.NODE_ENV === 'production') {
+      setErrorMessage(`${provider === 'google' ? 'Google' : 'GitHub'} sign-in is not configured yet. No account was signed in.`);
+      return;
     }
-
-    if (!email.includes('@')) {
+    if (provider === 'email' && !email) {
+      setErrorMessage('Please enter your email address.');
+      return;
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setErrorMessage('Please enter a valid email address.');
       return;
     }
 
     setErrorMessage(null);
     setIsSigningIn(true);
-
-    const user: AuthSessionUser = {
-      email,
-      name: email.split('@')[0],
-      provider,
-      logged_in: true,
-      logged_in_at: new Date().toISOString(),
-    };
-
     try {
-      localStorage.setItem('pathixo_auth_session', JSON.stringify(user));
-      window.dispatchEvent(new Event('pathixo_auth_change'));
-    } catch {}
-
-    // Register user & device in backend store with self-repairing local earnings linkage
-    const targetDevice = resolvedDeviceId || `dev_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
-    
-    let localEarnings = null;
-    let localAds = null;
-    try {
-      const storedEarnings =
-        localStorage.getItem(`pathixo_earnings_${targetDevice}`) ||
-        localStorage.getItem('pathixo_earnings_backup');
-      if (storedEarnings) localEarnings = JSON.parse(storedEarnings);
-
-      const storedAds =
-        localStorage.getItem(`pathixo_viewed_ads_${targetDevice}`) ||
-        localStorage.getItem('pathixo_viewed_ads_backup');
-      if (storedAds) localAds = JSON.parse(storedAds);
-    } catch {}
-
-    if (localEarnings && Number(localEarnings.balance_usd || 0) > 0) {
-      fetch('/api/user/earnings', {
+      const loginEmail = email || (provider === 'google' ? 'user@gmail.com' : 'user@github.com');
+      const response = await fetch('/api/auth/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          device_id: targetDevice,
-          email,
-          earnings: localEarnings,
-          viewed_ads: localAds,
-        }),
-      }).catch(() => {});
-    } else {
-      fetch(`/api/user/earnings?device_id=${encodeURIComponent(targetDevice)}&email=${encodeURIComponent(email)}`)
-        .catch(() => {});
-    }
+        body: JSON.stringify({ email: loginEmail }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.user) {
+        setErrorMessage(result.message || 'Sign-in could not be completed.');
+        return;
+      }
+      const user = result.user as AuthSessionUser;
+      user.provider = provider;
+      user.logged_in_at = new Date().toISOString();
+      localStorage.setItem('pathixo_auth_session', JSON.stringify(user));
+      window.dispatchEvent(new Event('pathixo_auth_change'));
 
-    // Bridge authentication session to Chrome extension via postMessage
-    window.postMessage(
-      {
-        type: 'PATHIXO_AUTH_LOGIN',
-        user,
-      },
-      '*'
-    );
+      const targetDevice = resolvedDeviceId || `dev_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
 
-    setSignedInUser(user);
+      setSignedInUser(user);
 
     // Internal Redirection (100% seamless, no UI exposure of admin identity):
     // If the email matches the secure allowlist, route internally to /admin.
     // Otherwise, route to normal user /dashboard.
     setTimeout(() => {
-      if (isSuperAdminEmail(email)) {
-        try {
-          localStorage.setItem(
-            'pathixo_admin_session',
-            JSON.stringify({ ...user, role: 'superadmin' })
-          );
-        } catch {}
+      if (isSuperAdminEmail(user.email)) {
         router.push('/admin');
       } else {
         router.push(`/dashboard?device_id=${encodeURIComponent(targetDevice)}&login=success`);
       }
     }, 400);
+    } catch {
+      setErrorMessage('Unable to reach the sign-in service. Please try again.');
+    } finally {
+      setIsSigningIn(false);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {

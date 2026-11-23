@@ -12,7 +12,6 @@ import {
   RefreshCw,
   Lock,
 } from 'lucide-react';
-import { isSuperAdminEmail } from '@/lib/admin-auth';
 import type { CircuitBreakerKey } from '@pathixo/shared';
 
 function AdminLayoutInner({ children }: { children: React.ReactNode }) {
@@ -31,46 +30,26 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
 
   // Check superadmin session
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    let email = '';
-    try {
-      const adminSession = localStorage.getItem('pathixo_admin_session');
-      if (adminSession) {
-        const parsed = JSON.parse(adminSession);
-        if (parsed.email && isSuperAdminEmail(parsed.email)) {
-          email = parsed.email;
+    let active = true;
+    fetch('/api/auth/session', { cache: 'no-store' })
+      .then(async (response) => response.ok ? response.json() : null)
+      .then((data) => {
+        if (!active) return;
+        if (data?.authenticated && data.user?.role === 'superadmin') {
+          setAdminEmail(data.user.email);
+          setAuthorized(true);
+        } else {
+          setAuthorized(false);
+          router.replace('/login?source=admin&error=admin_required');
         }
-      }
-
-      if (!email) {
-        const authSession = localStorage.getItem('pathixo_auth_session');
-        if (authSession) {
-          const parsed = JSON.parse(authSession);
-          if (parsed.email && isSuperAdminEmail(parsed.email)) {
-            email = parsed.email;
-            localStorage.setItem(
-              'pathixo_admin_session',
-              JSON.stringify({ ...parsed, role: 'superadmin' })
-            );
-          }
+      })
+      .catch(() => {
+        if (active) {
+          setAuthorized(false);
+          router.replace('/login?source=admin&error=admin_required');
         }
-      }
-    } catch {
-      // Storage read error
-    }
-
-    if (email && isSuperAdminEmail(email)) {
-      setAdminEmail(email);
-      setAuthorized(true);
-    } else {
-      setAuthorized(false);
-      // Give a tiny grace period for display or redirect
-      const timer = setTimeout(() => {
-        router.push('/login?source=admin&error=admin_required');
-      }, 1200);
-      return () => clearTimeout(timer);
-    }
+      });
+    return () => { active = false; };
   }, [router]);
 
   // Load circuit breakers
@@ -139,8 +118,10 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
 
   const handleSignOut = () => {
     try {
-      localStorage.removeItem('pathixo_admin_session');
+      localStorage.removeItem('pathixo_auth_session');
     } catch {}
+    fetch('/api/auth/session', { method: 'DELETE' }).catch(() => {});
+    window.dispatchEvent(new Event('pathixo_auth_change'));
     router.push('/login');
   };
 

@@ -106,6 +106,11 @@ export function getClientIp(request: Request): string {
   const cfIp = headers.get('cf-connecting-ip');
   if (cfIp) return cfIp.trim();
 
+  // In production accept only the identity header supplied by a trusted Cloudflare edge.
+  // Client-controlled forwarding headers are ignored; configure origin access so clients
+  // cannot bypass the edge and contact the application directly.
+  if (process.env.NODE_ENV === 'production') return 'unverified-client-ip';
+
   const forwardedFor = headers.get('x-forwarded-for');
   if (forwardedFor) {
     const firstIp = forwardedFor.split(',')[0]?.trim();

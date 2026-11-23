@@ -38,14 +38,12 @@ import type {
   AdminAuditLogEntry,
   SupportedPlatform,
 } from '@pathixo/shared';
-import { adminStore, type AdminPayoutRecord, type AdminUserRecord } from '@/lib/admin-store';
-import { campaignStore } from '@/lib/campaign-store';
+import type { AdminPayoutRecord, AdminUserRecord } from '@/lib/admin-store';
 
 type AdminTab = 'overview' | 'campaigns' | 'advertisers' | 'users' | 'payouts' | 'audit';
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
-  const [adminEmail, setAdminEmail] = useState('jhaabhijeet864@gmail.com');
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date>(new Date());
@@ -107,7 +105,7 @@ export default function AdminPage() {
       try {
         // 1. Overview Metrics
         const mRes = await fetch('/api/admin/overview', {
-          headers: { 'x-admin-email': adminEmail },
+          cache: 'no-store',
         });
         if (mRes.ok) {
           const mData = await mRes.json();
@@ -115,86 +113,62 @@ export default function AdminPage() {
             setMetrics(mData.metrics);
             setCwsInputCount(mData.metrics.cws_installs || 0);
           }
-        } else {
-          const currentMetrics = adminStore.getMetrics();
-          setMetrics(currentMetrics);
-          setCwsInputCount(currentMetrics.cws_installs || 0);
-        }
+        } else throw new Error('Could not load admin overview.');
 
         // 2. Campaigns
         const cRes = await fetch('/api/admin/campaigns', {
-          headers: { 'x-admin-email': adminEmail },
+          cache: 'no-store',
         });
         if (cRes.ok) {
           const cData = await cRes.json();
           if (cData.campaigns) setCampaigns(cData.campaigns);
-        } else {
-          setCampaigns(campaignStore.getAllCampaigns());
-        }
+        } else throw new Error('Could not load campaigns.');
 
         // 3. Users
         const uRes = await fetch('/api/admin/users', {
-          headers: { 'x-admin-email': adminEmail },
+          cache: 'no-store',
         });
         if (uRes.ok) {
           const uData = await uRes.json();
           if (uData.users) setUsers(uData.users);
-        } else {
-          setUsers(adminStore.getAllUsers());
-        }
+        } else throw new Error('Could not load users.');
 
         // 4. Payouts
         const pRes = await fetch('/api/admin/payouts', {
-          headers: { 'x-admin-email': adminEmail },
+          cache: 'no-store',
         });
         if (pRes.ok) {
           const pData = await pRes.json();
           if (pData.payouts) setPayouts(pData.payouts);
-        } else {
-          setPayouts(adminStore.getAllPayouts());
-        }
+        } else throw new Error('Could not load payouts.');
 
         // 5. Audit Logs
         const aRes = await fetch('/api/admin/audit-logs', {
-          headers: { 'x-admin-email': adminEmail },
+          cache: 'no-store',
         });
         if (aRes.ok) {
           const aData = await aRes.json();
           if (aData.logs) setAuditLogs(aData.logs);
-        } else {
-          setAuditLogs(adminStore.getAuditLogs());
-        }
+        } else throw new Error('Could not load audit logs.');
 
         setLastSyncedAt(new Date());
-      } catch {
-        const fallbackMetrics = adminStore.getMetrics();
-        setMetrics(fallbackMetrics);
-        setCwsInputCount(fallbackMetrics.cws_installs || 0);
-        setCampaigns(campaignStore.getAllCampaigns());
-        setUsers(adminStore.getAllUsers());
-        setPayouts(adminStore.getAllPayouts());
-        setAuditLogs(adminStore.getAuditLogs());
-        setLastSyncedAt(new Date());
+      } catch (error) {
+        setMetrics(null);
+        setCampaigns([]);
+        setUsers([]);
+        setPayouts([]);
+        setAuditLogs([]);
+        showToast(error instanceof Error ? error.message : 'Admin data is unavailable.', 'error');
       } finally {
         setIsLoading(false);
         setIsRefreshing(false);
       }
     },
-    [adminEmail]
+    []
   );
 
   // Auto-refresh interval (every 10s) + window focus listener for real-time live sync
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem('pathixo_admin_session');
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (parsed.email) setAdminEmail(parsed.email);
-        }
-      } catch {}
-    }
-
     loadAllData(true);
 
     // Live polling interval (10 seconds)
@@ -246,7 +220,6 @@ export default function AdminPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-email': adminEmail,
         },
         body: JSON.stringify({ cws_installs: count }),
       });
@@ -256,14 +229,11 @@ export default function AdminPage() {
         if (data.metrics) setMetrics(data.metrics);
         showToast(`Official Chrome Web Store downloads synced: ${count.toLocaleString()}`);
       } else {
-        adminStore.setCwsInstalls(count);
-        setMetrics(adminStore.getMetrics());
-        showToast(`Official CWS installs updated to ${count.toLocaleString()}!`);
+        const data = await res.json().catch(() => null);
+        showToast(data?.message || 'Could not save the install count.', 'error');
       }
     } catch {
-      adminStore.setCwsInstalls(Number(cwsInputCount));
-      setMetrics(adminStore.getMetrics());
-      showToast('CWS Installs updated locally!');
+      showToast('Could not reach the admin service. No change was saved.', 'error');
     } finally {
       setIsCwsModalOpen(false);
     }
@@ -277,7 +247,6 @@ export default function AdminPage() {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-email': adminEmail,
         },
         body: JSON.stringify({
           campaign_id: camp.id,
@@ -291,14 +260,11 @@ export default function AdminPage() {
         );
         showToast(`Campaign "${camp.sponsor_name}" ${nextStatus === 'active' ? 'activated' : 'paused'}!`);
       } else {
-        adminStore.moderateCampaign(camp.id, { status: nextStatus }, adminEmail);
-        setCampaigns(campaignStore.getAllCampaigns());
-        showToast(`Campaign "${camp.sponsor_name}" updated!`);
+        const data = await res.json().catch(() => null);
+        showToast(data?.message || 'Campaign change was not saved.', 'error');
       }
     } catch {
-      adminStore.moderateCampaign(camp.id, { status: nextStatus }, adminEmail);
-      setCampaigns(campaignStore.getAllCampaigns());
-      showToast(`Campaign "${camp.sponsor_name}" updated!`);
+      showToast('Could not reach the admin service. Campaign was not changed.', 'error');
     }
   };
 
@@ -332,7 +298,6 @@ export default function AdminPage() {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-email': adminEmail,
         },
         body: JSON.stringify({
           campaign_id: editingCampaign.id,
@@ -346,24 +311,11 @@ export default function AdminPage() {
         );
         showToast(`Campaign creative updated successfully!`);
       } else {
-        adminStore.moderateCampaign(editingCampaign.id, updates, adminEmail);
-        setCampaigns(campaignStore.getAllCampaigns());
-        showToast(`Campaign creative updated!`);
+        const data = await res.json().catch(() => null);
+        showToast(data?.message || 'Campaign changes were not saved.', 'error');
       }
     } catch {
-      adminStore.moderateCampaign(
-        editingCampaign.id,
-        {
-          headline: editHeadline,
-          target_url: editUrl,
-          badge: editBadge,
-          cpm_rate_usd: Number(editCpm),
-          budget_total_usd: Number(editBudget),
-        },
-        adminEmail
-      );
-      setCampaigns(campaignStore.getAllCampaigns());
-      showToast(`Campaign updated!`);
+      showToast('Could not reach the admin service. Campaign was not changed.', 'error');
     } finally {
       setEditingCampaign(null);
     }
@@ -377,7 +329,6 @@ export default function AdminPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-email': adminEmail,
         },
         body: JSON.stringify({
           user_id: user.id,
@@ -396,22 +347,11 @@ export default function AdminPage() {
         );
         showToast(`User ${user.email} ${action === 'ban' ? 'BANNED' : 'RESTORED'}!`);
       } else {
-        if (action === 'ban') {
-          adminStore.banUser(user.id, 'Terms violation', adminEmail);
-        } else {
-          adminStore.unbanUser(user.id, adminEmail);
-        }
-        setUsers(adminStore.getAllUsers());
-        showToast(`User ${action} applied!`);
+        const data = await res.json().catch(() => null);
+        showToast(data?.message || `Could not ${action} user.`, 'error');
       }
     } catch {
-      if (action === 'ban') {
-        adminStore.banUser(user.id, 'Terms violation', adminEmail);
-      } else {
-        adminStore.unbanUser(user.id, adminEmail);
-      }
-      setUsers(adminStore.getAllUsers());
-      showToast(`User status updated!`);
+      showToast('Could not reach the admin service. User status was not changed.', 'error');
     }
   };
 
@@ -425,7 +365,6 @@ export default function AdminPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-email': adminEmail,
         },
         body: JSON.stringify({
           user_id: adjustingUser.id,
@@ -447,16 +386,11 @@ export default function AdminPage() {
         );
         showToast(`Balance updated: ${adjustType === 'credit' ? '+' : '-'}$${adjustAmount}`);
       } else {
-        const delta = adjustType === 'credit' ? Number(adjustAmount) : -Number(adjustAmount);
-        adminStore.adjustUserBalance(adjustingUser.id, delta, adjustReason, adminEmail);
-        setUsers(adminStore.getAllUsers());
-        showToast(`Balance adjusted!`);
+        const data = await res.json().catch(() => null);
+        showToast(data?.message || 'Balance adjustment was not saved.', 'error');
       }
     } catch {
-      const delta = adjustType === 'credit' ? Number(adjustAmount) : -Number(adjustAmount);
-      adminStore.adjustUserBalance(adjustingUser.id, delta, adjustReason, adminEmail);
-      setUsers(adminStore.getAllUsers());
-      showToast(`Balance adjusted!`);
+      showToast('Could not reach the admin service. Balance was not changed.', 'error');
     } finally {
       setAdjustingUser(null);
       setAdjustReason('');
@@ -473,7 +407,6 @@ export default function AdminPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-email': adminEmail,
         },
         body: JSON.stringify({
           payout_id: settlingPayout.id,
@@ -495,14 +428,11 @@ export default function AdminPage() {
         );
         showToast(`Payout ${settlingPayout.id} marked as SETTLED!`);
       } else {
-        adminStore.settlePayout(settlingPayout.id, payoutReference, adminEmail);
-        setPayouts(adminStore.getAllPayouts());
-        showToast(`Payout marked as settled!`);
+        const data = await res.json().catch(() => null);
+        showToast(data?.message || 'Payout was not settled.', 'error');
       }
     } catch {
-      adminStore.settlePayout(settlingPayout.id, payoutReference, adminEmail);
-      setPayouts(adminStore.getAllPayouts());
-      showToast(`Payout settled!`);
+      showToast('Could not reach the admin service. Payout was not changed.', 'error');
     } finally {
       setSettlingPayout(null);
       setPayoutReference('');
@@ -519,7 +449,6 @@ export default function AdminPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-email': adminEmail,
         },
         body: JSON.stringify({
           payout_id: rejectingPayout.id,
@@ -537,31 +466,34 @@ export default function AdminPage() {
         );
         showToast(`Payout rejected. $${rejectingPayout.amount_usd.toFixed(2)} refunded to user balance!`);
       } else {
-        adminStore.rejectPayout(rejectingPayout.id, rejectReason, adminEmail);
-        setPayouts(adminStore.getAllPayouts());
-        showToast(`Payout rejected and refunded!`);
+        const data = await res.json().catch(() => null);
+        showToast(data?.message || 'Payout was not rejected.', 'error');
       }
     } catch {
-      adminStore.rejectPayout(rejectingPayout.id, rejectReason, adminEmail);
-      setPayouts(adminStore.getAllPayouts());
-      showToast(`Payout rejected and refunded!`);
+      showToast('Could not reach the admin service. Payout was not changed.', 'error');
     } finally {
       setRejectingPayout(null);
     }
   };
 
   // CSV Report Downloader
-  const downloadCsv = (type: 'revenue' | 'payouts' | 'pl') => {
-    const csvContent = adminStore.exportCsv(type);
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `pathixo_${type}_report_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showToast(`Exported ${type.toUpperCase()} CSV report!`);
+  const downloadCsv = async (type: 'revenue' | 'payouts' | 'pl') => {
+    try {
+      const apiType = type === 'pl' ? 'pnl' : type;
+      const response = await fetch(`/api/admin/reports/csv?type=${apiType}`, { cache: 'no-store' });
+      if (!response.ok) throw new Error('Report export is unavailable.');
+      const url = URL.createObjectURL(await response.blob());
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `pathixo_${type}_report_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      showToast(`Exported ${type.toUpperCase()} CSV report.`);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Could not export report.', 'error');
+    }
   };
 
   // Filtered views

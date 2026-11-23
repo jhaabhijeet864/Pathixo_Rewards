@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { POST } from '../../../apps/web/app/api/cashout/route';
+import { userStore } from '../../../apps/web/lib/user-store';
 
 describe('API Route: /api/cashout', () => {
   it('should enforce the $2.00 minimum cashout floor', async () => {
@@ -45,6 +46,9 @@ describe('API Route: /api/cashout', () => {
   });
 
   it('should successfully process valid cashout >= $2.00', async () => {
+    const user = userStore.getOrCreateUser('dev_user_1');
+    user.earnings.balance_usd = 5.0;
+
     const validPayload = {
       device_id: 'dev_user_1',
       amount_usd: 2.5,
@@ -66,6 +70,6 @@ describe('API Route: /api/cashout', () => {
     expect(json.payout).toBeDefined();
     expect(json.payout.id).toMatch(/^payout_[a-f0-9]{12}$/);
     expect(json.payout.amount_usd).toBe(2.5);
-    expect(json.payout.status).toBe('completed');
+    expect(json.payout.status).toBe('pending');
   });
 });

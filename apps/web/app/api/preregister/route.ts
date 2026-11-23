@@ -9,25 +9,13 @@ export interface PreRegistrationRecord {
   created_at: string;
 }
 
-// In-memory persistent collection for local development & fallback
-const preRegistrations: PreRegistrationRecord[] = [
-  {
-    id: 'reg_demo_01',
-    email: 'vip.tester@gmail.com',
-    source: 'coming_soon',
-    status: 'pending_launch',
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-  },
-  {
-    id: 'reg_demo_02',
-    email: 'ai.researcher@mit.edu',
-    source: 'coming_soon',
-    status: 'pending_launch',
-    created_at: new Date(Date.now() - 43200000).toISOString(),
-  },
-];
+// Local-only test records. Production writes stay disabled until durable storage and mail delivery exist.
+const preRegistrations: PreRegistrationRecord[] = [];
 
 export async function POST(request: Request) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ status: 'error', message: 'Launch notifications are not configured. Your email was not saved.' }, { status: 503 });
+  }
   // Rate limit: Max 5 submissions per minute per IP to prevent spamming
   const rateLimit = checkRateLimit(request, { maxRequests: 5, windowMs: 60_000, prefix: 'preregister' });
   if (!rateLimit.success) {
@@ -59,7 +47,7 @@ export async function POST(request: Request) {
     if (existing) {
       return NextResponse.json({
         status: 'ok',
-        message: "You're already on the launch notification list! We'll notify you as soon as we go live.",
+        message: 'This address is already in this development server list; no email notification is configured.',
         already_registered: true,
       });
     }
@@ -80,7 +68,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       status: 'ok',
-      message: "You're on the early access VIP list! We will notify you immediately upon official store release.",
+      message: "Saved in this development server only. It will not survive a restart and no email will be sent.",
       registration: {
         id: newEntry.id,
         email: newEntry.email,
@@ -94,9 +82,5 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-  return NextResponse.json({
-    status: 'ok',
-    total_pre_registered: preRegistrations.length,
-    recent: preRegistrations.slice(-10),
-  });
+  return NextResponse.json({ status: 'error', message: 'Not found.' }, { status: 404 });
 }

@@ -11,7 +11,6 @@ import {
   Clock,
   Copy,
   Check,
-  Play,
   Trash2,
   ArrowRight,
   ShieldCheck,
@@ -45,6 +44,7 @@ function formatTimeAgo(timestamp: number | string): string {
 export default function DashboardPage() {
   const router = useRouter();
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [isServerAuthenticated, setIsServerAuthenticated] = useState(false);
   const [deviceId, setDeviceId] = useState('');
   const [userSession, setUserSession] = useState<{ email: string; name: string } | null>(null);
   const [isNewLogin, setIsNewLogin] = useState(false);
@@ -66,30 +66,36 @@ export default function DashboardPage() {
   const [destination, setDestination] = useState('');
   const [cashoutSuccess, setCashoutSuccess] = useState<string | null>(null);
   const [isCashoutSubmitting, setIsCashoutSubmitting] = useState(false);
+  const [cashoutError, setCashoutError] = useState<string | null>(null);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/auth/session', { cache: 'no-store' })
+      .then(async (response) => response.ok ? response.json() : null)
+      .then((data) => {
+        if (!active) return;
+        if (data?.authenticated && data.user?.email) {
+          setUserSession({ email: data.user.email, name: data.user.name });
+          setIsServerAuthenticated(true);
+        } else {
+          setIsAuthLoading(false);
+          router.replace('/login');
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setIsAuthLoading(false);
+          router.replace('/login');
+        }
+      });
+    return () => { active = false; };
+  }, [router]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-
-    // STRICT AUTH CHECK: The dashboard section must only appear when properly logged in
-    let session: { email: string; name: string; logged_in?: boolean } | null = null;
-    try {
-      const storedAuth = localStorage.getItem('pathixo_auth_session');
-      if (storedAuth) {
-        const parsed = JSON.parse(storedAuth);
-        if (parsed?.logged_in && parsed?.email) {
-          session = parsed;
-          setUserSession(session);
-        }
-      }
-    } catch {
-      // Storage parse fallback
-    }
-
-    if (!session) {
-      setIsAuthLoading(false);
-      router.replace('/login');
-      return;
-    }
+    if (!isServerAuthenticated || !userSession) return;
+    const session = userSession;
 
     setIsAuthLoading(false);
 
@@ -113,89 +119,10 @@ export default function DashboardPage() {
       setIsNewLogin(true);
     }
 
-    // Self-repairing storage discovery fallback: never start from 0 if browser has prior earnings
-    let bestEarnings: UserEarnings | null = null;
-    let bestAds: ViewedAdItem[] = [];
-
-    try {
-      const stored = localStorage.getItem(`pathixo_earnings_${currentId}`);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Number(parsed?.balance_usd || 0) > 0) bestEarnings = parsed;
-      }
-    } catch {}
-
-    try {
-      const backup = localStorage.getItem('pathixo_earnings_backup');
-      if (backup) {
-        const parsed = JSON.parse(backup);
-        if (Number(parsed?.balance_usd || 0) > Number(bestEarnings?.balance_usd || 0)) {
-          bestEarnings = parsed;
-        }
-      }
-    } catch {}
-
-    // Fallback: search all other device keys on this browser
-    if (!bestEarnings || Number(bestEarnings.balance_usd || 0) === 0) {
-      try {
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && key.startsWith('pathixo_earnings_') && key !== 'pathixo_earnings_backup') {
-            const val = localStorage.getItem(key);
-            if (val) {
-              const parsed = JSON.parse(val);
-              if (Number(parsed?.balance_usd || 0) > Number(bestEarnings?.balance_usd || 0)) {
-                bestEarnings = parsed;
-              }
-            }
-          }
-        }
-      } catch {}
-    }
-
-    try {
-      const storedAds =
-        localStorage.getItem(`pathixo_viewed_ads_${currentId}`) ||
-        localStorage.getItem('pathixo_viewed_ads_backup');
-      if (storedAds) {
-        bestAds = JSON.parse(storedAds);
-      }
-    } catch {}
-
-    if (bestEarnings) {
-      setEarnings(bestEarnings);
-      try {
-        localStorage.setItem(`pathixo_earnings_${currentId}`, JSON.stringify(bestEarnings));
-        localStorage.setItem('pathixo_earnings_backup', JSON.stringify(bestEarnings));
-      } catch {}
-    }
-
-    if (bestAds && bestAds.length > 0) {
-      setViewedAds(bestAds);
-      try {
-        localStorage.setItem(`pathixo_viewed_ads_${currentId}`, JSON.stringify(bestAds));
-        localStorage.setItem('pathixo_viewed_ads_backup', JSON.stringify(bestAds));
-      } catch {}
-    }
-
     const code = getPermanentReferralCode(session?.email || currentId);
     setReferralCode(code);
 
-    // Helper to push synced state to server
-    const syncToServer = (syncedEarnings: UserEarnings, adsToSync?: ViewedAdItem[]) => {
-      fetch('/api/user/earnings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          device_id: currentId,
-          email: session?.email,
-          earnings: syncedEarnings,
-          viewed_ads: adsToSync,
-        }),
-      }).catch(() => {});
-    };
-
-    // Helper to fetch from backend API
+    // The server is authoritative for balances and impression history.
     const fetchBackendEarnings = () => {
       const query = new URLSearchParams({
         device_id: currentId,
@@ -206,61 +133,10 @@ export default function DashboardPage() {
         .then((res) => res.json())
         .then((data) => {
           if (data.status === 'ok') {
-            if (data.earnings) {
-              setEarnings((prev) => {
-                const serverBal = Number(data.earnings?.balance_usd || 0);
-                const clientBal = Number(prev.balance_usd || 0);
-                const maxBal = Number(Math.max(clientBal, serverBal).toFixed(5));
-                const maxLifetime = Number(
-                  Math.max(
-                    Number(prev.lifetime_earned_usd || 0),
-                    Number(data.earnings?.lifetime_earned_usd || 0),
-                    maxBal
-                  ).toFixed(5)
-                );
-                const maxImpressions = Math.max(
-                  Number(prev.impressions_today || 0),
-                  Number(data.earnings?.impressions_today || 0)
-                );
-
-                const merged: UserEarnings = {
-                  ...data.earnings,
-                  balance_usd: maxBal,
-                  lifetime_earned_usd: maxLifetime,
-                  impressions_today: maxImpressions,
-                };
-
-                localStorage.setItem(`pathixo_earnings_${currentId}`, JSON.stringify(merged));
-                localStorage.setItem('pathixo_earnings_backup', JSON.stringify(merged));
-
-                // If client balance is higher than server balance, push synced state to server
-                if (clientBal > serverBal) {
-                  syncToServer(merged);
-                } else if (serverBal > clientBal) {
-                  // If server had more, update extension overlay
-                  window.postMessage({ type: 'PATHIXO_SYNC_EARNINGS', earnings: merged }, '*');
-                }
-
-                return merged;
-              });
-            }
+            if (data.earnings) setEarnings(data.earnings);
 
             if (Array.isArray(data.viewed_ads)) {
-              setViewedAds((prev) => {
-                const adMap = new Map<string, ViewedAdItem>();
-                for (const ad of prev) {
-                  if (ad && ad.id) adMap.set(ad.id, ad);
-                }
-                for (const ad of data.viewed_ads) {
-                  if (ad && ad.id) adMap.set(ad.id, ad);
-                }
-                const merged = Array.from(adMap.values())
-                  .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
-                  .slice(0, 50);
-                localStorage.setItem(`pathixo_viewed_ads_${currentId}`, JSON.stringify(merged));
-                localStorage.setItem('pathixo_viewed_ads_backup', JSON.stringify(merged));
-                return merged;
-              });
+              setViewedAds(data.viewed_ads);
             }
 
             if (data.referral_code) {
@@ -283,10 +159,7 @@ export default function DashboardPage() {
           localStorage.setItem('pathixo_device_id', event.data.deviceId);
         }
 
-        let updatedEarningsSnapshot: UserEarnings | null = null;
-        let updatedAdsSnapshot: ViewedAdItem[] | null = null;
-
-        if (event.data.earnings) {
+        if (event.data.earnings && process.env.NODE_ENV !== 'production') {
           const inc = event.data.earnings;
           setEarnings((prev) => {
             const clientBal = Number(prev.balance_usd || 0);
@@ -308,18 +181,11 @@ export default function DashboardPage() {
             };
             localStorage.setItem(`pathixo_earnings_${currentId}`, JSON.stringify(merged));
             localStorage.setItem('pathixo_earnings_backup', JSON.stringify(merged));
-            updatedEarningsSnapshot = merged;
-
-            // If dashboard was ahead of extension, sync extension overlay immediately
-            if (clientBal > extBal) {
-              window.postMessage({ type: 'PATHIXO_SYNC_EARNINGS', earnings: merged }, '*');
-            }
-
             return merged;
           });
         }
 
-        if (Array.isArray(event.data.viewedAds)) {
+        if (Array.isArray(event.data.viewedAds) && process.env.NODE_ENV !== 'production') {
           setViewedAds((prev) => {
             const adMap = new Map<string, ViewedAdItem>();
             for (const ad of prev) {
@@ -333,22 +199,15 @@ export default function DashboardPage() {
               .slice(0, 50);
             localStorage.setItem(`pathixo_viewed_ads_${currentId}`, JSON.stringify(merged));
             localStorage.setItem('pathixo_viewed_ads_backup', JSON.stringify(merged));
-            updatedAdsSnapshot = merged;
             return merged;
           });
         }
 
         // Reconcile extension state with server
-        if (updatedEarningsSnapshot) {
-          syncToServer(updatedEarningsSnapshot, updatedAdsSnapshot || undefined);
-        }
       }
 
       if (event.data.type === 'PATHIXO_IMPRESSION_LOGGED') {
-        let updatedEarningsSnapshot: UserEarnings | null = null;
-        let updatedAdsSnapshot: ViewedAdItem[] | null = null;
-
-        if (event.data.earnings) {
+        if (event.data.earnings && process.env.NODE_ENV !== 'production') {
           const inc = event.data.earnings;
           setEarnings((prev) => {
             const clientBal = Number(prev.balance_usd || 0);
@@ -368,24 +227,19 @@ export default function DashboardPage() {
             };
             localStorage.setItem(`pathixo_earnings_${currentId}`, JSON.stringify(merged));
             localStorage.setItem('pathixo_earnings_backup', JSON.stringify(merged));
-            updatedEarningsSnapshot = merged;
             return merged;
           });
         }
 
-        if (event.data.ad) {
+        if (event.data.ad && process.env.NODE_ENV !== 'production') {
           setViewedAds((prev) => {
             const next = [event.data.ad, ...prev.filter((a) => a.id !== event.data.ad.id)].slice(0, 50);
             localStorage.setItem(`pathixo_viewed_ads_${currentId}`, JSON.stringify(next));
             localStorage.setItem('pathixo_viewed_ads_backup', JSON.stringify(next));
-            updatedAdsSnapshot = next;
             return next;
           });
         }
 
-        if (updatedEarningsSnapshot) {
-          syncToServer(updatedEarningsSnapshot, updatedAdsSnapshot || undefined);
-        }
       }
     };
 
@@ -423,80 +277,24 @@ export default function DashboardPage() {
       clearTimeout(t3);
       clearInterval(intervalId);
     };
-  }, []);
+  }, [isServerAuthenticated, userSession]);
 
-  const simulateTestImpression = () => {
-    const platforms = ['ChatGPT o3-mini', 'Claude 3.7 Sonnet', 'Google Gemini 4 Argon', 'DeepSeek R1', 'Perplexity Pro'];
-    const platform = platforms[Math.floor(Math.random() * platforms.length)];
-    const demoSponsors = [
-      { sponsor: 'Cursor', headline: 'Build software 10x faster with Cursor — The AI code editor.' },
-      { sponsor: 'Perplexity', headline: 'Instant research with verified sources using Perplexity Pro.' },
-      { sponsor: 'Pathixo AI Labs', headline: 'Building AI Native Applications with Instant Web Rewards.' },
-      { sponsor: 'KrocPDF', headline: 'Create PDFs and Other Docs: 100% Locally, Anti-ilovePDF.' },
-      { sponsor: 'Blip', headline: 'Vanish From Meeting with just a snap.' },
-    ];
-    const picked = demoSponsors[Math.floor(Math.random() * demoSponsors.length)];
-    const dwellSec = Number((4.0 + Math.random() * 3.5).toFixed(1));
-    const credit = 0.009;
-
-    const newAd: ViewedAdItem = {
-      id: `ad_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-      sponsor: picked.sponsor,
-      headline: picked.headline,
-      model: platform,
-      dwellSeconds: dwellSec,
-      earnedUsd: credit,
-      timestamp: Date.now(),
-      verified: true,
-    };
-
-    const updatedEarnings: UserEarnings = {
-      ...earnings,
-      balance_usd: Number((earnings.balance_usd + credit).toFixed(4)),
-      lifetime_earned_usd: Number((earnings.lifetime_earned_usd + credit).toFixed(4)),
-      impressions_today: earnings.impressions_today + 1,
-    };
-
-    setEarnings(updatedEarnings);
-    setViewedAds((prev) => {
-      const next = [newAd, ...prev].slice(0, 50);
-      try {
-        localStorage.setItem(`pathixo_viewed_ads_${deviceId}`, JSON.stringify(next));
-      } catch {}
-      return next;
-    });
-
+  const clearHistory = async () => {
+    setHistoryError(null);
     try {
-      localStorage.setItem(`pathixo_earnings_${deviceId}`, JSON.stringify(updatedEarnings));
-    } catch {}
-
-    // Post to API backend
-    try {
-      fetch('/api/events/impression', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          events: [
-            {
-              event_id: newAd.id,
-              ad_id: 'cmp_demo_cursor',
-              ad_token: 'tok_demo',
-              device_id: deviceId,
-              timestamp: Date.now(),
-              dwell_ms: Math.round(dwellSec * 1000),
-              ai_platform: platform.toLowerCase().includes('claude') ? 'claude' : 'chatgpt',
-            },
-          ],
-        }),
-      }).catch(() => {});
-    } catch {}
-  };
-
-  const clearHistory = () => {
+      const response = await fetch('/api/user/earnings/history', { method: 'DELETE' });
+      const data = await response.json();
+      if (!response.ok || data.status !== 'ok') throw new Error(data.message || 'History could not be cleared.');
+    } catch (error) {
+      setHistoryError(error instanceof Error ? error.message : 'History could not be cleared.');
+      return;
+    }
     setViewedAds([]);
     try {
       localStorage.removeItem(`pathixo_viewed_ads_${deviceId}`);
+      localStorage.removeItem('pathixo_viewed_ads_backup');
     } catch {}
+    window.postMessage({ type: 'PATHIXO_CLEAR_HISTORY' }, '*');
   };
 
   const fullReferralUrl = `https://pathixorewards.com/?ref=${referralCode || deviceId || 'member'}`;
@@ -513,6 +311,7 @@ export default function DashboardPage() {
   const handleCashout = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canCashout) return;
+    setCashoutError(null);
     setIsCashoutSubmitting(true);
 
     try {
@@ -530,7 +329,7 @@ export default function DashboardPage() {
 
       const data = await res.json();
       if (res.ok) {
-        setCashoutSuccess(data.message || 'Payout request received and queued for instant settlement!');
+        setCashoutSuccess(data.message || 'Your payout request was recorded. No transfer has been made.');
         const cashedAmount = earnings.balance_usd;
         const updated: UserEarnings = {
           ...earnings,
@@ -543,16 +342,18 @@ export default function DashboardPage() {
         } catch {}
 
         // Notify extension overlay to reset balance
-        window.postMessage({ type: 'PATHIXO_CASHOUT_SUCCESS', earnings: updated }, '*');
+      } else {
+        setCashoutError(data.message || 'Cashout request could not be submitted. Your balance was not changed.');
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
+      setCashoutError('Unable to reach the payout service. Your balance was not changed.');
     } finally {
       setIsCashoutSubmitting(false);
     }
   };
 
   const handleSignOut = () => {
+    fetch('/api/auth/session', { method: 'DELETE' }).catch(() => {});
     try {
       localStorage.removeItem('pathixo_auth_session');
       window.dispatchEvent(new Event('pathixo_auth_change'));
@@ -801,7 +602,7 @@ export default function DashboardPage() {
               {cashoutSuccess ? (
                 <div className="rounded-lg border border-emerald-500/40 bg-emerald-950/30 p-4 text-center space-y-1.5">
                   <CheckCircle2 className="h-6 w-6 text-emerald-400 mx-auto" />
-                  <h3 className="font-bold text-white text-sm">Transfer Initiated!</h3>
+                  <h3 className="font-bold text-white text-sm">Request recorded</h3>
                   <p className="text-xs text-emerald-300/80">{cashoutSuccess}</p>
                   <button
                     type="button"
@@ -813,6 +614,7 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <form onSubmit={handleCashout} className="space-y-3.5">
+                  {cashoutError && <p role="alert" className="rounded-lg border border-rose-500/30 bg-rose-950/30 p-3 text-xs text-rose-300">{cashoutError}</p>}
                   <div>
                     <label className="block text-[11px] font-semibold text-slate-300 mb-1.5">Select Payout Rail</label>
                     <div className="grid grid-cols-3 gap-2">
@@ -946,26 +748,17 @@ export default function DashboardPage() {
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-white">Ads seen so far</h2>
                 <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
-                  Live history of sponsored messages displayed during your AI wait times.
+                  Verified sponsored messages recorded by the rewards service.
                 </p>
+                {historyError && <p role="alert" className="mt-2 text-xs text-rose-300">{historyError}</p>}
               </div>
 
               {/* Action & Sync Controls */}
               <div className="flex items-center gap-3 self-start sm:self-auto">
                 <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium bg-emerald-950/50 border border-emerald-800/40 px-2.5 py-1 rounded-lg">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  <span>Live Sync</span>
+                  <span>Sync status</span>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={simulateTestImpression}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800/80 px-2.5 py-1 text-xs font-semibold text-slate-200 hover:bg-slate-700 hover:text-white transition cursor-pointer"
-                  title="Simulate a verified 4s wait impression"
-                >
-                  <Play className="h-3 w-3 text-emerald-400" />
-                  <span>Simulate Wait</span>
-                </button>
 
                 {viewedAds.length > 0 && (
                   <button
@@ -991,16 +784,6 @@ export default function DashboardPage() {
                 <p className="mt-1 text-xs sm:text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
                   Start chatting on ChatGPT, Claude, Gemini, Perplexity, or DeepSeek. Sponsored lines shown during thinking mode will automatically appear here with real-time earnings.
                 </p>
-                <div className="mt-4">
-                  <button
-                    type="button"
-                    onClick={simulateTestImpression}
-                    className="inline-flex items-center gap-1.5 text-xs text-emerald-400 font-semibold hover:underline cursor-pointer"
-                  >
-                    <Play className="h-3 w-3" />
-                    <span>Simulate a test wait impression to see live updates</span>
-                  </button>
-                </div>
               </div>
             ) : (
               <div className="overflow-x-auto">

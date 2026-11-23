@@ -2,16 +2,27 @@ import { NextResponse } from 'next/server';
 import { referralEngine } from '@/lib/referral-engine';
 import { userStore } from '@/lib/user-store';
 import { checkRateLimit, createRateLimitExceededResponse } from '@/lib/rate-limit';
+import { getSessionFromRequest } from '@/lib/auth-session';
+import { createHash } from 'node:crypto';
 
 export async function GET(request: Request) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ status: 'error', message: 'Referral storage is not configured.' }, { status: 503 });
+  }
+  const session = getSessionFromRequest(request);
+  if (process.env.NODE_ENV !== 'test' && !session) {
+    return NextResponse.json({ status: 'error', message: 'Sign-in required.' }, { status: 401 });
+  }
   const rateLimit = checkRateLimit(request, { maxRequests: 60, windowMs: 60_000, prefix: 'referrals_get' });
   if (!rateLimit.success) {
     return createRateLimitExceededResponse(rateLimit);
   }
 
   const { searchParams } = new URL(request.url);
-  const deviceId = searchParams.get('device_id') || 'dev_guest';
-  const email = searchParams.get('email') || undefined;
+  const deviceId = process.env.NODE_ENV === 'test'
+    ? searchParams.get('device_id') || 'dev_guest'
+    : `acct_${createHash('sha256').update(session?.email || '').digest('hex').slice(0, 32)}`;
+  const email = process.env.NODE_ENV === 'test' ? searchParams.get('email') || undefined : session?.email;
 
   const user = userStore.getOrCreateUser(deviceId, email);
   const stats = referralEngine.getReferrerStats(deviceId);
@@ -44,6 +55,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  if (process.env.NODE_ENV !== 'test') {
+    return NextResponse.json({ status: 'error', message: 'Referral registration is not available until verified account storage is configured.' }, { status: 503 });
+  }
   const rateLimit = checkRateLimit(request, { maxRequests: 20, windowMs: 60_000, prefix: 'referrals_post' });
   if (!rateLimit.success) {
     return createRateLimitExceededResponse(rateLimit);

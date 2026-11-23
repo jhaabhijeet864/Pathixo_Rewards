@@ -243,11 +243,14 @@ class UserStore {
     const user = this.getOrCreateUser(deviceId);
     const requestedAmount = typeof amountUsd === 'number' && amountUsd > 0 ? amountUsd : user.earnings.balance_usd;
 
-    if (requestedAmount < 2.0 && user.earnings.balance_usd < 2.0) {
+    if (!Number.isFinite(requestedAmount) || requestedAmount < 2.0 || user.earnings.balance_usd < 2.0) {
       return { success: false, amount: 0, message: 'Minimum cashout floor is $2.00 USD', earnings: { ...user.earnings } };
     }
+    if (requestedAmount > user.earnings.balance_usd) {
+      return { success: false, amount: 0, message: 'Requested amount exceeds the available balance.', earnings: { ...user.earnings } };
+    }
 
-    const cashedAmount = Math.max(requestedAmount, user.earnings.balance_usd);
+    const cashedAmount = Number(requestedAmount.toFixed(2));
     user.earnings.balance_usd = 0.0;
     user.earnings.lifetime_cashouts_usd = Number(((user.earnings.lifetime_cashouts_usd || 0) + cashedAmount).toFixed(4));
     user.lastActive = new Date().toISOString();
@@ -256,7 +259,7 @@ class UserStore {
     return {
       success: true,
       amount: cashedAmount,
-      message: `Successfully transferred $${cashedAmount.toFixed(2)} via ${railName} to ${payoutDestination || 'configured account'}.`,
+      message: `Cashout request for $${cashedAmount.toFixed(2)} via ${railName} was recorded for review. No transfer was made.`,
       earnings: { ...user.earnings },
     };
   }
@@ -272,6 +275,15 @@ class UserStore {
       referral_bonus_usd: 0,
     };
     user.viewedAds = [];
+  }
+
+  public clearViewedAdsForEmail(email: string): boolean {
+    const deviceId = this.emailToDevice.get(email.trim().toLowerCase());
+    const user = deviceId ? this.users.get(deviceId) : undefined;
+    if (!user || user.email?.toLowerCase() !== email.trim().toLowerCase()) return false;
+    user.viewedAds = [];
+    this.syncToAdmin(user);
+    return true;
   }
 
   private formatPlatformName(platform: string): string {

@@ -1,12 +1,27 @@
 import { NextResponse } from 'next/server';
 import { campaignStore } from '../../../lib/campaign-store';
 import { DEFAULT_USD_INR_RATE } from '@pathixo/shared';
+import { getSessionFromRequest } from '@/lib/auth-session';
+
+const productionNotConfigured = () => NextResponse.json(
+  { status: 'error', message: 'Campaign storage and advertiser checkout are not configured. No campaign was changed.' },
+  { status: 503 }
+);
+
+function validHttpsUrl(value: unknown): value is string {
+  if (typeof value !== 'string' || value.length > 2048) return false;
+  try { return new URL(value).protocol === 'https:'; } catch { return false; }
+}
 
 export async function POST(request: Request) {
+  if (process.env.NODE_ENV === 'production') return productionNotConfigured();
+  const session = getSessionFromRequest(request);
+  if (process.env.NODE_ENV !== 'test' && !session) {
+    return NextResponse.json({ status: 'error', message: 'Sign-in required.' }, { status: 401 });
+  }
   try {
     const body = await request.json();
     const {
-      advertiser_email,
       headline,
       sponsor_name,
       target_url,
@@ -17,14 +32,18 @@ export async function POST(request: Request) {
       budget_usd,
       budget_inr,
       target_platforms,
-      status,
     } = body;
 
-    if (!advertiser_email || !headline || !target_url || !sponsor_name) {
+    if (!headline || !target_url || !sponsor_name || !validHttpsUrl(target_url)) {
       return NextResponse.json(
         { status: 'error', message: 'Missing required campaign parameters' },
         { status: 400 }
       );
+    }
+    const cleanHeadline = typeof headline === 'string' ? headline.trim() : '';
+    const cleanSponsor = typeof sponsor_name === 'string' ? sponsor_name.trim() : '';
+    if (cleanHeadline.length < 3 || cleanHeadline.length > 70 || cleanSponsor.length < 2 || cleanSponsor.length > 80) {
+      return NextResponse.json({ status: 'error', message: 'Campaign name or headline is outside the allowed length.' }, { status: 400 });
     }
 
     // Determine normalized USD budget
@@ -34,11 +53,14 @@ export async function POST(request: Request) {
     } else if (budget_inr !== undefined && budget_inr !== null) {
       normalizedBudgetUsd = Number((Number(budget_inr) / DEFAULT_USD_INR_RATE).toFixed(4));
     }
+    if (!Number.isFinite(normalizedBudgetUsd) || normalizedBudgetUsd < 2 || normalizedBudgetUsd > 100_000) {
+      return NextResponse.json({ status: 'error', message: 'Campaign budget must be between $2 and $100,000.' }, { status: 400 });
+    }
 
     const campaign = campaignStore.createCampaign({
-      advertiser_email,
-      headline,
-      sponsor_name,
+      advertiser_email: process.env.NODE_ENV === 'test' ? body.advertiser_email : session?.email,
+      headline: cleanHeadline,
+      sponsor_name: cleanSponsor,
       target_url,
       icon_url,
       badge,
@@ -46,12 +68,12 @@ export async function POST(request: Request) {
       cpm_rate_usd: Number(cpm_rate_usd) || 2.50,
       budget_usd: normalizedBudgetUsd,
       target_platforms,
-      status: status || undefined,
+      status: 'pending_review',
     });
 
     return NextResponse.json({
       status: 'success',
-      message: 'Campaign published and funded successfully!',
+      message: 'Campaign submitted for review. No payment was processed.',
       campaign,
     });
   } catch (err: unknown) {
@@ -61,6 +83,7 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
+  const session = getSessionFromRequest(request);
   let id: string | null = null;
   let email: string | null = null;
 
@@ -82,11 +105,17 @@ export async function GET(request: Request) {
         { status: 404 }
       );
     }
+    if (process.env.NODE_ENV !== 'test' && (!session || campaign.advertiser_email.toLowerCase() !== session.email)) {
+      return NextResponse.json({ status: 'error', message: 'Campaign not found.' }, { status: 404 });
+    }
     return NextResponse.json({ status: 'ok', campaign });
   }
 
   if (email) {
-    const campaigns = campaignStore.getCampaignsByEmail(email);
+    if (process.env.NODE_ENV !== 'test' && (!session || session.email !== email.trim().toLowerCase())) {
+      return NextResponse.json({ status: 'error', message: 'Sign-in required.' }, { status: 401 });
+    }
+    const campaigns = campaignStore.getCampaignsByEmail(process.env.NODE_ENV === 'test' ? email : session?.email || '');
     return NextResponse.json({
       status: 'ok',
       total_campaigns: campaigns.length,
@@ -94,7 +123,9 @@ export async function GET(request: Request) {
     });
   }
 
-  const all = campaignStore.getAllCampaigns();
+  const all = campaignStore.getAllCampaigns()
+    .filter((campaign) => campaign.status === 'active')
+    .map(({ advertiser_email: _email, ad_token: _token, ...campaign }) => campaign);
   return NextResponse.json({
     status: 'ok',
     total_campaigns: all.length,
@@ -103,9 +134,14 @@ export async function GET(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  if (process.env.NODE_ENV === 'production') return productionNotConfigured();
+  const session = getSessionFromRequest(request);
+  if (process.env.NODE_ENV !== 'test' && !session) {
+    return NextResponse.json({ status: 'error', message: 'Sign-in required.' }, { status: 401 });
+  }
   try {
     const body = await request.json();
-    const { id, headline, sponsor_name, target_url, icon_url, badge, status, add_budget_usd } = body;
+    const { id, headline, sponsor_name, target_url, icon_url, badge } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -121,9 +157,11 @@ export async function PATCH(request: Request) {
         { status: 404 }
       );
     }
-
-    if (add_budget_usd && Number(add_budget_usd) > 0) {
-      campaign = campaignStore.addBudget(id, Number(add_budget_usd));
+    if (process.env.NODE_ENV !== 'test' && campaign.advertiser_email.toLowerCase() !== session?.email) {
+      return NextResponse.json({ status: 'error', message: 'Campaign not found.' }, { status: 404 });
+    }
+    if (target_url !== undefined && !validHttpsUrl(target_url)) {
+      return NextResponse.json({ status: 'error', message: 'A valid HTTPS destination is required.' }, { status: 400 });
     }
 
     const updated = campaignStore.updateCampaign(id, {
@@ -132,7 +170,6 @@ export async function PATCH(request: Request) {
       target_url,
       icon_url,
       badge,
-      status,
     });
 
     return NextResponse.json({

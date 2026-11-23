@@ -38,6 +38,7 @@ export default function AdvertisePage() {
   // Submission state
   const [createdCampaign, setCreatedCampaign] = useState<{ id: string; budget_total_usd: number } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Compute bid and total due
   const safeBlocks = Math.max(1, Math.floor(blocks || 1));
@@ -79,6 +80,7 @@ export default function AdvertisePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSubmitError(null);
 
     try {
       const res = await fetch('/api/campaigns', {
@@ -100,15 +102,17 @@ export default function AdvertisePage() {
         }),
       });
 
+      const data = await res.json();
       if (res.ok) {
-        const data = await res.json();
         setCreatedCampaign(data.campaign);
         if (data.campaign?.id) {
           window.location.href = `/advertise/manage?id=${encodeURIComponent(data.campaign.id)}`;
         }
+      } else {
+        setSubmitError(data.message || 'Campaign submission failed. No payment was taken.');
       }
-    } catch (err) {
-      console.error('Failed to submit campaign:', err);
+    } catch {
+      setSubmitError('Unable to reach the campaign service. No payment was taken.');
     } finally {
       setIsSubmitting(false);
     }
@@ -177,12 +181,12 @@ export default function AdvertisePage() {
                     <CheckCircle2 className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-white">Campaign Live & Funded!</h3>
+                    <h3 className="text-lg font-bold text-white">Campaign submitted for review</h3>
                     <p className="text-xs text-slate-300 mt-1">
                       Campaign ID: <strong className="font-mono text-emerald-400">{createdCampaign.id}</strong>
                     </p>
                     <p className="text-xs text-slate-300 mt-1">
-                      Prepaid budget of <strong>{currency === 'USD' ? `$${createdCampaign.budget_total_usd}` : `₹${Math.round(createdCampaign.budget_total_usd * DEFAULT_USD_INR_RATE)}`}</strong> is now active in rotation across ChatGPT, Claude, and Gemini.
+                      Proposed budget: <strong>{currency === 'USD' ? `$${createdCampaign.budget_total_usd}` : `₹${Math.round(createdCampaign.budget_total_usd * DEFAULT_USD_INR_RATE)}`}</strong>. No payment has been taken and the ad is not active.
                     </p>
                   </div>
 
@@ -204,6 +208,7 @@ export default function AdvertisePage() {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4 text-sm">
+                  {submitError && <p role="alert" className="rounded-lg border border-rose-500/30 bg-rose-950/30 p-3 text-xs text-rose-300">{submitError}</p>}
                   <div>
                     <label className="block text-xs font-semibold text-slate-300">Work Email</label>
                     <input
@@ -411,11 +416,11 @@ export default function AdvertisePage() {
                     className="w-full rounded-xl bg-emerald-600 py-3.5 text-base font-bold text-white shadow-lg shadow-emerald-950/50 transition hover:bg-emerald-500 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer mt-4"
                   >
                     <span>
-                      {isSubmitting ? 'Processing...' : 'Continue to checkout'}
+                      {isSubmitting ? 'Submitting...' : 'Submit for review'}
                     </span>
                   </button>
                   <p className="text-[11px] text-center text-slate-500">
-                    Safe zero-debt prepaid model • Instant campaign live activation
+                    Campaign review and secure payment are not yet enabled.
                   </p>
                 </form>
               )}

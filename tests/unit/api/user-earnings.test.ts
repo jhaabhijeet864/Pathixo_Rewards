@@ -17,15 +17,31 @@ describe('API Route: /api/user/earnings', () => {
     expect(json.referral_url).toContain('dev_guest_123');
   });
 
-  it('should sync earnings and viewed ads via POST without losing higher client balance', async () => {
-    const syncPayload = {
+  it('should reject client-supplied balance manipulation and permit display history sync via POST', async () => {
+    // 1. Client attempting to inject balance must be rejected
+    const forgeryPayload = {
       device_id: 'dev_sync_test_999',
       email: 'syncuser@gmail.com',
       earnings: {
-        balance_usd: 0.02617,
-        lifetime_earned_usd: 0.02617,
-        impressions_today: 4,
+        balance_usd: 15.50, // Forged balance above cashout floor
       },
+    };
+
+    const forgeryReq = new Request('http://localhost:3000/api/user/earnings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(forgeryPayload),
+    });
+
+    const forgeryRes = await POST(forgeryReq);
+    expect(forgeryRes.status).toBe(400);
+    const forgeryJson = await forgeryRes.json();
+    expect(forgeryJson.message).toBe('Client-supplied earnings are not accepted.');
+
+    // 2. Legitimate display history sync (viewed_ads only) is permitted in test/development
+    const historyPayload = {
+      device_id: 'dev_sync_test_999',
+      email: 'syncuser@gmail.com',
       viewed_ads: [
         {
           id: 'evt_sync_01',
@@ -43,25 +59,21 @@ describe('API Route: /api/user/earnings', () => {
     const postReq = new Request('http://localhost:3000/api/user/earnings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(syncPayload),
+      body: JSON.stringify(historyPayload),
     });
 
     const postRes = await POST(postReq);
     expect(postRes.status).toBe(200);
     const postJson = await postRes.json();
     expect(postJson.status).toBe('ok');
-    expect(postJson.earnings.balance_usd).toBe(0.02617);
-    expect(postJson.earnings.impressions_today).toBe(4);
     expect(postJson.viewed_ads.length).toBeGreaterThanOrEqual(1);
     expect(postJson.viewed_ads[0].sponsor).toBe('KrocPDF');
 
-    // Subsequent GET should return the exact synced balance and ads
+    // Subsequent GET should return the exact synced display ads
     const getReq = new Request('http://localhost:3000/api/user/earnings?device_id=dev_sync_test_999&email=syncuser@gmail.com');
     const getRes = await GET(getReq);
     const getJson = await getRes.json();
     expect(getJson.status).toBe('ok');
-    expect(getJson.earnings.balance_usd).toBe(0.02617);
-    expect(getJson.earnings.impressions_today).toBe(4);
     expect(getJson.viewed_ads[0].id).toBe('evt_sync_01');
   });
 });

@@ -19,7 +19,7 @@ describe('API Route: /api/preregister', () => {
     const json = await res.json();
     expect(json.status).toBe('ok');
     expect(json.registration.email).toBe(testEmail);
-    expect(json.message).toContain('early access VIP list');
+    expect(json.message).toContain('Saved in this development server only');
   });
 
   it('should reject invalid or missing email formatting', async () => {
@@ -41,30 +41,40 @@ describe('API Route: /api/preregister', () => {
   });
 
   it('should handle already-registered emails gracefully with friendly notice', async () => {
-    const req = new Request('https://pathixorewards.com/api/preregister', {
+    const firstReq = new Request('https://pathixorewards.com/api/preregister', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-forwarded-for': '10.0.0.101',
       },
-      body: JSON.stringify({ email: 'vip.tester@gmail.com' }), // seeded
+      body: JSON.stringify({ email: 'duplicate.tester@gmail.com' }),
+    });
+    await POST(firstReq);
+
+    const dupReq = new Request('https://pathixorewards.com/api/preregister', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-forwarded-for': '10.0.0.101',
+      },
+      body: JSON.stringify({ email: 'duplicate.tester@gmail.com' }),
     });
 
-    const res = await POST(req);
+    const res = await POST(dupReq);
     expect(res.status).toBe(200);
 
     const json = await res.json();
     expect(json.status).toBe('ok');
     expect(json.already_registered).toBe(true);
-    expect(json.message).toContain('already on the launch notification list');
+    expect(json.message).toContain('already in this development server list');
   });
 
-  it('should report registered count on GET query', async () => {
+  it('should return 404 on GET query to protect user email privacy against public listing', async () => {
     const res = await GET();
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(404);
 
     const json = await res.json();
-    expect(json.status).toBe('ok');
-    expect(json.total_pre_registered).toBeGreaterThanOrEqual(2);
+    expect(json.status).toBe('error');
+    expect(json.message).toBe('Not found.');
   });
 });

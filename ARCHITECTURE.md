@@ -65,12 +65,14 @@ Each supported AI platform has a dedicated content script adapter that:
 
 ## 4. Backend & Ad Engine Subsystem
 
-- **`/api/ads/bundle`**: Delivers targeted sponsor creatives with fallback to high-yield affiliate partners to guarantee 100% inventory fill rate.
-- **`/api/config/selectors`**: Serves versioned DOM selector maps with caching headers.
-- **`/api/events/impression`**: Validates signed impression tokens, verifies dwell criteria, debits campaign budgets, and credits user balances.
-- **`/api/cashout`**: Processes micro-cashout requests meeting the $2.00 minimum threshold.
-- **`/api/health`**: Comprehensive health check and telemetry endpoint.
-- **`/admin` & `/api/admin/*`**: Master Command Console providing real-time dual telemetry (Chrome Web Store vs. live heartbeat pings), campaign moderation, advertiser inflow ledger, user fraud shields with Read-Only impersonation, and payout settlement rails. Governed by [ADMIN_CONSOLE_SPEC.md](file:///e:/Open Source/Ad_AI/docs/ADMIN_CONSOLE_SPEC.md).
+**Production readiness state (2026-11-24):** Several services described below are not implemented as production services. The present stores are process-local and are not backed by the supplied PostgreSQL schema. Financial and account mutation routes fail closed in production until persistent, transactional services are configured. Do not interpret UI or local development records as real balances, payments, or campaign funding. See the [go-live audit](./docs/GO_LIVE_BUG_AUDIT.md).
+
+- **`/api/ads/bundle`**: Serves available creatives; availability and fallback inventory are not a guarantee of 100% fill.
+- **`/api/config/selectors`**: Serves selector configuration.
+- **`/api/events/impression`**: Production reward credit is disabled pending a durable ledger and server-verified impression flow. The extension also suppresses local production credits.
+- **`/api/cashout`**: Production cashout is disabled until an authenticated durable ledger and real payout provider are integrated. The $2.00 floor is a product rule, not proof of a live payout rail.
+- **`/api/health`**: Health check endpoint; it is not a complete production readiness or dependency check.
+- **`/admin` & `/api/admin/*`**: Admin APIs require a signed session and allowlisted identity. Admin stores and operational metrics remain in-memory; they are not a durable live financial ledger. Governed by [ADMIN_CONSOLE_SPEC.md](./docs/ADMIN_CONSOLE_SPEC.md).
 
 ---
 

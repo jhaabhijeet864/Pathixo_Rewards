@@ -103,7 +103,7 @@ export default function ComingSoonPage() {
               {submitted ? (
                 <div className="rounded-2xl border border-emerald-500/40 bg-emerald-950/30 p-5 text-center">
                   <CheckCircle2 className="h-6 w-6 text-emerald-400 mx-auto mb-2" />
-                  <p className="text-sm font-semibold text-white">You&apos;re on the early access VIP list!</p>
+                  <p className="text-sm font-semibold text-white">Development-only signup saved</p>
                   <p className="text-xs text-slate-400 mt-1 leading-relaxed">
                     {responseMsg || `We'll ping ${email} the moment we go live.`}
                   </p>

@@ -14,17 +14,14 @@ export function Navbar() {
   useEffect(() => {
     setIsMounted(true);
 
-    const checkAuth = () => {
+    let active = true;
+    const checkAuth = async () => {
       try {
-        const stored = localStorage.getItem('pathixo_auth_session');
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          setIsLoggedIn(Boolean(parsed?.logged_in && parsed?.email));
-        } else {
-          setIsLoggedIn(false);
-        }
+        const response = await fetch('/api/auth/session', { cache: 'no-store' });
+        const data = response.ok ? await response.json() : null;
+        if (active) setIsLoggedIn(Boolean(data?.authenticated && data.user?.email));
       } catch {
-        setIsLoggedIn(false);
+        if (active) setIsLoggedIn(false);
       }
     };
 
@@ -35,6 +32,7 @@ export function Navbar() {
     window.addEventListener('pathixo_auth_change', checkAuth);
 
     return () => {
+      active = false;
       window.removeEventListener('storage', checkAuth);
       window.removeEventListener('pathixo_auth_change', checkAuth);
     };

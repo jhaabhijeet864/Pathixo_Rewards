@@ -12,7 +12,7 @@
 
 1. **Login & Dashboard Button Switching**:
    - In normal unauthenticated cases, the button beside `Add to Chrome` (and in the mobile menu drawer) displays **`Login`**. Non-login users must ONLY see `Login`.
-   - Once a user logs in (verified `pathixo_auth_session` in `localStorage` with `logged_in === true` and a valid `email`), this button dynamically switches to **`Dashboard`**.
+   - Once a user has a valid server-issued HttpOnly `pathixo_session` cookie, this button dynamically switches to **`Dashboard`**. The localStorage mirror is presentation-only and is never authorization proof.
    - When a user logs out / signs out, the button immediately switches back to **`Login`**.
 
 2. **Hydration & State Sync**:
@@ -29,14 +29,14 @@
 ## 2. Dashboard Route Rules (`apps/web/app/dashboard/page.tsx` & `/referrals`)
 
 1. **Strict Route Protection**:
-   - The user rewards console, metric cards, telemetry/impression logs, and withdrawal forms **MUST NEVER RENDER** for unauthenticated visitors.
+   - The user rewards console, metric cards, telemetry/impression logs, and withdrawal forms **MUST NEVER RENDER** for unauthenticated visitors. Client route checks use `GET /api/auth/session`; sensitive API routes independently verify the signed HttpOnly cookie.
    - If a visitor navigates directly to `/dashboard` or `/dashboard/referrals` without a valid `pathixo_auth_session`:
      - The page must immediately redirect them to `/login`.
      - While redirecting, the page must show an authentication barrier ("Sign in required"), never the rewards console or stub metrics.
 
 2. **Sign Out Functionality**:
    - The authenticated dashboard header must include the user's logged-in email and a dedicated `Sign out` action.
-   - Signing out must clear `pathixo_auth_session`, dispatch `pathixo_auth_change`, and redirect to `/login`.
+   - Signing out must clear the server cookie through `DELETE /api/auth/session`, clear the local presentation mirror, dispatch `pathixo_auth_change`, and redirect to `/login`.
 
 ---
 
@@ -45,7 +45,11 @@
 1. **Local Development Stubbing**:
    - The convenience `user@gmail.com` stub / single-click bypass is strictly restricted to local development environments (`process.env.NODE_ENV !== 'production'`).
 2. **Production Safeguard**:
-   - In production (`process.env.NODE_ENV === 'production'`), `user@gmail.com` **MUST NEVER** be hardcoded or used as an automatic fallback bypass. Real OAuth flows (Google / GitHub) or verified email magic link authentication must be strictly enforced.
+   - In production (`process.env.NODE_ENV === 'production'`), the local email stub cannot create a session. OAuth and verified email routes are not implemented/configured yet; sign-in therefore fails closed until a provider is added. Do not present the current local development sign-in as production authentication.
+
+4. **Production readiness state**:
+   - `AUTH_SECRET` must be configured to at least 32 characters for signed sessions.
+   - Rewards, history, campaign writes, referrals, preregistration, and cashout must stay unavailable in production until durable storage and the relevant verified financial/provider workflows exist. See [GO_LIVE_BUG_AUDIT.md](./GO_LIVE_BUG_AUDIT.md).
 
 ---
 

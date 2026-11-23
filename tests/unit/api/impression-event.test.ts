@@ -6,8 +6,8 @@ describe('API Route: /api/events/impression', () => {
   it('should accept qualified impressions with dwell >= 4000ms and credit $0.009 USD', async () => {
     const validEvent: ImpressionEvent = {
       event_id: 'evt_test_qual_01',
-      ad_id: 'ad_cursor',
-      ad_token: 'tok_valid_123',
+      ad_id: 'cmp_house_vakxo',
+      ad_token: 'tok_house_vakxo_001',
       device_id: 'dev_test_01',
       timestamp: Date.now(),
       dwell_ms: 4500,
@@ -34,8 +34,8 @@ describe('API Route: /api/events/impression', () => {
   it('should disqualify impressions with dwell time < 4000ms', async () => {
     const shortEvent: ImpressionEvent = {
       event_id: 'evt_test_short_02',
-      ad_id: 'ad_cursor',
-      ad_token: 'tok_valid_123',
+      ad_id: 'cmp_house_vakxo',
+      ad_token: 'tok_house_vakxo_001',
       device_id: 'dev_test_01',
       timestamp: Date.now(),
       dwell_ms: 2500, // Insufficient dwell
@@ -108,12 +108,12 @@ describe('API Route: /api/events/impression', () => {
     expect(afterCmp?.metrics?.platform_impressions.gemini).toBe(initialImpressions + 1);
   });
 
-  it('should return recent events via GET', async () => {
+  it('should return total verified impressions count via GET without leaking private user event history', async () => {
     const res = await GET();
     expect(res.status).toBe(200);
 
     const json = await res.json();
     expect(typeof json.total_verified_impressions).toBe('number');
-    expect(Array.isArray(json.recent)).toBe(true);
+    expect(json.recent).toBeUndefined();
   });
 });

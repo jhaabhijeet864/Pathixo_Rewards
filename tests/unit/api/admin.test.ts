@@ -234,7 +234,7 @@ describe('Admin Console API Suite', () => {
       const res = await settlePayout(req);
       expect(res.status).toBe(200);
       const json = await res.json();
-      expect(json.payout.status).toBe('settled');
+      expect(json.payout.status).toBe('completed');
       expect(json.payout.transaction_reference).toBe('UTR_504928174982');
     });
 

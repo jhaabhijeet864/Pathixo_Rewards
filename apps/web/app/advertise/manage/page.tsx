@@ -79,6 +79,15 @@ function CampaignManagerContent() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+        setErrorMsg('Choose a PNG, JPG, or WEBP image.');
+        return;
+      }
+      if (file.size > 256 * 1024) {
+        setErrorMsg('Image must be 256 KB or smaller.');
+        return;
+      }
+      setErrorMsg(null);
       setIconFileName(file.name);
       setRemoveIcon(false);
       const reader = new FileReader();
@@ -209,7 +218,7 @@ function CampaignManagerContent() {
       {saveSuccess && (
         <div className="mb-6 flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-400 shadow-xs">
           <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-          <span>Your ad changes have been saved and applied to live preview!</span>
+          <span>Your campaign draft changes have been saved. No live campaign was changed.</span>
         </div>
       )}
 

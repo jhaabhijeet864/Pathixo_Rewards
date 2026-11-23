@@ -155,7 +155,6 @@ interface SustainedCardEntry {
   ad: AdCreative;
   anchor: HTMLElement;
   turnKey: string;
-  userPromptText: string;
   dismissed: boolean;
 }
 
@@ -194,37 +193,16 @@ export default defineContentScript({
     // When host frameworks (React, Angular, Next.js) re-render message turns after streaming,
     // they remove or reorder foreign DOM nodes. This reconciler ensures all ad cards remain permanently sustained in the conversation.
     const findReplacementAnchor = (entry: SustainedCardEntry): HTMLElement | null => {
-      // Case 1: Search by turnKey / data-message-id
-      if (entry.turnKey && entry.turnKey.length > 3) {
+      // Use opaque DOM identifiers only. Never inspect user message or response text.
+      if (entry.turnKey) {
         const byId = document.querySelector<HTMLElement>(`[data-message-id="${entry.turnKey}"]`);
         if (byId) {
           const article = byId.closest<HTMLElement>('article');
           return article || byId;
         }
+        const byDomId = document.getElementById(entry.turnKey);
+        if (byDomId instanceof HTMLElement) return byDomId;
       }
-
-      // Case 2: Search by prompt text content
-      if (entry.userPromptText) {
-        const queryList = document.querySelectorAll<HTMLElement>(
-          'article, [data-message-author-role="user"], [data-user-message-bubble], [data-testid="user-message"], user-query'
-        );
-        for (let i = queryList.length - 1; i >= 0; i--) {
-          const node = queryList[i];
-          if (node.textContent && node.textContent.includes(entry.userPromptText.slice(0, 25))) {
-            const article = node.closest<HTMLElement>('article');
-            return article || node;
-          }
-        }
-      }
-
-      // Case 3: Fallback to last user message container
-      const userList = document.querySelectorAll<HTMLElement>(
-        'article, [data-message-author-role="user"], [data-testid="user-message"], user-query'
-      );
-      if (userList.length > 0) {
-        return userList[userList.length - 1];
-      }
-
       return null;
     };
 
@@ -259,11 +237,10 @@ export default defineContentScript({
 
     // Track tab visibility during active wait
     const handleVisibilityChange = () => {
-      if (document.visibilityState !== 'visible') {
-        isTabFocusedDuringWait = false;
-      }
+      if (document.visibilityState !== 'visible' || !document.hasFocus()) isTabFocusedDuringWait = false;
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleVisibilityChange);
 
     // Record verified impression helper
     const recordImpression = async (ad: AdCreative, elapsedMs: number) => {
@@ -278,7 +255,7 @@ export default defineContentScript({
       };
 
       try {
-        await browser.runtime.sendMessage({
+        const result = (await browser.runtime.sendMessage({
           type: 'RECORD_QUALIFIED_IMPRESSION',
           event: impressionEvent,
           ad: {
@@ -286,8 +263,12 @@ export default defineContentScript({
             headline: ad.headline,
             target_cpm: ad.target_cpm,
           },
-        });
-        console.log(`[Pathixo Rewards] Verified ${elapsedMs}ms dwell time! Reward credited.`);
+        })) as { success?: boolean } | undefined;
+        if (result?.success) {
+          console.log(`[Pathixo Rewards] Verified ${elapsedMs}ms dwell time; reward accepted.`);
+        } else {
+          console.info('[Pathixo Rewards] Dwell qualified locally, but reward service did not accept it.');
+        }
       } catch (err) {
         console.debug('[Pathixo Rewards] Failed to notify service worker:', err);
       }
@@ -308,7 +289,7 @@ export default defineContentScript({
         currentAd = null;
         cardStartTime = 0;
         dismissedThisTurn = false;
-        isTabFocusedDuringWait = document.visibilityState === 'visible';
+        isTabFocusedDuringWait = document.visibilityState === 'visible' && document.hasFocus();
       },
 
       async onAnchorReady(anchor: HTMLElement) {
@@ -348,11 +329,10 @@ export default defineContentScript({
         const chosenAd = await getNextAdCreative();
         currentAd = chosenAd;
 
-        const promptText = anchor.textContent?.trim().slice(0, 80) || '';
         const messageId =
           anchor.getAttribute('data-message-id') ||
           anchor.closest('[data-message-id]')?.getAttribute('data-message-id') ||
-          promptText;
+          anchor.id;
 
         // 2. Prepare card & populate content before DOM attachment (Zero empty DOM gap)
         const newCard = new PathixoAdCard();
@@ -365,7 +345,6 @@ export default defineContentScript({
           ad: chosenAd,
           anchor,
           turnKey: messageId,
-          userPromptText: promptText,
           dismissed: false,
         };
         sustainedCards.push(entry);
@@ -417,5 +396,6 @@ export default defineContentScript({
         enforceSustainedMount();
       },
     });
+
   },
 });

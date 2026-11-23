@@ -17,7 +17,7 @@ describe('API Route: /api/campaigns', () => {
     expect(json.message).toContain('Missing required campaign parameters');
   });
 
-  it('should create an active campaign and configure default CPM/budget', async () => {
+  it('should create a campaign in pending_review and configure default CPM/budget', async () => {
     const validCampaign = {
       advertiser_email: 'sponsor@example.com',
       headline: 'Next-Gen Developer Assistant',
@@ -37,8 +37,9 @@ describe('API Route: /api/campaigns', () => {
 
     const json = await res.json();
     expect(json.status).toBe('success');
+    expect(json.message).toContain('Campaign submitted for review');
     expect(json.campaign.id).toMatch(/^cmp_[a-f0-9]{12}$/);
-    expect(json.campaign.status).toBe('active');
+    expect(json.campaign.status).toBe('pending_review');
     expect(json.campaign.cpm_rate_usd).toBe(2.50);
     expect(json.campaign.budget_total_usd).toBe(2.0);
   });
@@ -102,28 +103,21 @@ describe('API Route: /api/campaigns', () => {
     expect(json.campaigns[0].advertiser_email).toBe('founder@pathixo.com');
   });
 
-  it('should pause, resume, and top-up campaign via PATCH', async () => {
-    // 1. Pause
-    const pauseReq = new Request('http://localhost:3000/api/campaigns', {
+  it('should update campaign creative metadata via PATCH without permitting unauthenticated budget tampering', async () => {
+    const patchReq = new Request('http://localhost:3000/api/campaigns', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: 'cmp_house_vakxo', status: 'paused' }),
+      body: JSON.stringify({
+        id: 'cmp_house_vakxo',
+        headline: 'Run AI Agents Locally: 100% Free',
+        target_url: 'https://vakxo.pathixo.com/local',
+      }),
     });
-    const pauseRes = await PATCH(pauseReq);
-    expect(pauseRes.status).toBe(200);
-    const pauseJson = await pauseRes.json();
-    expect(pauseJson.campaign.status).toBe('paused');
-
-    // 2. Resume & add budget
-    const resumeReq = new Request('http://localhost:3000/api/campaigns', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: 'cmp_house_vakxo', status: 'active', add_budget_usd: 15.0 }),
-    });
-    const resumeRes = await PATCH(resumeReq);
-    expect(resumeRes.status).toBe(200);
-    const resumeJson = await resumeRes.json();
-    expect(resumeJson.campaign.status).toBe('active');
-    expect(resumeJson.campaign.budget_total_usd).toBeGreaterThan(100.0);
+    const patchRes = await PATCH(patchReq);
+    expect(patchRes.status).toBe(200);
+    const patchJson = await patchRes.json();
+    expect(patchJson.status).toBe('success');
+    expect(patchJson.campaign.headline).toBe('Run AI Agents Locally: 100% Free');
+    expect(patchJson.campaign.target_url).toBe('https://vakxo.pathixo.com/local');
   });
 });

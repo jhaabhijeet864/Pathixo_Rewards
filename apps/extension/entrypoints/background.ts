@@ -90,6 +90,10 @@ export default defineBackground(() => {
     }
 
     if (msg.type === 'RECORD_QUALIFIED_IMPRESSION' && msg.event) {
+      if (process.env.NODE_ENV === 'production') {
+        sendResponse({ success: false, message: 'Reward ledger is not enabled in this build.' });
+        return true;
+      }
       (async () => {
         const canonicalDeviceId = await getDeviceId();
         const authUser = await getAuthUser();
@@ -181,6 +185,13 @@ export default defineBackground(() => {
     if (msg.type === 'SET_EARNINGS' && msg.earnings) {
       setEarnings(msg.earnings).then(() => {
         sendResponse({ success: true, earnings: msg.earnings });
+      });
+      return true;
+    }
+
+    if (msg.type === 'CLEAR_VIEWED_ADS') {
+      browser.storage.local.set({ viewed_ads: [] }).then(() => {
+        sendResponse({ success: true });
       });
       return true;
     }

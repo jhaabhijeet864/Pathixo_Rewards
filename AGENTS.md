@@ -42,7 +42,9 @@ This document serves as the **Single Point of Contact (SPOC)**. It defines stric
 **Answer: THEY CANNOT AND MUST NEVER ACCESS THE DASHBOARD.**  
 A private financial rewards dashboard with live payout rails (UPI, PayPal, Gift Cards) and a unique permanent referral link **must never be accessible without verified authentication**.
 
-#### The 3 Authoritative User Journeys:
+#### The 3 Intended User Journeys:
+
+**Current release gate:** these are target journeys, not all available production behavior. OAuth/email verification, durable rewards storage, advertiser checkout, and payout providers are not configured; production sign-in and financial mutations must fail closed until implemented. See [`docs/GO_LIVE_BUG_AUDIT.md`](./docs/GO_LIVE_BUG_AUDIT.md).
 
 ```mermaid
 flowchart TD
@@ -124,14 +126,16 @@ Colors, No-AI-Slop       Calculator, Mockups DB, Cashout, Referrals Shadow DOM, 
 - **Owns:** `apps/web/app/dashboard/page.tsx`, `apps/web/app/dashboard/referrals/page.tsx`, `apps/web/app/login/page.tsx`, `apps/web/lib/user-store.ts`, `apps/web/lib/referral-engine.ts`.
 - **Invariants:**
   - `/dashboard` and `/dashboard/referrals` are **strictly auth-gated**. Unauthenticated visits redirect to `/login`.
-  - Header displays user email and a working `Sign out` action that clears `pathixo_auth_session` and dispatches `pathixo_auth_change`.
+  - Header displays user email and a working `Sign out` action that clears the HttpOnly `pathixo_session` through `DELETE /api/auth/session`, clears its local presentation mirror, dispatches `pathixo_auth_change`, and returns to `/login`.
+  - Protected routes and APIs must verify the signed server cookie; localStorage is never authentication proof. Production sign-in remains unavailable until verified OAuth or email authentication is configured.
   - Referral codes are permanent and tied to user email.
 
 ### Agent 4: Browser Extension Bot
 - **Owns:** `apps/extension/` (WXT Manifest V3, background worker, popup, content scripts, and chatbot adapters).
 - **Invariants:**
   - Isolated Shadow DOM (`attachShadow({ mode: 'open' })`) with pure DOM APIs (`document.createElement`, `textContent`). **Zero `innerHTML` sinks.**
-  - 4-second minimum dwell timer with `document.visibilityState === 'visible'`.
+  - 4-second minimum dwell timer while `document.visibilityState === 'visible'` and the page is focused.
+  - Production rewards stay disabled until durable storage and a server-verified impression ledger are configured. Do not display local extension counters as payable balances.
   - Adapters for ChatGPT, Claude, Gemini, Perplexity, DeepSeek.
   - Ads must sustain during generation and cycle smoothly without repetition.
 
