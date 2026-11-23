@@ -12,12 +12,16 @@ const PRESETS = [
   { label: 'Heavy', value: 50 },
   { label: 'Power', value: 100 },
 ];
+const MIN_DAILY_PROMPTS = 5;
+const MAX_DAILY_PROMPTS = 100;
+const PROMPT_STEP = 1;
 
 const USER_CREDIT_PER_PROMPT_USD = 0.0015; // $0.0015 USD avg (60% split on $2.50 blended CPM, dynamic per-ad auction)
 const CASHOUT_FLOOR_USD = 2.0;
 
 export function EarningsCalculator() {
   const [dailyPrompts, setDailyPrompts] = useState<number>(25);
+  const [dailyPromptInput, setDailyPromptInput] = useState('25');
   const [currency, setCurrency] = useState<'USD' | 'INR'>('USD');
 
   const monthlyPrompts = dailyPrompts * 30;
@@ -47,9 +51,13 @@ export function EarningsCalculator() {
   };
 
   const handleSliderChange = (val: number) => {
-    const clamped = Math.max(1, Math.min(150, val));
+    if (!Number.isFinite(val)) return;
+    const clamped = Math.max(MIN_DAILY_PROMPTS, Math.min(MAX_DAILY_PROMPTS, Math.round(val)));
     setDailyPrompts(clamped);
+    setDailyPromptInput(String(clamped));
   };
+
+  const sliderProgress = ((dailyPrompts - MIN_DAILY_PROMPTS) / (MAX_DAILY_PROMPTS - MIN_DAILY_PROMPTS)) * 100;
 
   return (
     <div className="w-full max-w-4xl lg:max-w-5xl mx-auto rounded-2xl border border-slate-800/80 bg-[#0a0f18] p-5 sm:p-8 lg:p-10 shadow-xl">
@@ -77,10 +85,29 @@ export function EarningsCalculator() {
           <div className="space-y-4 rounded-2xl border border-slate-800 bg-[#0e1624] p-5 sm:p-6">
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-slate-200">Daily prompts sent</span>
-              <div className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/80 px-2.5 py-1 font-mono text-sm font-bold text-emerald-400">
-                <span>{dailyPrompts}</span>
+              <label className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/80 px-2.5 py-1 font-mono text-sm font-bold text-emerald-400 focus-within:border-emerald-500">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={dailyPromptInput}
+                  onChange={(event) => {
+                    const raw = event.currentTarget.value;
+                    setDailyPromptInput(raw);
+                    if (!/^\d+$/.test(raw)) return;
+                    const next = Number(raw);
+                    if (next >= MIN_DAILY_PROMPTS && next <= MAX_DAILY_PROMPTS) setDailyPrompts(next);
+                  }}
+                  onBlur={() => {
+                    const value = Number(dailyPromptInput);
+                    if (Number.isFinite(value)) handleSliderChange(value);
+                    else setDailyPromptInput(String(dailyPrompts));
+                  }}
+                  aria-label="Daily prompts sent"
+                  aria-describedby="daily-prompts-range"
+                  className="w-10 appearance-none bg-transparent text-right outline-none"
+                />
                 <span className="text-xs text-slate-400 font-sans font-normal">/ day</span>
-              </div>
+              </label>
             </div>
 
             {/* Stepper + Slider */}
@@ -88,7 +115,8 @@ export function EarningsCalculator() {
               <button
                 type="button"
                 onClick={() => handleSliderChange(dailyPrompts - 5)}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-slate-300 transition hover:bg-slate-700 hover:text-white active:scale-95 cursor-pointer"
+                disabled={dailyPrompts <= MIN_DAILY_PROMPTS}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-slate-300 transition hover:bg-slate-700 hover:text-white active:scale-95 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Decrease prompts"
               >
                 <Minus className="h-3.5 w-3.5" />
@@ -97,20 +125,24 @@ export function EarningsCalculator() {
               <div className="relative flex-1 flex items-center">
                 <input
                   type="range"
-                  min="5"
-                  max="100"
-                  step="1"
+                  min={MIN_DAILY_PROMPTS}
+                  max={MAX_DAILY_PROMPTS}
+                  step={PROMPT_STEP}
                   value={dailyPrompts}
                   onChange={(e) => handleSliderChange(Number(e.target.value))}
+                  style={{ background: `linear-gradient(to right, #10e599 ${sliderProgress}%, #1e293b ${sliderProgress}%)` }}
                   className="earnings-slider w-full cursor-pointer accent-emerald-500"
                   aria-label="Daily AI Prompts Slider"
+                  aria-valuetext={`${dailyPrompts} prompts per day`}
+                  id="daily-prompts-range"
                 />
               </div>
 
               <button
                 type="button"
                 onClick={() => handleSliderChange(dailyPrompts + 5)}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-slate-300 transition hover:bg-slate-700 hover:text-white active:scale-95 cursor-pointer"
+                disabled={dailyPrompts >= MAX_DAILY_PROMPTS}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-slate-300 transition hover:bg-slate-700 hover:text-white active:scale-95 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Increase prompts"
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -199,7 +231,7 @@ export function EarningsCalculator() {
           {/* Big Amount */}
           <div className="py-6">
             <div className="text-5xl sm:text-6xl font-black tracking-tight text-white font-mono">
-              {formatMoney(monthlyEarningsUsd)}
+              <span aria-live="polite" aria-atomic="true">{formatMoney(monthlyEarningsUsd)}</span>
             </div>
             <div className="mt-1 text-sm font-medium text-emerald-400">
               per month in passive cash
